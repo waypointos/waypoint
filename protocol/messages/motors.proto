@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+import "google/protobuf/timestamp.proto";
+import "messages/common.proto";
+
+// telemetry.motors — core → bus (20 Hz, one message per servo per tick)
+message MotorTelemetry {
+  google.protobuf.Timestamp t = 1;
+
+  // STS3215 ID, 1..12. Drive wheels are 7..10.
+  uint32 id = 2;
+
+  optional double position_rad    = 3;
+  optional double velocity_radps  = 4;
+  optional double current_a       = 5;
+  optional double temperature_c   = 6;
+
+  // Bus voltage observed by this servo (servos on the same bus will agree
+  // to within a few mV — any servo can report it; reading the busiest one is fine).
+  optional double bus_voltage_v   = 7;
+
+  Stamp stamp = 8;  // capture-time dual stamp (set when the servo was read)
+}

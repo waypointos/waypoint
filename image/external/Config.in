@@ -1,0 +1,5 @@
+source "$BR2_EXTERNAL_WAYPOINT_PATH/package/waypoint-agent/Config.in"
+source "$BR2_EXTERNAL_WAYPOINT_PATH/package/waypoint-core/Config.in"
+source "$BR2_EXTERNAL_WAYPOINT_PATH/package/waypoint-bootcheck/Config.in"
+source "$BR2_EXTERNAL_WAYPOINT_PATH/package/waypoint-firstboot/Config.in"
+source "$BR2_EXTERNAL_WAYPOINT_PATH/package/waypoint-resize/Config.in"

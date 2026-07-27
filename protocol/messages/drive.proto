@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+import "google/protobuf/timestamp.proto";
+import "messages/common.proto";
+
+// cmd.drive — operator → core
+// Differential drive: body-frame linear velocity (forward) and yaw rate.
+message DriveCommand {
+  google.protobuf.Timestamp t = 1;
+
+  // Target body linear velocity along x, meters/second. Positive = forward.
+  optional double body_vx_mps = 2;
+
+  // Target body yaw rate, radians/second. Positive = counter-clockwise (left).
+  optional double yaw_rate_radps = 3;
+}
+
+// telemetry.drive — core → bus (50 Hz)
+message DriveTelemetry {
+  google.protobuf.Timestamp t = 1;
+
+  optional double body_vx_mps    = 2;
+  optional double yaw_rate_radps = 3;
+
+  Stamp stamp = 4;  // capture-time dual stamp
+}

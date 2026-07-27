@@ -1,0 +1,49 @@
+#!/usr/bin/env expect -f
+
+set timeout 180
+
+spawn image/scripts/qemu-run.sh --headless --dev
+
+expect {
+    -re "waypoint login:" { send_user "\n\[+\] login prompt reached\n" }
+    timeout                { send_user "\n\[-\] timeout before login prompt\n"; exit 1 }
+}
+
+send "root\r"
+expect "# "
+
+# Consume the command echo before checking the response, otherwise the
+# echoed string `is-active waypoint-agent` would falsely match the
+# `active` arm via its `is-active` substring. After the echo is consumed,
+# expect's buffer position advances past it, so subsequent matches only
+# see the actual command output.
+#
+# Order matters within each expect block — `inactive`/`failed` come
+# before `active` so they fail-fast even though both contain `active`
+# as a substring.
+send "systemctl is-active waypoint-agent\r"
+expect "is-active waypoint-agent"
+expect {
+    "inactive" { send_user "\n\[-\] waypoint-agent inactive\n"; exit 1 }
+    "failed"   { send_user "\n\[-\] waypoint-agent failed\n"; exit 1 }
+    "active"   { send_user "\n\[+\] waypoint-agent active\n" }
+    timeout    { send_user "\n\[-\] waypoint-agent state-check timeout\n"; exit 1 }
+}
+expect "# "
+
+send "systemctl is-active waypoint-core\r"
+expect "is-active waypoint-core"
+expect {
+    "inactive" { send_user "\n\[-\] waypoint-core inactive\n"; exit 1 }
+    "failed"   { send_user "\n\[-\] waypoint-core failed\n"; exit 1 }
+    "active"   { send_user "\n\[+\] waypoint-core active\n" }
+    timeout    { send_user "\n\[-\] waypoint-core state-check timeout\n"; exit 1 }
+}
+expect "# "
+
+send "cat /etc/waypoint/image.toml\r"
+expect "partition"
+
+send "poweroff\r"
+expect eof
+send_user "\n\[+\] boot smoke PASS\n"

@@ -1,0 +1,87 @@
+# Canonical subject list. Every subject is scoped under a rover account:
+#   waypoint.<rover-id>.<subject>
+# The leaves below are the part after the rover-id.
+#
+# Bridge direction (proxy <-> rover), enforced by proxy integration tests:
+#   rover -> proxy  (cross-account Stream):  the rover account exports its WHOLE
+#     namespace (waypoint.<id>.>), so any subject the rover publishes reaches the
+#     sessions account. The list below is the publish CONVENTION, not the export
+#     scope: telemetry.* event.* alert.* diag.* + infra.* (heartbeat, system.image,
+#     camera.list, audit, modules snapshot) + module.<id>.* (module telemetry a
+#     proxy-served module panel subscribes to). All of it rides the same stream.
+#   proxy -> rover  (proxy relay -> rover-account conn):  cmd.*
+#   proxy -> rover  (rover-account conn, request/reply):  rpc.*
+#   proxy -> rover  (rover-account conn, publish):        modules.desired
+# All proxy->rover delivery rides a per-rover connection in the rover's OWN
+# account (intra-account, carried by the leaf). cmd.* is browser-initiated, so a
+# proxy relay forwards it from the sessions account onto that connection. rpc.*
+# is request/reply over the same connection -- NOT a cross-account Service, which
+# is not delivered to a leaf-backed responder.
+
+[telemetry]
+"telemetry.drive"   = "DriveTelemetry"   # 50 Hz: body vx, yaw rate
+"telemetry.motors"  = "MotorTelemetry"   # 20 Hz: per-servo (one msg per servo)
+"telemetry.power"   = "PowerTelemetry"   # 1 Hz:  bus voltage, current draw
+"telemetry.system"  = "SystemTelemetry"  # 1 Hz:  CPU, temp, RTT, image
+"telemetry.imu"     = "ImuTelemetry"     # reserved — N/A until IMU module
+"telemetry.gps"     = "GpsTelemetry"     # reserved — N/A until GPS module
+"telemetry.uplink"  = "UplinkTelemetry"  # connectivity uplink signal (agent mirrors from module.<id>.uplink)
+
+[commands]
+"cmd.drive"   = "DriveCommand"
+"cmd.servo"   = "ServoControl"   # generic per-servo control (core-bound; agent brokers module.<id>.servo.cmd onto this)
+"cmd.gamepad" = "GamepadSnapshot"   # operator gamepad snapshot; agent mirrors to module.<id>.input
+"cmd.servo_sync" = "ServoSyncWrite"   # coordinated multi-servo goal write (core-bound)
+"cmd.arm"     = "ArmCommand"     # reserved — deferred to arm module
+"cmd.sim_scenario" = "SimScenario"   # sim-only: mutate the servo model (no responder on hardware)
+
+[events]
+"event.fault"   = "FaultEvent"
+"event.mode"    = "ModeEvent"
+"event.system"  = "SystemEvent"
+"event.recorder" = "RecorderEvent"  # recorder state + progress (agent-published)
+
+[alerts]
+"alert.raised"        = "AlertRaised"
+"alert.acknowledged"  = "AlertAcknowledged"
+"alert.resolved"      = "AlertResolved"
+
+[rpc]
+"rpc.set_mode"      = "ModeRequest -> ModeResponse"
+"rpc.get_info"      = "InfoRequest -> InfoResponse"
+"rpc.estop"         = "EstopRequest -> EstopResponse"
+"rpc.recover"       = "RecoverRequest -> RecoverResponse"  # clear an engaged E-stop (body ignored; reuses ModeEvent like estop)
+"rpc.camera_offer"  = "CameraOfferRequest -> CameraOfferResponse"  # WHEP offer tunnel (additive)
+"rpc.apply_image"   = "ApplyImageRequest -> ApplyImageResponse"     # OTA image apply (additive, Phase 5)
+"rpc.basemap_tile"  = "BasemapTileRequest -> BasemapTileResponse"   # rover → proxy (proxy responds): tile fetch on cache miss (additive)
+"rpc.servo_read"   = "ServoReadRequest -> ServoState"   # generic raw single-servo read (core responds)
+"rpc.sim_advance"  = "SimAdvanceRequest -> SimAdvanceResponse"  # sim-only: controlled-clock time grant
+"rpc.sim_info"     = "SimInfoRequest -> SimInfo"                # sim-only: sim status probe
+"rpc.recorder_start" = "RecorderStartRequest -> RecorderStartResponse"  # agent-handled: begin an episode
+"rpc.recorder_stop"  = "RecorderStopRequest -> RecorderStopResponse"    # agent-handled: finalize with success flag
+"rpc.episode_list"   = "EpisodeListRequest -> EpisodeList"              # agent-handled: episode metadata (sidecars)
+
+[infra]
+"heartbeat"       = "Heartbeat"          # agent → core every 200 ms (must be < core's 500 ms watchdog timeout to absorb scheduler jitter)
+"system.image"    = "ImageState"         # current image + A/B partition state
+"camera.list"    = "CameraList"          # available camera names (filled by cameras plan)
+"infra.audit"     = "AuditEvent"          # durable audit log (proxy + agent gateways)
+"infra.modules"   = "ModuleSnapshot"     # active modules + health (agent publishes at 1 Hz + on state change)
+"infra.clock"     = "ClockAnchor"        # per-boot clock anchor: boot id, wall at mono zero, NTP state (agent; 60 s re-announce + on change)
+"infra.platform"  = "PlatformInfo"       # platform descriptor projection (core; boot + 5 s re-announce)
+"modules.desired"   = "DesiredModuleSet"      # proxy → agent, retained
+"modules.reconcile" = "ModuleReconcileEvent"  # agent → bus, one per transition
+
+[access]
+"access.users.<user-id>"  = "AccessUser"  # reserved — per-user local creds (v1.1)
+
+[diag]
+"diag.log"          = "LogRecord"        # agent log stream (mirrors stderr/journald)
+
+[modules]
+# Modules live under waypoint.<rover-id>.module.<id>.>
+# Each module's manifest declares which subjects under its namespace it may
+# publish/subscribe. Agent mints a per-module user JWT scoped accordingly.
+# Conventional leaves (modules may add their own):
+#   module.<id>.health.<probe>   request/reply for liveness
+#   module.<id>.stats            primary publish stream (if applicable)

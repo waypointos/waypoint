@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+import "google/protobuf/timestamp.proto";
+import "messages/common.proto";
+
+// Device-generic gamepad snapshot. The dashboard publishes one of these to
+// cmd.gamepad at ~50Hz; the agent mirrors it into the subtree of any module
+// that declares requires=["teleop-input"]. Not drive- or arm-shaped.
+message GamepadSnapshot {
+  google.protobuf.Timestamp t = 1;
+  repeated float axes     = 2;  // normalized -1..1, deadzone applied
+  repeated bool  buttons  = 3;  // pressed state
+  repeated float triggers = 4;  // analog 0..1 (LT, RT)
+
+  Stamp stamp = 5;  // browser producer sets wall time only; mono_ns/boot_id stay unset
+}

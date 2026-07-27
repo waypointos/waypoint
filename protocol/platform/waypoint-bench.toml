@@ -1,0 +1,88 @@
+# Arm-only bench platform: six servo joints, no drive. The structural
+# counterpart to waypoint-rover.toml that proves drive is a capability,
+# not an assumption. Schema reference: protocol/platform/SCHEMA.md
+schema = 1
+
+[platform]
+id = "waypoint-bench"
+name = "Waypoint Bench"
+vehicle_class = "fixed_base"
+
+[drivers.main]
+kind = "sts3215"
+port = "/dev/ttyAMA0"
+baud = 1000000
+
+# Arm servos 1..5 plus gripper 6: all module-owned (so100 shape). The empty
+# platform-owned set makes the module servo deny-list legitimately empty.
+[[joints]]
+name = "arm_1"
+driver = "main"
+bus_id = 1
+type = "revolute"
+ownership = "module"
+command_interfaces = ["position"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+
+[[joints]]
+name = "arm_2"
+driver = "main"
+bus_id = 2
+type = "revolute"
+ownership = "module"
+command_interfaces = ["position"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+
+[[joints]]
+name = "arm_3"
+driver = "main"
+bus_id = 3
+type = "revolute"
+ownership = "module"
+command_interfaces = ["position"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+
+[[joints]]
+name = "arm_4"
+driver = "main"
+bus_id = 4
+type = "revolute"
+ownership = "module"
+command_interfaces = ["position"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+
+[[joints]]
+name = "arm_5"
+driver = "main"
+bus_id = 5
+type = "revolute"
+ownership = "module"
+command_interfaces = ["position"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+
+[[joints]]
+name = "gripper"
+driver = "main"
+bus_id = 6
+type = "gripper"
+ownership = "module"
+command_interfaces = ["position"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+
+[modes]
+available = ["manual", "safe", "estop"]
+
+# No telemetry.drive stream: the platform cannot produce it.
+[observations]
+[[observations.streams]]
+subject = "telemetry.motors"
+message = "waypoint.v1.MotorTelemetry"
+rate_hz = 20
+
+[[observations.streams]]
+subject = "telemetry.power"
+message = "waypoint.v1.PowerTelemetry"
+rate_hz = 1
+
+[actions]
+altitudes = ["joint_position"]

@@ -1,0 +1,16 @@
+[Unit]
+Description=Waypoint modules.toml sync from boot partition
+# Must run before the agent reads /data/waypoint/modules.toml. Ordered
+# After waypoint-firstboot so the first-boot identity install runs to
+# completion (and creates /data/waypoint) before we touch sibling files.
+Before=waypoint-agent.service
+After=local-fs.target waypoint-firstboot.service
+Wants=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/waypoint-boot-modules-sync
+
+[Install]
+WantedBy=multi-user.target

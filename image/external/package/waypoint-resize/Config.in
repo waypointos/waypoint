@@ -1,0 +1,10 @@
+config BR2_PACKAGE_WAYPOINT_RESIZE
+    bool "waypoint-resize"
+    default y
+    help
+      First-boot oneshot that grows the trailing "store" partition
+      (PARTUUID eeee..., mounted at /data/waypoint/store) to fill the
+      whole SD card, then grows its ext4 filesystem online. Idempotent
+      via a sentinel on /data; wiping /data re-arms it. Runs before
+      waypoint-agent/waypoint-core. Needs sgdisk (gptfdisk), partx
+      (util-linux), and resize2fs (e2fsprogs) on the target.

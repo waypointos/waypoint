@@ -1,0 +1,7 @@
+bin/
+dist/
+staging/
+dashboard/dist/
+**/.vite/
+dashboard/node_modules/
+node_modules/

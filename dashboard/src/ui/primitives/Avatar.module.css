@@ -1,0 +1,13 @@
+.avatar {
+  width: 26px;
+  height: 26px;
+  background: var(--color-accent);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}

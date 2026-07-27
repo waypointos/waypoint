@@ -1,0 +1,11 @@
+.dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.ok    { background: var(--color-ok); }
+.warn  { background: var(--color-caution); }
+.fault { background: var(--color-fault); }
+.off   { background: var(--color-fg-4); }

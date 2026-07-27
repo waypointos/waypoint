@@ -1,0 +1,25 @@
+[Unit]
+Description=Waypoint module: example
+After=waypoint-agent.service
+Requires=waypoint-agent.service
+
+[Service]
+Type=notify
+# WAYPOINT_ROVER_ID comes from the agent's core.env (dev: /etc/waypoint,
+# hardware: /data/waypoint; the leading "-" makes a missing file non-fatal).
+# The agent (re)populates /run/waypoint/modules/example/ before starting this
+# unit, so config.toml and creds.env exist at exec time.
+Environment=WAYPOINT_ROVER_ID=
+EnvironmentFile=-/etc/waypoint/core.env
+EnvironmentFile=-/data/waypoint/core.env
+ExecStart=/usr/bin/waypoint-module-example \
+  --config /run/waypoint/modules/example/config.toml \
+  --creds  /run/waypoint/modules/example/creds.env \
+  --rover  ${WAYPOINT_ROVER_ID}
+Restart=always
+RestartSec=2s
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

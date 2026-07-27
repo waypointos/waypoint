@@ -1,0 +1,21 @@
+CONFIG_IDF_TARGET="esp32"
+
+# ESP32-WROOM-32 on the Waveshare HAT has 4 MB flash; our 2×1.5 MB OTA
+# partition table needs this set explicitly (default is 2 MB).
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+
+# CRITICAL: production firmware emits zero bytes on UART0 from any source
+# other than the relay path. ESP-IDF default routes log + boot banner to
+# UART0 — disable both. (Setting LOG_DEFAULT_LEVEL_NONE also caps the
+# compile-time maximum log level because LOG_MAXIMUM_EQUALS_DEFAULT
+# defaults to y.)
+CONFIG_ESP_CONSOLE_NONE=y
+CONFIG_LOG_DEFAULT_LEVEL_NONE=y
+CONFIG_BOOTLOADER_LOG_LEVEL_NONE=y
+
+# Pin app to both cores; we'll spawn one relay task per core.
+CONFIG_FREERTOS_UNICORE=n
+
+# Use a 2-OTA partition table (room to grow into OTA later).
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"

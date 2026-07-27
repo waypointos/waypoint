@@ -1,0 +1,12 @@
+.flow { display: flex; align-items: center; justify-content: center; gap: var(--space-xl); padding: var(--space-lg) 0 var(--space-sm); }
+.vbox { text-align: center; }
+.cap { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-fg-4); margin-bottom: var(--space-sm); }
+.ver { font-family: var(--font-mono); font-size: 24px; color: var(--color-fg-2); }
+.new .ver { color: var(--color-accent); }
+.arrow { font-size: 22px; color: var(--color-fg-4); }
+.meta { text-align: center; font-family: var(--font-mono); font-size: 11px; color: var(--color-fg-4); padding-bottom: var(--space-md); }
+.changelog { font-size: 13px; color: var(--color-fg-2); line-height: 1.6; border-top: 1px solid var(--color-border); padding-top: var(--space-md); max-height: 220px; overflow: auto; }
+.changelog h5 { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-fg-3); margin: var(--space-sm) 0 var(--space-xs); }
+.warn { font-size: 12px; color: var(--color-caution); padding-top: var(--space-sm); }
+.err { font-size: 12px; color: var(--color-fault); padding-top: var(--space-sm); }
+.actions { display: flex; justify-content: flex-end; gap: var(--space-sm); padding-top: var(--space-lg); }

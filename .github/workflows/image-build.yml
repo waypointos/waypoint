@@ -1,0 +1,141 @@
+name: image-build
+on:
+  push:
+    tags: ["image-v*"]
+
+# OIDC: cosign sign-blob uses the workflow's GitHub-issued OIDC token to
+# obtain a short-lived Fulcio certificate. No long-lived signing key
+# anywhere — the cert's identity claim binds the signature to this
+# repo + workflow + tag ref, and Rekor records an inclusion proof.
+#
+# Caching strategy (supply-chain hardened): the only Buildroot state cached
+# is the download dir (image/dl). Buildroot hash-verifies every downloaded
+# tarball against its .hash file, so a tampered cache entry is rejected
+# rather than built. Compiled artifacts (build/host/staging/target/
+# per-package) and ccache are deliberately NOT cached: they would be
+# restored into the signed image with no integrity check, which is a
+# cache-poisoning path into a release. Every release therefore does a clean
+# Buildroot build. docker/build-push-action still caches the buildroot
+# build-environment image layers (content-addressed, release-scoped).
+#
+# Expected timing (ubuntu-latest): ~30-45 min per release (clean build).
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write    # upload to GitHub Release
+      id-token: write    # mint the OIDC token for Fulcio
+    env:
+      REF_NAME: ${{ github.ref_name }}
+      BUILDROOT_VERSION: "2026.02"
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      # image-prod's vendor-agent and embed-dashboard prerequisites run on
+      # the runner (not in the Buildroot container), so they need the Go
+      # and pnpm toolchains here.
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: agent/go.mod
+
+      # pnpm version comes from packageManager in package.json.
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+
+      # Bake the buildroot Docker image once via buildx, cached on the
+      # gha backend. `load: true` makes the image available to the local
+      # daemon so `make image-prod` finds `waypoint-buildroot:2026.02`.
+      - name: Build buildroot Docker image (cached)
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: image
+          file: image/Dockerfile.buildroot
+          tags: waypoint-buildroot:${{ env.BUILDROOT_VERSION }}
+          load: true
+          cache-from: type=gha,scope=buildroot-image-release
+          cache-to: type=gha,mode=max,scope=buildroot-image-release
+
+      # Buildroot's slow stuff (toolchain, kernel, system libs, ccache,
+      # downloaded source tarballs). Keyed on inputs that affect those
+      # outputs only — application source changes do NOT bust this cache.
+      # Only the download dir is cached, and it is keyed + restore-scoped to
+      # the `dl-release` namespace so it cannot collide with any future CI
+      # cache. Buildroot re-verifies every tarball against its .hash, and
+      # all compiled output is rebuilt clean each run (nothing compiled is
+      # restored). Keep image-build tag-triggered, never PR or branch.
+      - name: Restore Buildroot download cache (hash-verified sources only)
+        id: br-cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: image/dl
+          key: ${{ runner.os }}-buildroot-dl-release-${{ env.BUILDROOT_VERSION }}-${{ hashFiles('image/Dockerfile.buildroot', 'image/external/configs/**', 'image/external/board/**', 'image/external/swupdate/sw-description.in') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-buildroot-dl-release-${{ env.BUILDROOT_VERSION }}-${{ hashFiles('image/Dockerfile.buildroot', 'image/external/configs/**', 'image/external/board/**', 'image/external/swupdate/sw-description.in') }}-
+
+      # Force application packages to rebuild against the current
+      # agent/, core/, dashboard/ source trees regardless of cache hit.
+      # `<pkg>-dirclean` removes the per-package build dir + stamp so
+      # Buildroot re-extracts source and re-runs build commands. On a
+      # fully cold run the output dir doesn't exist and we skip.
+      - name: Force-rebuild application packages
+        run: |
+          set -euo pipefail
+          if [ ! -d image/output/prod ]; then
+            echo "No restored output; skipping dirclean."
+            exit 0
+          fi
+          docker run --rm \
+            -v "$PWD":/src \
+            -v "$PWD/image/output":/work/output \
+            -w /buildroot \
+            -e BR2_DL_DIR=/work/dl \
+            waypoint-buildroot:${{ env.BUILDROOT_VERSION }} \
+            bash -c "make BR2_EXTERNAL=/src/image/external O=/work/output/prod \
+              waypoint-agent-dirclean \
+              waypoint-core-dirclean \
+              waypoint-dashboard-dirclean \
+              waypoint-bootcheck-dirclean"
+
+      - name: Build prod image
+        run: |
+          set -euo pipefail
+          version="${REF_NAME#image-v}"
+          export WAYPOINT_VERSION="$version"
+          make -C image image-prod
+
+      - name: Sign artifacts (cosign keyless)
+        working-directory: image/output/prod/images
+        run: |
+          set -euo pipefail
+          version="${REF_NAME#image-v}"
+          for f in waypoint-prod-"$version".swu waypoint.img; do
+            cosign sign-blob \
+              --yes \
+              --bundle "$f.cosign" \
+              "$f"
+          done
+
+      - name: Compute checksums
+        working-directory: image/output/prod/images
+        run: |
+          set -euo pipefail
+          sha256sum waypoint.img waypoint-prod-*.swu > SHA256SUMS
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        with:
+          files: |
+            image/output/prod/images/waypoint.img
+            image/output/prod/images/waypoint.img.cosign
+            image/output/prod/images/waypoint-prod-*.swu
+            image/output/prod/images/waypoint-prod-*.swu.cosign
+            image/output/prod/images/SHA256SUMS

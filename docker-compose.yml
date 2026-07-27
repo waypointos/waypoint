@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: waypoint-postgres
+    environment:
+      POSTGRES_USER: waypoint
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: waypoint
+    ports:
+      - "5432:5432"
+    volumes:
+      - waypoint-pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U waypoint"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  waypoint-pg-data:

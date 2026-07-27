@@ -1,0 +1,33 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        bc bison build-essential ca-certificates ccache cpio file flex \
+        git gzip libncurses-dev libssl-dev libelf-dev libgmp-dev libmpfr-dev \
+        libmpc-dev locales make patch perl python3 python3-pip rsync \
+        squashfs-tools sudo unzip wget xz-utils \
+        openssl jq \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN locale-gen en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+
+# Pinned Buildroot version. Refresh annually after smoke-testing.
+ENV BUILDROOT_VERSION=2026.02
+RUN git clone --branch ${BUILDROOT_VERSION} --depth 1 \
+        https://github.com/buildroot/buildroot.git /buildroot
+
+# /work is HOME for whatever UID `docker run --user` maps to (we pass
+# the host UID from image/Makefile). World-writable so any non-root
+# UID can use it. Buildroot writes outside /buildroot via O=, so
+# /buildroot stays read-only for that user — which is fine.
+#
+# /work/output-internal is the mount point for the named Docker volume
+# that holds Buildroot's intermediate output. On first mount Docker
+# copies the directory's perms into the volume, so chmod 0777 here
+# means the volume starts world-writable — non-root containers can
+# write into it without further init steps.
+RUN mkdir -p /work /work/output-internal \
+ && chmod 0777 /work /work/output-internal
+WORKDIR /work

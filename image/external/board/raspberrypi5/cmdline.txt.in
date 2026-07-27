@@ -1,0 +1,1 @@
+console=tty1 root=PARTUUID={ROOTFS_PARTUUID} rootfstype=squashfs ro rootwait fsck.repair=yes loglevel=4 init=/sbin/init

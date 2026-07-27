@@ -1,0 +1,38 @@
+{
+  "joint_name_to_bus_id": {
+    "arm_1": 1, "arm_2": 2, "arm_3": 3, "arm_4": 4, "arm_5": 5, "arm_6": 6,
+    "wheel_back_left": 7, "wheel_back_right": 8,
+    "wheel_front_right": 9, "wheel_front_left": 10,
+    "drill_1": 11, "drill_2": 12
+  },
+  "platform_owned_bus_ids": [7, 8, 9, 10],
+  "wheel_speeds": [
+    {
+      "vx_mps": 1.0, "wz_radps": 0.0,
+      "expected": {
+        "wheel_front_left": -13.468013468013468,
+        "wheel_back_left": -13.468013468013468,
+        "wheel_front_right": 13.468013468013468,
+        "wheel_back_right": 13.468013468013468
+      }
+    },
+    {
+      "vx_mps": 0.0, "wz_radps": 1.0,
+      "expected": {
+        "wheel_front_left": 2.0202020202020203,
+        "wheel_back_left": 2.0202020202020203,
+        "wheel_front_right": 2.0202020202020203,
+        "wheel_back_right": 2.0202020202020203
+      }
+    },
+    {
+      "vx_mps": 0.5, "wz_radps": -0.8,
+      "expected": {
+        "wheel_front_left": -8.350168350168351,
+        "wheel_back_left": -8.350168350168351,
+        "wheel_front_right": 5.117845117845118,
+        "wheel_back_right": 5.117845117845118
+      }
+    }
+  ]
+}

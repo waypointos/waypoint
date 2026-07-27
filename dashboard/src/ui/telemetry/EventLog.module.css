@@ -1,0 +1,11 @@
+.log {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1.8;
+  letter-spacing: 0.02em;
+  color: var(--color-fg-3);
+}
+.t { color: var(--color-fg-4); }
+.default {}
+.warn { color: var(--color-caution); }
+.fault { color: var(--color-fault); }

@@ -1,0 +1,18 @@
+version: 2
+updates:
+  # Keep SHA-pinned GitHub Actions current. Dependabot bumps the pinned
+  # commit SHA (and the trailing "# vX" comment) when a new release ships.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    cooldown:
+      # github-actions supports only default-days. Hold a newly released
+      # version this many days before proposing it: a supply-chain buffer
+      # (a bad release can be caught first) that also cuts churn.
+      default-days: 14
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        patterns: ["*"]

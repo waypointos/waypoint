@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+import "google/protobuf/timestamp.proto";
+
+// infra.audit — durable audit log entries published by proxy + agent gateways
+// whenever a privileged action happens (command issued, access changed, session
+// opened/closed, image applied). Persisted to Postgres on the proxy and SQLite
+// on the rover. Survives restarts on both sides.
+message AuditEvent {
+  string id = 1;                              // UUID
+  google.protobuf.Timestamp at = 2;
+  string source = 3;                          // "proxy-ws", "agent-ws", "agent-rpc", "proxy-api"
+  string actor_user_id = 4;                   // empty if system-issued
+  string actor_email = 5;
+  string rover_id = 6;
+
+  oneof body {
+    CommandIssued    command       = 10;
+    AccessChanged    access        = 11;
+    SessionOpened    session_open  = 12;
+    SessionClosed    session_close = 13;
+    ImageApplied     image         = 14;
+    RoverDeleted     rover_deleted = 15;
+  }
+}
+
+message CommandIssued {
+  string subject = 1;                          // e.g. "waypoint.sim-01.cmd.drive"
+  int32  payload_bytes = 2;
+}
+
+message AccessChanged {
+  string target_user_id = 1;
+  string action = 2;                           // "grant" or "revoke"
+  string role = 3;                             // monitor/control/admin, empty on revoke
+}
+
+message SessionOpened {
+  string transport = 1;                        // "ws" or "magic-link"
+  string remote_ip = 2;
+}
+
+message SessionClosed {
+  string transport = 1;
+  int64  duration_ms = 2;
+}
+
+message ImageApplied {
+  string from_version = 1;
+  string to_version = 2;
+  string url = 3;
+}
+
+message RoverDeleted {
+  string rover_name = 1;                       // human-friendly name at deletion time
+  string account_pubkey = 2;                   // NATS account pubkey that was revoked
+}

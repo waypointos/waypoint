@@ -1,0 +1,59 @@
+/* Collapsed sidebar (icons only) + topbar, map fills the rest. */
+.shell { display: grid; grid-template-columns: 52px 1fr; grid-template-rows: auto 1fr; height: 100vh; background: var(--color-bg); }
+.body  { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+
+.title h1 { margin: 0; font-size: 14px; font-weight: 500; font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.title .sub { color: var(--color-fg-3); font-size: 11px; font-family: var(--font-mono); margin-top: 3px; letter-spacing: 0.02em; }
+
+/* Full-bleed map stage with floating overlays. */
+.stage { position: relative; flex: 1; min-height: 0; }
+.map { position: absolute; inset: 0; }
+
+/* Floating, blurred rover list over the map. */
+.floatCard {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 2;
+  width: 290px;
+  max-height: calc(100% - 28px);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-overlay);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--color-border);
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--color-fg-2);
+}
+.bracket { color: var(--color-fg-4); }
+.count { color: var(--color-fg-3); font-weight: 400; }
+
+.list { display: flex; flex-direction: column; gap: 2px; padding: 8px; overflow: auto; min-height: 0; }
+.empty { padding: 10px 4px; font-family: var(--font-mono); font-size: 11px; color: var(--color-fg-4); letter-spacing: 0.04em; }
+
+.row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px; background: transparent; border: 1px solid transparent; cursor: pointer;
+  text-align: left; transition: background var(--motion-fast), border-color var(--motion-fast);
+}
+.row:hover { background: var(--color-surface-2); }
+.rowActive { border-color: var(--color-accent); background: var(--color-accent-tint); }
+
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 8px; }
+.online { background: var(--color-ok); }
+.offline { background: var(--color-fg-4); }
+
+.rowMeta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.nick { font-family: var(--font-sans); font-size: 13px; color: var(--color-fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.loc { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; color: var(--color-fg-3); }

@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+import "google/protobuf/timestamp.proto";
+
+// Capture-time stamp. Producers set this at the moment of observation, not at
+// publish time. mono_ns and boot_id let a recorder align observations across
+// NTP steps (the Pi 5 has no RTC; the wall clock steps when NTP syncs).
+// Producers fill what their environment provides: a browser sets t only.
+message Stamp {
+  google.protobuf.Timestamp t = 1;  // wall clock (CLOCK_REALTIME)
+  uint64 mono_ns = 2;               // CLOCK_MONOTONIC ns since boot; 0 = unset
+  string boot_id = 3;               // /proc/sys/kernel/random/boot_id; "" = unset
+}
+
+// 3-axis vector. Used for accel, gyro, etc.
+message Vec3 {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+}
+
+// Operational mode. Owned by core; published on event.mode and set via rpc.set_mode.
+enum Mode {
+  MODE_UNSPECIFIED = 0;
+  MODE_MANUAL      = 1;
+  MODE_SAFE        = 2;
+  MODE_AUTONOMOUS  = 3;
+  MODE_ESTOP       = 4;
+}
+
+// Severity for alerts and events.
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  SEVERITY_INFO        = 1;
+  SEVERITY_WARN        = 2;
+  SEVERITY_FAULT       = 3;
+}

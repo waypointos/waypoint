@@ -1,0 +1,48 @@
+.card {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  background: rgba(255, 255, 255, 0.025);
+  border-left: 2px solid transparent;
+}
+.card.hot { background: var(--color-caution-tint); border-left-color: var(--color-caution); }
+
+.id {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--color-fg-3);
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+}
+.vals { display: flex; flex-direction: column; }
+.a {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-fg);
+}
+.a .u {
+  font-size: 9px;
+  color: var(--color-fg-3);
+  margin-left: 2px;
+}
+.t {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--color-fg-3);
+}
+.hot .t { color: var(--color-caution); }
+
+.vel {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--color-fg-3);
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.velLbl  { color: var(--color-fg-4); text-transform: uppercase; letter-spacing: 0.06em; }
+.velVal  { color: var(--color-fg-2); font-variant-numeric: tabular-nums; }
+.velUnit { color: var(--color-fg-4); margin-left: 2px; }

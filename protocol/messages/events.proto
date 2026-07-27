@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+import "google/protobuf/timestamp.proto";
+import "messages/common.proto";
+
+// event.fault — any → bus
+message FaultEvent {
+  google.protobuf.Timestamp t = 1;
+  string source = 2;             // "core", "agent", "module:<name>"
+  Severity severity = 3;
+  string code = 4;               // machine-readable, e.g. "heartbeat_lost"
+  string message = 5;             // human-readable
+}
+
+// event.mode — core → bus
+message ModeEvent {
+  google.protobuf.Timestamp t = 1;
+  Mode from = 2;
+  Mode to = 3;
+  string reason = 4;
+}
+
+// event.system — agent → bus
+message SystemEvent {
+  google.protobuf.Timestamp t = 1;
+  string source = 2;
+  string code = 3;
+  string message = 4;
+}

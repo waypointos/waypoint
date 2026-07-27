@@ -1,0 +1,5 @@
+config BR2_PACKAGE_WAYPOINT_CORE
+    bool "waypoint-core"
+    select BR2_PACKAGE_PROTOBUF
+    help
+      The Waypoint C++ safety-critical core daemon.

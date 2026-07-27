@@ -1,0 +1,9 @@
+config BR2_PACKAGE_WAYPOINT_FIRSTBOOT
+    bool "waypoint-firstboot"
+    default y
+    help
+      First-boot oneshot that copies identity.toml from the FAT32 boot
+      partition root into the writable data partition at
+      /data/waypoint/identity.toml. Ordered before waypoint-agent.service
+      so commissioning works on a fresh flash with no SSH or console
+      access required.

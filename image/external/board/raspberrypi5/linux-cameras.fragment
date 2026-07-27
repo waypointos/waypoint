@@ -1,0 +1,22 @@
+# Kernel options for USB UVC webcams. bcm2712_defconfig leaves the v4l2
+# subsystem off because Raspberry Pi OS ships UVC via DKMS modules and
+# expects userspace (raspberrypi-userland / camera-libcamera) to drive
+# CSI ribbon cameras through the Broadcom-specific Unicam path. Waypoint
+# uses plain USB UVC webcams on Pi 5's USB-3 ports and needs the
+# standard Linux media stack baked into the kernel.
+#
+# Built-in (=y) rather than module (=m) because:
+#   1. The rootfs is read-only squashfs; loading modules from /lib/modules
+#      at runtime adds a depmod step we'd otherwise skip.
+#   2. We always want UVC available — there's no scenario in which a
+#      Waypoint image runs without camera-class support.
+#
+# Total kernel size impact: ~150 KB on a 23 MB kernel. Negligible.
+
+CONFIG_MEDIA_SUPPORT=y
+CONFIG_MEDIA_USB_SUPPORT=y
+CONFIG_USB_VIDEO_CLASS=y
+# Allow the userspace v4l2 API; without this the uvcvideo driver builds
+# but /dev/videoN nodes don't materialize.
+CONFIG_VIDEO_DEV=y
+CONFIG_MEDIA_CAMERA_SUPPORT=y

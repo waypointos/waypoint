@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+import "messages/common.proto";
+
+// cmd.servo — generic per-servo control. Core-bound and arm-agnostic. Modules
+// never publish here directly; the agent's servo-control broker republishes a
+// module's sandboxed module.<id>.servo.cmd onto this subject (see platform
+// plan 2). Core refuses ops targeting the drive wheels (ids 7..10).
+message ServoControl {
+  uint32 servo_id = 1;  // 1..12
+
+  oneof op {
+    uint32      set_mode             = 2;  // 0 = position, 1 = wheel
+    bool        set_torque_enable    = 3;  // true enables; position mode latches goal=present first
+    uint32      set_goal_position    = 4;  // raw ticks 0..4095
+    uint32      set_torque_limit     = 5;  // raw servo torque-limit units
+    AngleLimits set_angle_limits     = 6;  // EEPROM min/max travel
+    uint32      set_overcurrent_limit = 7; // raw current units; 0 disables the trip
+    uint32      set_goal_speed       = 8;  // position-mode moving-speed cap, raw steps/s; 0 = max speed
+    ServoTuning set_tuning           = 9;  // one-time control-loop tuning (PID, accel, comms delay)
+    sint32 set_goal_velocity = 10;  // wheel-mode signed velocity, raw ticks/s; core clamps to +/-32767
+  }
+}
+
+message AngleLimits {
+  uint32 min_raw = 1;  // 0..4095
+  uint32 max_raw = 2;  // 0..4095
+}
+
+// One-time control-loop tuning, written together so the EEPROM-backed fields
+// take a single unlock/relock cycle. Each field is optional: only those set are
+// written. Applied once at startup (torque off), not per control tick. Lowering
+// the position-loop P gain and raising acceleration is what makes streamed goal
+// positions glide instead of dart-and-stall — see the SO-arm teleop tuning.
+message ServoTuning {
+  optional uint32 p_coefficient    = 1;  // position-loop P (reg 0x15); lower = less shake (default 32)
+  optional uint32 i_coefficient    = 2;  // position-loop I (reg 0x17)
+  optional uint32 d_coefficient    = 3;  // position-loop D (reg 0x16)
+  optional uint32 acceleration     = 4;  // reg 0x29 (SRAM, 1 byte), goal accel/decel ramp
+  optional uint32 max_acceleration = 5;  // reg 0x55 (SRAM, 2 bytes), accel ceiling
+  optional uint32 return_delay     = 6;  // reg 0x07 (EEPROM, 1 byte), bus response delay; 0 = min
+}
+
+// rpc.servo_read — request/reply. Core reads one servo and returns raw state.
+message ServoReadRequest {
+  uint32 servo_id = 1;  // 1..12
+}
+
+message ServoState {
+  uint32 servo_id = 1;
+
+  // N/A is first-class: fields are absent when the servo did not respond.
+  optional uint32 position_raw   = 2;  // 0..4095
+  optional sint32 speed_raw      = 3;
+  optional sint32 load_raw       = 4;
+  optional uint32 current_raw    = 5;
+  optional uint32 voltage_deci   = 6;  // x0.1 V
+  optional uint32 temperature_c  = 7;
+
+  bool moving               = 8;
+  bool overcurrent_tripped  = 9;  // core cut this servo's torque on this read
+  bool ok                   = 10; // false when the servo did not respond
+
+  Stamp stamp = 11;  // capture-time dual stamp, filled by core
+}
+
+// One servo's goal position, for coordinated multi-servo writes.
+message ServoGoal {
+  uint32 servo_id      = 1;  // 1..12
+  uint32 goal_position = 2;  // raw ticks 0..4095
+}
+
+// Coordinated SYNC WRITE of goal positions: core emits a single broadcast
+// packet so every joint latches its new goal from the same frame.
+message ServoSyncWrite {
+  repeated ServoGoal goals = 1;
+}

@@ -1,0 +1,5 @@
+NAME="Waypoint"
+PRETTY_NAME="Waypoint OS"
+ID=waypoint
+VERSION_ID="0.5.0"
+HOME_URL="https://github.com/waypointos/waypoint"

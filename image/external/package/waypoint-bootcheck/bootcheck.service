@@ -1,0 +1,12 @@
+[Unit]
+Description=Clear bootcount once agent reports healthy
+After=waypoint-agent.service waypoint-core.service
+Wants=waypoint-agent.service waypoint-core.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/waypoint-bootcheck
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

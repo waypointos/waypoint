@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+import "google/protobuf/timestamp.proto";
+import "messages/common.proto";
+
+// alert.raised — stateful, persisted; lifecycle: raised → acknowledged → resolved
+// Severity uses the shared enum from common.proto; SEVERITY_FAULT is the
+// conceptual "CRITICAL" tier referenced in Phase 6 alert handling.
+message AlertRaised {
+  google.protobuf.Timestamp t = 1;
+  string id = 2;                  // ULID, stable across the alert's lifecycle
+  string source = 3;              // "core", "agent", "module:<name>"
+  Severity severity = 4;
+  string code = 5;
+  string message = 6;
+  map<string, string> metadata = 7;  // free-form context: motor id, temperature, etc.
+}
+
+message AlertAcknowledged {
+  google.protobuf.Timestamp t = 1;
+  string id = 2;                  // matches AlertRaised.id
+  string user_id = 3;             // who acknowledged
+}
+
+message AlertResolved {
+  google.protobuf.Timestamp t = 1;
+  string id = 2;                  // matches AlertRaised.id
+  string reason = 3;              // "auto" | "user:<user-id>" (kept for backward compat)
+  bool auto_resolved = 4;         // true when auto-resolved (e.g. on reconnect or successful apply)
+}

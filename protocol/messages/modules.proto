@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+// Snapshot of which optional modules are present on a rover and their
+// health. Published by agent on waypoint.<rover-id>.infra.modules at 1 Hz
+// and on state change.
+message ModuleSnapshot {
+  google.protobuf.Timestamp t = 1;
+  repeated ModuleInfo modules = 2;
+}
+
+message ModuleInfo {
+  string  id        = 1;
+  string  label     = 2;
+  string  version   = 3;
+  string  tab_id    = 4;   // legacy: pre-ModuleUI field; agent fills both for compat
+  bool    healthy   = 5;
+  google.protobuf.Timestamp last_seen = 6;
+  ModuleUI ui       = 7;   // unset when module declares no UI
+  ModuleOrigin origin = 8; // who asked for this module
+  ModuleComponent component = 9;  // unset when module declares no [component]
+}
+
+// Component class a module serves (manifest [component]); lets consumers
+// discover arms/sensors without reading manifests.
+message ModuleComponent {
+  string class = 1;          // component class, open registry; arm | sensor | base are typed
+  double state_rate_hz = 2;
+}
+
+enum ModuleOrigin {
+  MODULE_ORIGIN_UNSPECIFIED = 0;
+  MODULE_ORIGIN_PROXY       = 1;
+  MODULE_ORIGIN_LOCAL       = 2;
+}
+
+message ModuleUI {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_STATIC      = 1;   // ESM bundle served from /module/<id>/static/
+    KIND_PROXY       = 2;   // reverse-proxied from /module/<id>/* to localhost
+  }
+  Kind   kind     = 1;
+  string tab_id   = 2;
+  bool   lan_only = 3;
+  TeleopWindow teleop = 4;       // unset when module has no teleop window
+}
+
+// A draggable overlay a module contributes to the teleop console, separate
+// from its full-page tab. Unset when the module declares no [ui.teleop].
+message TeleopWindow {
+  string window_id = 1;          // "w-..."
+  string label     = 2;          // shown in the toggle bar
+  string entry     = 3;          // ESM filename served from /module/<id>/static/<entry>
+  repeated string bindings = 4;  // advisory gamepad bindings (HUD legend only)
+}
+
+// Desired-state push from proxy to agent on waypoint.<rover-id>.modules.desired.
+// Retained delivery (JetStream KV or last-value cache); agent caches bytes to
+// /data/waypoint/modules.desired.pb so an offline boot still has the last set.
+message DesiredModuleSet {
+  google.protobuf.Timestamp t = 1;
+  repeated ModuleDesired modules = 2;
+}
+
+message ModuleDesired {
+  string id          = 1;
+  string version     = 2;
+  string raw_url     = 3;   // proxy-served HTTPS URL to fetch the .raw
+  string raw_sha256  = 4;
+  string config_toml = 5;   // per-rover [modules_config.<id>] payload, raw TOML
+}
+
+// Agent-emitted reconciliation events on waypoint.<rover-id>.modules.reconcile.
+// One event per state transition. Surfaces in the Events feed.
+message ModuleReconcileEvent {
+  enum Action {
+    ACTION_UNSPECIFIED = 0;
+    ACTION_ATTACH      = 1;
+    ACTION_DETACH      = 2;
+    ACTION_UPDATE      = 3;
+    ACTION_FAILED      = 4;
+  }
+  google.protobuf.Timestamp t = 1;
+  string id      = 2;
+  string version = 3;
+  Action action  = 4;
+  string reason  = 5;   // failure detail; empty on success
+}

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package foxglove;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go/foxglove;foxglovepb";
+
+import "google/protobuf/timestamp.proto";
+
+// Vendored from foxglove/schemas (MIT). The schema name foxglove.CompressedVideo
+// is load-bearing: Foxglove Studio resolves the decoder by this exact name.
+message CompressedVideo {
+  google.protobuf.Timestamp timestamp = 1;
+  string frame_id = 2;
+  bytes data = 3;    // one H.264 Annex-B access unit, keyframe-led stream
+  string format = 4; // always "h264"
+}

@@ -1,0 +1,24 @@
+[Unit]
+Description=Waypoint store partition grow-to-fill (one-shot)
+# Must run before the daemons that write to the store partition so the
+# space is available on first use.
+Before=waypoint-agent.service waypoint-core.service
+# Prefer the store mounted (resize2fs then grows it online) and /data for
+# the sentinel. data-waypoint-store.mount is the systemd-escaped name for
+# the /data/waypoint/store fstab mount (systemd-escape -p --suffix=mount).
+# Wants (not Requires): if the store device is absent the mount fails, but
+# the script detects the missing device and exits cleanly, so we must not
+# hard-fail the unit on a missing/late store.
+After=data-waypoint-store.mount local-fs.target
+Wants=data-waypoint-store.mount
+# True one-shot: once grown it never runs again. Wiping /data re-arms it,
+# matching the waypoint-firstboot pattern.
+ConditionPathExists=!/data/waypoint/.store-resized
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/waypoint-resize-store
+
+[Install]
+WantedBy=multi-user.target

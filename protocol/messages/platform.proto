@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+import "messages/common.proto";
+
+// infra.platform: proto projection of the platform descriptor core booted
+// with. Published at startup and re-announced every 5 s (NATS core has no
+// retention). The TOML is the model; this is its wire projection.
+
+message PlatformJoint {
+  string name = 1;
+  uint32 bus_id = 2;
+  string type = 3;       // wheel | revolute | gripper
+  string ownership = 4;  // platform | module
+  bool invert = 5;
+  repeated string command_interfaces = 6;
+}
+
+message PlatformKinematics {
+  string model = 1;
+  double wheel_radius_m = 2;
+  double track_width_m = 3;
+  map<string, string> wheels = 4;  // position -> joint name
+}
+
+message PlatformInfo {
+  string platform_id = 1;
+  string name = 2;
+  string vehicle_class = 3;
+  uint32 schema = 4;
+  repeated PlatformJoint joints = 5;
+  // Absent on platforms without a drive (fixed_base): optionality over
+  // sentinel zeros.
+  PlatformKinematics kinematics = 6;
+  Stamp stamp = 7;
+}

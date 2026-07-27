@@ -1,0 +1,114 @@
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 14px;
+  padding: 14px;
+  min-height: 0;
+  align-items: start;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+/* Copied verbatim from RoverView.module.css */
+
+.ctrl {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 14px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.ctrl h3 { margin: 0 0 10px; font-size: 13px; font-weight: 600; align-self: flex-start; }
+
+.readouts {
+  margin-top: 12px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  width: 200px;
+  border: 1px solid var(--color-border);
+}
+.readouts div { padding: 8px 10px; }
+.readouts div + div { border-left: 1px solid var(--color-border); }
+.l { color: var(--color-fg-3); font-size: 11px; font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 2px; }
+.v { font-family: var(--font-mono); font-size: 14px; color: var(--color-accent); font-weight: 500; }
+
+.modeNote {
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-fg-3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.motorsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+
+.readOnly {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) 0;
+  width: 200px;
+  text-align: center;
+}
+.readOnlyHint {
+  font-size: 11px;
+  color: var(--color-fg-3);
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+/* "N/A" slab shown when the rover advertises no cameras. */
+.camPlaceholder {
+  height: 280px;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-fg-3);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.teleopLink {
+  display: block;
+  text-align: center;
+  padding: 10px;
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.teleopLink:hover { background: var(--color-accent-tint); }
+
+.srcSwitch { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; width: 200px; border: 1px solid var(--color-border); }
+.srcSwitch button {
+  padding: 6px 0; background: transparent; border: 0; cursor: pointer;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--color-fg-3);
+}
+.srcSwitch button + button { border-left: 1px solid var(--color-border); }
+.srcSwitch button.srcOn { background: var(--color-surface-2); color: var(--color-fg); box-shadow: inset 0 -2px 0 var(--color-accent); }
+.srcSwitch button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.modeBlock { margin-top: 12px; width: 200px; display: flex; flex-direction: column; gap: 8px; }

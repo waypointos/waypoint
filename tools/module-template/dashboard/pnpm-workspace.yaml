@@ -1,0 +1,6 @@
+# Supply-chain cooldown: refuse to resolve any package version published less
+# than this many minutes ago, so `pnpm update` / `pnpm add` can't pull a
+# freshly-compromised release. Frozen-lockfile installs are unaffected.
+# Requires pnpm >= 10.16. 1440 = 1 day; raise (e.g. 4320 = 3 days) for more.
+# (pnpm 10 already blocks dependency build/postinstall scripts by default.)
+minimumReleaseAge: 4320

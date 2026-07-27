@@ -1,0 +1,10 @@
+/* Minimal design tokens for the template panel. Real modules should mirror the
+   dashboard's own tokens (dashboard/src/ui/tokens.css) rather than invent new
+   colors. Never hardcode hex values in components: reference these vars. */
+:root {
+  --wp-bg: #0d0d0d;
+  --wp-fg: #e8e8e8;
+  --wp-muted: #6b6b6b;
+  --wp-line: #262626;
+  --wp-accent: #4ade80;
+}

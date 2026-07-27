@@ -1,0 +1,55 @@
+#!/usr/bin/env expect -f
+
+set timeout 240
+
+spawn image/scripts/qemu-run.sh --headless --dev
+
+# Pre-OTA: confirm partition A, version 0.5.0
+expect "waypoint login:"; send "root\r"
+expect "# "; send "grep partition /etc/waypoint/image.toml\r"
+expect -re "partition\\s*=\\s*\"A\""
+expect "# "; send "grep version /etc/waypoint/image.toml\r"
+expect -re "version\\s*=\\s*\"0\\.5\\.0\""
+
+# Apply v0.5.1 from host. Guest reaches host at 10.0.2.2.
+# Fetch then apply locally — this matches the production agent flow
+# (agent fetches with cosign verification, writes to disk, invokes
+# swupdate -i). swupdate's own `-d -u URL` streaming-download mode has a
+# separate cpio-parsing issue under our python http.server setup; the
+# wget+local approach sidesteps it and is what the real rover does.
+#
+# Booted from partition A, so apply copy-2 (writes rootfs-B + runs
+# switch-to-b.sh). The agent's production apply handler should infer
+# copy-1 vs copy-2 from the current /etc/waypoint/image.toml partition
+# field; smoke hardcodes copy-2.
+send "wget -O /tmp/update.swu http://10.0.2.2:8000/waypoint-dev-0.5.1.swu\r"
+expect "# "
+send "swupdate -e dev,copy-2 -i /tmp/update.swu\r"
+expect {
+    -re "SWUPDATE successful|Update successful" { send_user "\n\[+\] swupdate accepted\n" }
+    timeout                                      { send_user "\n\[-\] swupdate timeout\n"; exit 1 }
+}
+
+# Verify switch-to-b.sh actually flipped cmdline.txt on the boot partition
+# and armed the bootcount file. We do NOT verify that the kernel re-boots
+# from partition B, because QEMU's `-kernel ... -append ...` bypasses the
+# boot partition entirely — only the Pi 5 firmware reads cmdline.txt at
+# boot. End-to-end A/B switch validation is a Pi hardware concern.
+expect "# "; send "mkdir -p /tmp/b && mount /dev/disk/by-partuuid/cccccccc-cccc-cccc-cccc-cccccccccccc /tmp/b && cat /tmp/b/cmdline.txt; umount /tmp/b\r"
+expect {
+    "PARTUUID=BBBB" { send_user "\n\[+\] cmdline.txt flipped to PARTUUID=B\n" }
+    "PARTUUID=AAAA" { send_user "\n\[-\] cmdline.txt still on PARTUUID=A\n"; exit 1 }
+    timeout         { send_user "\n\[-\] cmdline.txt read timeout\n"; exit 1 }
+}
+
+expect "# "; send "cat /data/waypoint/bootcount 2>/dev/null || echo MISSING\r"
+expect {
+    "3"       { send_user "\n\[+\] bootcount armed to 3\n" }
+    "MISSING" { send_user "\n\[-\] bootcount missing\n"; exit 1 }
+    timeout   { send_user "\n\[-\] bootcount read timeout\n"; exit 1 }
+}
+
+send_user "\n\[+\] OTA apply smoke PASS (bootloader→cmdline link untested under QEMU)\n"
+
+send "poweroff\r"
+expect eof

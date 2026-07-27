@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+import "google/protobuf/timestamp.proto";
+import "messages/common.proto";
+
+// telemetry.system — 1 Hz
+message SystemTelemetry {
+  google.protobuf.Timestamp t = 1;
+
+  optional double cpu_percent       = 2;
+  optional double temperature_c     = 3;
+  optional double link_rtt_ms       = 4;
+  optional string image_version     = 5;       // e.g. "v0.4.1"
+  optional string image_partition   = 6;       // "A" or "B"
+
+  // Host RAM use; both reported in bytes. used / total gives a usage fraction.
+  // Both absent → memory probe unavailable on this platform.
+  optional uint64 memory_used_bytes  = 7;
+  optional uint64 memory_total_bytes = 8;
+
+  // Wall-clock uptime of the host (not the agent process), seconds.
+  optional uint64 uptime_seconds     = 9;
+
+  Stamp stamp = 10;  // capture-time dual stamp
+}

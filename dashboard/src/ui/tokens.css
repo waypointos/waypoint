@@ -1,0 +1,71 @@
+/* dashboard/src/ui/tokens.css
+ *
+ * Single source of truth for visual tokens. Never use hex inline.
+ */
+:root {
+  /* Surfaces */
+  --color-bg:          #0A0A0B;
+  --color-chrome:      #0F0F11;
+  --color-surface:     #131316;
+  --color-surface-2:   #1B1B1F;
+  --color-raise:       #232328;
+  --color-border:      #26262C;
+  --color-border-soft: #18181C;
+  /* Slightly elevated surface used inside cards (e.g. rover visualisation slab). */
+  --color-bg-elev-1:   #15151A;
+  /* Semi-opaque pill backdrop used over imagery (status pin, version chip). */
+  --color-bg-overlay:  rgba(0, 0, 0, 0.7);
+  /* Frosted glass backdrop for HUD panels floated over a live camera feed
+   * (teleop console). Chrome charcoal at reduced alpha, paired with blur. */
+  --hud-bg:            rgba(15, 15, 17, 0.66);
+
+  /* Text */
+  --color-fg:        rgba(255, 255, 255, 0.96);
+  --color-fg-2:      #C2C2C8;
+  --color-fg-3:      #828289;
+  --color-fg-4:      #565660;
+
+  /* Brand & status */
+  --color-accent:        #0A84FF;
+  --color-accent-hover:  #0070E0;
+  --color-accent-tint:   rgba(10, 132, 255, 0.14);
+  --color-caution:       #FFCC00;
+  --color-caution-tint:  rgba(255, 204, 0, 0.10);
+  --color-ok:            #30D158;
+  --color-fault:         #FF453A;
+
+  /* Type */
+  --font-sans:    -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  --font-display: -apple-system, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+
+  /* Spacing — 4 px base */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  12px;
+  --space-lg:  16px;
+  --space-xl:  24px;
+  --space-xxl: 40px;
+
+  /* Motion */
+  --motion-fast: 80ms ease-out;
+  --motion:      120ms ease-out;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+a { color: var(--color-accent); text-decoration: none; }
+
+/* Disable default rounding everywhere; use 2 px max where needed via opt-in classes. */
+button, input, select, textarea { border-radius: 0; font-family: inherit; }

@@ -1,0 +1,112 @@
+/* dashboard/src/views/AdminView.module.css */
+
+.shell { display: grid; grid-template-columns: 200px 1fr; grid-template-rows: auto 1fr; min-height: 100vh; }
+.body  { display: flex; flex-direction: column; min-width: 0; }
+.content { padding: 18px 22px; flex: 1; display: flex; flex-direction: column; }
+
+.title h1 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.title .sub {
+  color: var(--color-fg-3);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  margin-top: 3px;
+  letter-spacing: 0.02em;
+}
+
+.enrollRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--color-fg-3);
+}
+
+.empty {
+  font-size: 12px;
+  color: var(--color-fg-3);
+  font-family: var(--font-mono);
+  padding: var(--space-md) 0;
+}
+
+.roverList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.roverRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xl);
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border-soft);
+  background: var(--color-bg-elev-1);
+}
+
+.deleteBtn {
+  margin-left: auto;
+  align-self: center;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-fg-3);
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color var(--motion-fast), border-color var(--motion-fast), background var(--motion-fast);
+}
+.deleteBtn:hover {
+  color: var(--color-fault);
+  border-color: var(--color-fault);
+  background: rgba(255, 69, 58, 0.08);
+}
+.deleteBtn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.roverId {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-fg);
+  letter-spacing: 0.04em;
+}
+
+.roverName {
+  font-size: 12px;
+  color: var(--color-fg-3);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fieldLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-fg-4);
+}
+
+.fieldValue {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-fg-2);
+}

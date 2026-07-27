@@ -1,0 +1,12 @@
+packages:
+  - 'dashboard'
+  - 'dashboard/packages/*'
+
+# Supply-chain cooldown: refuse to resolve any package version published less
+# than this many minutes ago. Compromised releases (worm-style npm attacks) are
+# usually caught and unpublished within a day or two, so this avoids pulling a
+# fresh malicious version during `pnpm update` / `pnpm add`. Frozen-lockfile
+# installs are unaffected (they install the already-locked, older versions).
+# 1440 = 1 day. Raise (e.g. 4320 = 3 days) for more caution.
+minimumReleaseAge: 4320
+# (pnpm 10 already blocks dependency build/postinstall scripts by default.)

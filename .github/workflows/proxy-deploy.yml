@@ -1,0 +1,24 @@
+name: proxy-deploy
+on:
+  push:
+    tags: ["proxy-v*"]
+  workflow_dispatch: {}
+
+# Least privilege: checkout of this private repo needs contents:read;
+# everything else runs on RAILWAY_TOKEN.
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli@5.27.2
+      - name: Deploy
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        # No --detach: we want CI to fail if Railway's build fails, not
+        # report success just because the source upload finished.
+        run: railway up --service waypoint-proxy --ci

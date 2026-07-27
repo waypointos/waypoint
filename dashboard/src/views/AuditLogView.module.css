@@ -1,0 +1,162 @@
+/* dashboard/src/views/AuditLogView.module.css
+ *
+ * Mission-console audit log: filters strip + event table inside Panels.
+ * Layout mirrors AdminView.module.css; columns use mono so timestamps and
+ * rover IDs line up.
+ */
+
+.shell { display: grid; grid-template-columns: 200px 1fr; grid-template-rows: auto 1fr; min-height: 100vh; }
+.body  { display: flex; flex-direction: column; min-width: 0; }
+.content { padding: 18px 22px; flex: 1; display: flex; flex-direction: column; }
+
+.title h1 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.title .sub {
+  color: var(--color-fg-3);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  margin-top: 3px;
+  letter-spacing: 0.02em;
+}
+
+/* Filters strip */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  align-items: flex-end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.fieldLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-fg-4);
+}
+
+.input {
+  height: 28px;
+  background: var(--color-bg-elev-1);
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  padding: 0 var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  min-width: 180px;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.rangeRow {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.rangeBtn {
+  height: 28px;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-fg-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color var(--motion), color var(--motion);
+}
+.rangeBtn:hover { color: var(--color-fg); border-color: var(--color-fg-3); }
+.rangeBtnActive {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  background: var(--color-accent-tint);
+}
+
+/* Event table */
+.table {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: grid;
+  grid-template-columns:
+    80px              /* time */
+    minmax(110px, 1fr) /* rover */
+    minmax(110px, 1fr) /* source */
+    minmax(180px, 1.5fr) /* actor */
+    100px             /* kind */
+    minmax(220px, 3fr); /* payload */
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border-soft);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--color-fg-2);
+}
+.row:last-child { border-bottom: none; }
+
+.head {
+  border-bottom: 1px solid var(--color-border);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-fg-4);
+}
+
+.time { color: var(--color-fg-3); }
+.rover { color: var(--color-fg); }
+.source { color: var(--color-fg-2); }
+.actor {
+  color: var(--color-fg-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.payload {
+  color: var(--color-fg-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--color-fg-4);
+  font-style: normal;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.naLabel {
+  color: var(--color-fg-4);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border);
+  padding: 2px var(--space-sm);
+}
+.naHint { color: var(--color-fg-3); }

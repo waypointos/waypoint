@@ -1,0 +1,124 @@
+# Waypoint dev defconfig (Pi 5, 4 GB).
+#
+# Identical to waypoint_prod_defconfig with the dev-only deltas at the
+# bottom (SSH, debug tools, dev overlay marker). WAYPOINT_VARIANT=dev is
+# set by the image-dev Makefile target so post-build.sh records the
+# correct variant in /etc/waypoint/image.toml. The waypoint-agent systemd
+# unit prefers /data/waypoint/dev/waypoint-agent over the baked-in binary
+# when the dev overlay is present.
+
+# Architecture
+BR2_aarch64=y
+BR2_cortex_a76=y
+
+# Toolchain — glibc (matches prod; see waypoint_prod_defconfig for the
+# kernel-headers reasoning).
+BR2_KERNEL_HEADERS_6_6=y
+BR2_TOOLCHAIN_BUILDROOT_GLIBC=y
+BR2_TOOLCHAIN_BUILDROOT_CXX=y
+
+# Kernel (matches prod — same Pi Foundation fork + 4K page fragment)
+BR2_LINUX_KERNEL=y
+BR2_LINUX_KERNEL_CUSTOM_TARBALL=y
+BR2_LINUX_KERNEL_CUSTOM_TARBALL_LOCATION="$(call github,raspberrypi,linux,21b410140c47ffab5668399f6f143c7d7b935c8b)/linux-21b410140c47ffab5668399f6f143c7d7b935c8b.tar.gz"
+BR2_LINUX_KERNEL_DEFCONFIG="bcm2712"
+BR2_LINUX_KERNEL_CONFIG_FRAGMENT_FILES="board/raspberrypi/linux-4k-page-size.fragment $(BR2_EXTERNAL_WAYPOINT_PATH)/board/raspberrypi5/linux-virtio.fragment $(BR2_EXTERNAL_WAYPOINT_PATH)/board/raspberrypi5/linux-cameras.fragment $(BR2_EXTERNAL_WAYPOINT_PATH)/board/raspberrypi5/linux-servobus.fragment"
+BR2_LINUX_KERNEL_DTS_SUPPORT=y
+BR2_LINUX_KERNEL_INTREE_DTS_NAME="broadcom/bcm2712-rpi-5-b broadcom/bcm2712d0-rpi-5-b broadcom/bcm2712-rpi-500"
+BR2_LINUX_KERNEL_NEEDS_HOST_OPENSSL=y
+
+# System
+BR2_INIT_SYSTEMD=y
+BR2_PACKAGE_SYSTEMD_PORTABLED=y
+BR2_TARGET_GENERIC_HOSTNAME="waypoint"
+BR2_TARGET_GENERIC_ISSUE="Waypoint OS"
+BR2_SYSTEM_BIN_SH_BASH=y
+BR2_PACKAGE_BUSYBOX_INDIVIDUAL_BINARIES=y
+
+# Filesystem
+BR2_TARGET_ROOTFS_SQUASHFS=y
+BR2_TARGET_ROOTFS_SQUASHFS_XZ=y
+
+# Pi 5 firmware (matches prod — see waypoint_prod_defconfig for the
+# Pi 5 boot-flow reasoning).
+BR2_PACKAGE_RPI_FIRMWARE=y
+BR2_PACKAGE_RPI_FIRMWARE_CONFIG_FILE="$(BR2_EXTERNAL_WAYPOINT_PATH)/board/raspberrypi5/config.txt"
+BR2_PACKAGE_RPI_FIRMWARE_CMDLINE_FILE="$(BR2_EXTERNAL_WAYPOINT_PATH)/board/raspberrypi5/cmdline.txt.in"
+# DT overlays needed for `dtparam=uart0=on` to take effect on Pi 5
+# (see waypoint_prod_defconfig for the full reasoning).
+BR2_PACKAGE_RPI_FIRMWARE_INSTALL_DTB_OVERLAYS=y
+
+# Host-side image-assembly tools (matches prod).
+BR2_PACKAGE_HOST_GENIMAGE=y
+BR2_PACKAGE_HOST_DOSFSTOOLS=y
+BR2_PACKAGE_HOST_MTOOLS=y
+BR2_PACKAGE_HOST_E2FSPROGS=y
+
+# Waypoint (matches prod — see waypoint_prod_defconfig for how the
+# dashboard reaches the rootfs via the agent's //go:embed).
+BR2_PACKAGE_WAYPOINT_AGENT=y
+BR2_PACKAGE_WAYPOINT_CORE=y
+BR2_PACKAGE_WAYPOINT_BOOTCHECK=y
+BR2_PACKAGE_WAYPOINT_FIRSTBOOT=y
+BR2_PACKAGE_WAYPOINT_RESIZE=y
+# Target-side filesystem-grow tools used by waypoint-resize at first boot
+# to expand the trailing "store" partition to fill the card: sgdisk
+# (gptfdisk) rewrites the GPT to fill free space, partx pokes the kernel
+# to pick up the new size while mounted, resize2fs grows the ext4 online.
+# (Buildroot 2026.02 has no growpart package, so the script drives sgdisk.)
+BR2_PACKAGE_E2FSPROGS=y
+BR2_PACKAGE_E2FSPROGS_RESIZE2FS=y
+BR2_PACKAGE_GPTFDISK=y
+BR2_PACKAGE_GPTFDISK_SGDISK=y
+BR2_PACKAGE_UTIL_LINUX=y
+BR2_PACKAGE_UTIL_LINUX_PARTX=y
+# Network (CONNMAN as in prod, plus SSH for dev)
+BR2_PACKAGE_CONNMAN=y
+BR2_PACKAGE_DROPBEAR=y
+BR2_PACKAGE_DROPBEAR_CLIENT=y
+# Required for the agent's Sigstore TUF fetch over HTTPS.
+BR2_PACKAGE_CA_CERTIFICATES=y
+
+# swupdate (see waypoint_prod_defconfig for the rationale on each flag).
+BR2_PACKAGE_SWUPDATE=y
+BR2_PACKAGE_SWUPDATE_CONFIG="$(BR2_EXTERNAL_WAYPOINT_PATH)/package/waypoint-overrides/swupdate.config"
+BR2_PACKAGE_LIBCURL=y
+BR2_PACKAGE_OPENSSL=y
+BR2_PACKAGE_LIBCURL_OPENSSL=y
+BR2_PACKAGE_LIBCURL_CURL=y
+BR2_PACKAGE_LIBCONFIG=y
+
+# Dev tooling.
+BR2_PACKAGE_STRACE=y
+BR2_PACKAGE_LSOF=y
+BR2_PACKAGE_HTOP=y
+BR2_PACKAGE_LESS=y
+BR2_PACKAGE_VIM=y
+
+# Post-build / post-image (variant=dev is set via WAYPOINT_VARIANT env).
+# Two overlays layered in order: shared prod tree, then dev-only files
+# (currently just /root/.ssh/authorized_keys for dropbear). Later entries
+# win on conflict — keep dev-only paths in rootfs-overlay-dev/ so prod
+# stays minimal and SSH-less.
+BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_WAYPOINT_PATH)/board/raspberrypi5/rootfs-overlay $(BR2_EXTERNAL_WAYPOINT_PATH)/board/raspberrypi5/rootfs-overlay-dev"
+BR2_ROOTFS_POST_BUILD_SCRIPT="$(BR2_EXTERNAL_WAYPOINT_PATH)/board/raspberrypi5/post-build.sh"
+BR2_ROOTFS_POST_IMAGE_SCRIPT="$(BR2_EXTERNAL_WAYPOINT_PATH)/board/raspberrypi5/post-image.sh"
+
+# GStreamer (for cameras). See waypoint_prod_defconfig for the v4l2
+# sub-plugin rationale — pairs with the linux-cameras.fragment kernel
+# UVC enable.
+BR2_PACKAGE_GSTREAMER1=y
+BR2_PACKAGE_GST1_PLUGINS_BASE=y
+BR2_PACKAGE_GST1_PLUGINS_GOOD=y
+BR2_PACKAGE_GST1_PLUGINS_GOOD_PLUGIN_V4L2=y
+BR2_PACKAGE_GST1_PLUGINS_BAD=y
+# Pi 5 has no HW H.264 encoder, so cameras transcode in software: jpegdec
+# (GOOD_JPEG selects libjpeg) + x264enc (UGLY x264 selects libx264) + h264parse
+# (videoparsers, gst-bad). NOTE the good-jpeg symbol is GST1_PLUGINS_GOOD_JPEG,
+# not ..._PLUGIN_JPEG (unlike _PLUGIN_V4L2 above).
+BR2_PACKAGE_GST1_PLUGINS_GOOD_JPEG=y
+BR2_PACKAGE_GST1_PLUGINS_UGLY=y
+BR2_PACKAGE_GST1_PLUGINS_UGLY_PLUGIN_X264=y
+BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_VIDEOPARSERS=y
+BR2_PACKAGE_LIBV4L=y
+BR2_PACKAGE_LIBV4L_UTILS=y

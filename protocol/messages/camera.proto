@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+// CameraList is published on `waypoint.<rover>.infra.camera.list` whenever
+// the set of available cameras changes (startup, hot-plug, manager restart).
+message CameraList {
+  repeated CameraInfo cameras = 1;
+}
+
+message CameraInfo {
+  string name = 1;           // e.g. "chassis-front", "gripper"
+  string pipeline = 2;       // "synthetic", "mac", "pi5"
+  optional int32 width = 3;
+  optional int32 height = 4;
+  optional int32 fps = 5;
+}
+
+// Sent as the body of a NATS request on `waypoint.<rover>.rpc.camera_offer`.
+// The proxy forwards browser WHEP offers verbatim.
+message CameraOfferRequest {
+  string camera = 1;          // camera name
+  string session_id = 2;      // assigned by proxy
+  string offer_sdp = 3;       // browser's SDP offer (WHEP body)
+}
+
+message CameraOfferResponse {
+  string answer_sdp = 1;
+  optional string error = 2;
+}
+
+// IceServers is provided to the agent at boot via NATS request on
+// `waypoint.<rover>.rpc.ice_servers` (proxy → agent). Future: rotate
+// TURN credentials on schedule.
+message IceServers {
+  repeated IceServer servers = 1;
+}
+
+message IceServer {
+  repeated string urls = 1;
+  optional string username = 2;
+  optional string credential = 3;
+}

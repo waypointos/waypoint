@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+import "messages/common.proto";
+
+// Standard component APIs. These ride standard leaves inside the module
+// sandbox: module.<id>.<class>.state (stream) and module.<id>.<class>.cmd.
+// Sandbox subjects are not registered in subjects.toml by convention.
+
+// module.<id>.arm.state — the joint list IS the schema: names and order
+// define the arm for consumers.
+message ArmState {
+  Stamp stamp = 1;
+  repeated ArmJoint joints = 2;
+}
+
+message ArmJoint {
+  string name = 1;
+  double position_rad = 2;
+  optional double velocity_radps = 3;
+  optional double effort = 4;
+  bool calibrated = 5;
+}
+
+// module.<id>.arm.cmd — joint-space only in v1.
+message ArmCommand {
+  Stamp stamp = 1;
+  oneof cmd {
+    ArmJointGoals goals = 2;
+    bool stop = 3;  // true: halt motion, hold position
+  }
+}
+
+message ArmJointGoals {
+  repeated ArmJointGoal goals = 1;
+}
+
+message ArmJointGoal {
+  string name = 1;
+  double position_rad = 2;
+}
+
+// module.<id>.sensor.state — read-only class, no command message.
+// Absent value with ok=false is the N/A form; never sentinel zeros.
+message SensorReadings {
+  Stamp stamp = 1;
+  repeated SensorReading readings = 2;
+}
+
+message SensorReading {
+  string name = 1;
+  optional double value = 2;
+  string unit = 3;
+  bool ok = 4;
+}
+
+// module.<id>.base.state / .base.cmd — reserved contract; no production
+// consumer in v1. Core remains the platform's base.
+message BaseState {
+  Stamp stamp = 1;
+  double body_vx_mps = 2;
+  double yaw_rate_radps = 3;
+}
+
+message BaseCommand {
+  Stamp stamp = 1;
+  double body_vx_mps = 2;
+  double yaw_rate_radps = 3;
+}
+
+// module.<id>.stats — SDK runtime heartbeat (published every 5 s).
+message ModuleStats {
+  Stamp stamp = 1;
+  uint64 uptime_s = 2;
+}

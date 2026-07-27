@@ -1,0 +1,10 @@
+# CDC-ACM driver for the Bus Servo Driver HAT's CH343 USB-serial bridge.
+# With the HAT's USB/ESP32 switch set to USB, the CH343 enumerates as a
+# CDC-ACM device (USB interface classes 02/0a) and the servo RS485 bus
+# reaches the Pi as /dev/ttyACM0 — driving the bus directly over USB with
+# no on-HAT ESP32 relay in the path.
+#
+# Built-in (=y) rather than module: the rootfs is read-only squashfs and
+# this kernel has loadable-module support disabled, so the driver must be
+# baked into the kernel image to bind at boot.
+CONFIG_USB_ACM=y

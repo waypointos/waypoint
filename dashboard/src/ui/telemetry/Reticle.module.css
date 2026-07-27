@@ -1,0 +1,7 @@
+.reticle { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 138px; height: 138px; pointer-events: none; }
+.b { position: absolute; width: 22px; height: 22px; border: 1.5px solid var(--color-caution); opacity: 0.55; }
+.tl { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+.tr { top: 0; right: 0; border-left: 0; border-bottom: 0; }
+.bl { bottom: 0; left: 0; border-right: 0; border-top: 0; }
+.br { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+.dot { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; border-radius: 50%; background: var(--color-caution); transform: translate(-50%, -50%); transition: transform 90ms linear; }

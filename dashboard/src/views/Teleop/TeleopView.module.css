@@ -1,0 +1,65 @@
+.console { position: fixed; inset: 0; background: var(--color-bg); }
+.stage { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(120% 90% at 50% 16%, var(--color-bg-elev-1) 0%, var(--color-bg) 60%); }
+.noCam { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--color-fg-3); font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* ---- top strip ---- */
+.strip {
+  position: absolute; top: 0; left: 0; right: 0; height: 42px; z-index: 200;
+  display: flex; align-items: center; gap: var(--space-md); padding: 0 var(--space-lg);
+  background: var(--hud-bg); border-bottom: 1px solid var(--color-border);
+  backdrop-filter: blur(8px) saturate(1.1);
+}
+.brand { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-fg-2); white-space: nowrap; }
+.stripSpacer { flex: 1; }
+.stripCenter { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+.link { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fg-3); white-space: nowrap; }
+.exit { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-fg-2); border: 1px solid var(--color-border); padding: 5px 10px; }
+.exit:hover { color: var(--color-fg); }
+
+/* ---- e-stop banner ---- */
+.banner {
+  position: absolute; top: 52px; left: 50%; transform: translateX(-50%); z-index: 210;
+  border: 1px solid var(--color-fault); background: rgba(255, 69, 58, 0.08);
+  color: var(--color-fault); font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.14em; text-transform: uppercase; padding: 6px 14px;
+}
+.banner small { color: var(--color-fg-3); letter-spacing: 0.06em; margin-left: 10px; text-transform: none; }
+
+/* ---- telemetry rail + events (left) ---- */
+.left {
+  position: absolute; left: var(--space-md); top: 54px; width: 170px; z-index: 150;
+  display: flex; flex-direction: column; gap: var(--space-sm);
+}
+.rail {
+  display: flex; flex-direction: column; gap: 1px;
+  background: var(--hud-bg); border: 1px solid var(--color-border);
+  backdrop-filter: blur(8px) saturate(1.1); padding: 0 0 6px;
+}
+.railTitle { padding: 5px 10px 4px; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-fg-4); }
+.railPills { padding: 4px 8px 0; }
+.events { padding: 0 2px; }
+
+/* ---- speed (top right, below the strip) ---- */
+.tr { position: absolute; top: 54px; right: var(--space-md); z-index: 150; }
+
+/* ---- joystick (bottom left) ---- */
+.bl { position: absolute; bottom: 20px; left: 20px; z-index: 150; display: flex; align-items: flex-end; gap: var(--space-sm); }
+.stickVals { display: flex; flex-direction: column; gap: 4px; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fg-3); white-space: pre; }
+
+/* ---- drive cluster (bottom center) ---- */
+.drive {
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 150;
+  display: flex; align-items: stretch; gap: 1px;
+  background: var(--color-border-soft); border: 1px solid var(--color-border);
+}
+.dcol { background: var(--hud-bg); backdrop-filter: blur(8px) saturate(1.1); padding: 8px 12px 9px; }
+.dhd { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-fg-4); margin-bottom: 6px; white-space: nowrap; }
+.axes { display: grid; grid-template-columns: 26px 130px 64px; gap: 4px 8px; align-items: center; }
+.axk { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-fg-4); }
+.axv { font-family: var(--font-mono); font-size: 11px; color: var(--color-fg); text-align: right; font-variant-numeric: tabular-nums; white-space: pre; }
+.axv small { font-size: 8.5px; color: var(--color-fg-3); }
+.wheels { display: grid; grid-template-columns: repeat(2, 104px); gap: 4px 10px; }
+.wheel { display: grid; grid-template-columns: 18px 1fr; gap: 5px; align-items: center; }
+
+/* ---- e-stop (bottom right) ---- */
+.br { position: absolute; bottom: 20px; right: 20px; width: 200px; z-index: 150; }

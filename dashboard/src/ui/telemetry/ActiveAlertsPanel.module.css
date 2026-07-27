@@ -1,0 +1,103 @@
+/* dashboard/src/ui/telemetry/ActiveAlertsPanel.module.css
+ *
+ * Dense list inside a Panel. Mirrors AuditLogView row density (mono columns,
+ * thin dividers, no rounded corners). No hex colors — tokens only.
+ */
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+.row:last-child { border-bottom: none; }
+.row:first-child { padding-top: 0; }
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-3);
+}
+
+.rover {
+  color: var(--color-fg);
+  text-transform: uppercase;
+}
+
+.source {
+  color: var(--color-fg-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+.source .dot { color: var(--color-fg-4); }
+
+.time {
+  color: var(--color-fg-4);
+  white-space: nowrap;
+}
+
+.ackd {
+  color: var(--color-caution);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-caution);
+  padding: 1px var(--space-xs);
+  background: var(--color-caution-tint);
+}
+
+.msg {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--color-fg);
+  line-height: 1.4;
+}
+
+.muted {
+  color: var(--color-fg-4);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.naLabel {
+  color: var(--color-fg-4);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border);
+  padding: 2px var(--space-sm);
+}
+.naHint { color: var(--color-fg-3); }

@@ -1,0 +1,47 @@
+.layout {
+  padding: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  align-content: start;
+  align-items: start;
+  overflow: auto;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cellHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.cellLbl {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-fg-3);
+}
+.cellVal {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-fg);
+  font-variant-numeric: tabular-nums;
+}
+.cellSub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-fg-4);
+  letter-spacing: 0.02em;
+}
