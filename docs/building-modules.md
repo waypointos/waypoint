@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-02
 **Status:** authoring guide.
-**References:** `docs/setup/no-rebuild-modules.md` (operator flow), `tools/module-template/` (canonical skeleton), `docs/setup/umr.md` (the worked example, a real shipping module).
+**References:** `docs/setup/no-rebuild-modules.md` (operator flow), `docs/setup/module-sdk.md` (the `wpmodule` authoring guide), `docs/setup/drill-module.md` and the `waypointos/waypoint-drill` repo (the worked example, a real shipping module).
 
 ---
 
@@ -16,9 +16,9 @@ sensor reader, a custom dashboard tab.
 The defining properties:
 
 - **Out-of-tree.** A module lives in its **own GitHub repo**, not in the
-  Waypoint monorepo. The reference module `waypoint-ubiquiti-mobile-router`
-  (the "umr" / Connectivity module) is exactly this: a standalone repo built
-  from the template, released by tag, registered on the proxy.
+  Waypoint monorepo. The reference module `waypointos/waypoint-drill` (the
+  drill module) is exactly this: a standalone repo built against the SDK,
+  released by tag, registered on the proxy.
 - **No image rebuild.** A module ships as a signed, self-contained `.raw`
   squashfs image. The agent fetches it, attaches it as a systemd portable
   service, and starts it. Installing or updating a module never reflashes the
@@ -33,8 +33,11 @@ The defining properties:
   workflow, pinned by the proxy on first registration (trust on first use).
 
 If you are building a module, you are building a small Go (or other-language)
-daemon, a manifest, a systemd unit, and a release pipeline, all in a new repo
-copied from `tools/module-template/`.
+daemon, a manifest, a systemd unit, and a release pipeline, all in a new repo.
+Write the daemon against the `wpmodule` SDK
+([docs/setup/module-sdk.md](setup/module-sdk.md)) and take the repo shape from
+`waypointos/waypoint-drill`. The in-tree skeleton at `tools/module-template/`
+predates the SDK and is being refreshed separately; do not treat it as current.
 
 ---
 
@@ -48,8 +51,8 @@ Everything a module must satisfy:
 | Stay in its sandbox | publish/subscribe only `waypoint.*.module.<name>.*` (section 5) |
 | Take config and credentials from the agent | read the fixed files at `/run/waypoint/modules/<id>/` (section 6) |
 | Answer health probes | reply on `waypoint.<rover>.module.<name>.health.<probe>` (section 6.4) |
-| Signal readiness | `sd_notify(READY=1)` once the process is alive (section 6.3) |
-| Ship as a signed `.raw` | the template Makefile plus the release CI (sections 8 and 9) |
+| Signal readiness | the SDK sends `sd_notify(READY=1)` when `setup` returns (section 6.3) |
+| Ship as a signed `.raw` | `build/Makefile` plus the release CI (sections 8 and 9) |
 | Be registered and enabled | proxy admin registers the repo, then enables per rover (section 10) |
 
 The agent provides, at runtime, two files in `/run/waypoint/modules/<name>/`:
@@ -64,20 +67,22 @@ It passes their paths on the command line and starts the process under systemd.
 
 ## 3. Repo layout
 
-`tools/module-template/` is a minimal starting skeleton, but the authoritative
-layout is the reference module, `waypoint-ubiquiti-mobile-router`. Its structure:
+The authoritative layout is the drill module, `waypointos/waypoint-drill`. Its
+structure:
 
 ```
 <your-module-repo>/
   go.mod                            # the DAEMON module (built from cmd/)
   go.sum
   module.toml                       # manifest (section 4)
-  README.md
+  README.md  LICENSE  NOTICE  SECURITY.md
+  Makefile                          # test / dev / raw entry points
   cmd/
-    waypoint-module-<id>/main.go    # entrypoint
-  internal/                         # daemon packages (config, poller, publisher, ...)
+    waypoint-module-<id>/main.go    # entrypoint: flags, then wpmodule.Run
+    waypoint-module-<id>/main_test.go
+  internal/                         # daemon packages (config, plus your domain)
   protocol/                         # module-owned .proto + generated bindings (optional)
-    umr.proto
+    <id>.proto
     buf.yaml  buf.gen.yaml
     gen/go/   gen/ts/
   systemd/
@@ -90,25 +95,22 @@ layout is the reference module, `waypoint-ubiquiti-mobile-router`. Its structure
     manifest/manifest.go            # emits manifest.json for the release
   dashboard/                        # static UI bundle, built with Vite (section 7.2)
     package.json  src/  vite.config.ts
-  vendor/                           # vendored deps for reproducible CI builds
   .github/workflows/release.yml     # cosign-keyless release on v* tags (section 9)
+  .github/workflows/ci.yml          # build, test, and panel build on every push
 ```
 
 Note the **two Go modules**: the repo root `go.mod` is the daemon (entrypoint at
 `cmd/waypoint-module-<id>/`), and `build/go.mod` is a small separate module whose
 only job is the `manifest` tool that emits the release's `manifest.json`. They
-are split so the daemon's dependency graph stays clean. The reference module also
-**vendors** its dependencies (`vendor/`) so CI builds are reproducible and need no
-network at build time.
+are split so the daemon's dependency graph stays clean.
 
-> The in-repo template at `tools/module-template/` mirrors this layout exactly
-> (same `cmd/` + `internal/` + `build/` split, same flag-bearing unit, same
-> `build/Makefile` and release workflow), so copying it gives you the reference
-> structure. The only intentional difference is that the template does not vendor
-> its dependencies; add `vendor/` if you want fully offline CI builds.
+The daemon's `go.mod` reaches the SDK with `replace` directives pointing at
+`../waypoint`, so both workflows clone the public monorepo next to the checkout
+before building. Do not vendor: a vendor directory and a sibling `replace` do not
+coexist.
 
-When you start a new module, rename every occurrence of `example`/`umr` to your
-module id: the `module.toml` fields, `cmd/waypoint-module-<id>/`,
+When you start a new module, substitute your module id everywhere the drill's id
+appears: the `module.toml` fields, `cmd/waypoint-module-<id>/`,
 `systemd/waypoint-module-<id>.service`, the `MODULE_ID` in `build/Makefile`, and
 the release-asset names in `.github/workflows/release.yml`.
 
@@ -269,10 +271,10 @@ Rules:
 
 ## 6. The module binary contract
 
-The daemon must cooperate with the agent's supervision model. The reference is
-`tools/module-template/cmd/waypoint-module-example/main.go` (a runnable skeleton)
-and the umr module's `cmd/waypoint-module-umr/main.go` (a full implementation
-with config, auth, and a poll loop).
+The daemon must cooperate with the agent's supervision model. Do not hand-roll
+that cooperation: the `wpmodule` SDK implements all of it. The reference is the
+drill module's `cmd/waypoint-module-drill/main.go`, and the SDK's own guide is
+[docs/setup/module-sdk.md](setup/module-sdk.md).
 
 ### 6.1 What the agent provides, and what it does not
 
@@ -292,32 +294,45 @@ not set a NATS URL. The only drop-in it ever writes is the hardware one
 
 So how does the daemon learn where its files are and which rover it is on? From
 **its own unit**, which the module author baked into the `.raw`. The unit is
-responsible for wiring the fixed paths into the process. The reference module's
-unit does it with explicit flags pointing at those fixed paths and a rover id
-read from `core.env` (see section 7):
+responsible for wiring the fixed paths into the process. The drill module's unit
+does it with explicit flags pointing at those fixed paths and a rover id read
+from `core.env` (see section 7):
 
 ```
-ExecStart=/usr/bin/waypoint-module-umr \
-  --config /run/waypoint/modules/umr/config.toml \
-  --creds  /run/waypoint/modules/umr/creds.env \
+ExecStart=/usr/bin/waypoint-module-drill \
+  --config /run/waypoint/modules/drill/config.toml \
+  --creds  /run/waypoint/modules/drill/creds.env \
   --rover  ${WAYPOINT_ROVER_ID}
 ```
 
 A module that prefers no flags could instead read the two well-known fixed paths
-directly. The template's `main.go` accepts both: the `--config`/`--creds`/
-`--rover` flags its unit passes, and `WAYPOINT_MODULE_CONFIG` /
-`WAYPOINT_MODULE_CREDS` / `WAYPOINT_NATS_URL` env fallbacks. Either way, the
-contract is: the agent puts the files at `/run/waypoint/modules/<id>/` and starts
-the unit; the unit and daemon agree on how to find them.
-
-For the bus, the module connects on its own and defaults to the local NATS bus
-(both the template and umr default to `nats://127.0.0.1:4222`, overridable via
-`WAYPOINT_NATS_URL`). Authenticate with the `creds.env` user.
+directly. An SDK-built `main()` accepts both: the `--config`/`--creds`/`--rover`
+flags its unit passes, and the `WAYPOINT_MODULE_CONFIG` / `WAYPOINT_MODULE_CREDS`
+/ `WAYPOINT_NATS_URL` env vars the SDK reads. Either way, the contract is: the
+agent puts the files at `/run/waypoint/modules/<id>/` and starts the unit; the
+unit and daemon agree on how to find them.
 
 ### 6.2 Reading config and credentials
 
-`config.toml` carries whatever the operator entered at enable time. Define your
-own schema and parse it (the umr module uses `github.com/BurntSushi/toml`):
+Credentials are never parsed by hand. `main()` bridges the `--creds` flag into
+`WAYPOINT_MODULE_CREDS` (only when that variable is unset, so the agent's
+drop-in stays authoritative), and `wpmodule.Run` does the rest: it loads
+`creds.env`, connects to the bus, and reconnects forever. The env-contract table
+in [docs/setup/module-sdk.md](setup/module-sdk.md) is the authority on every
+variable, its source, and its default.
+
+`config.toml` carries whatever the operator entered at enable time, and its
+schema is yours. The reference modules resolve the path themselves, flag first
+and `WAYPOINT_MODULE_CONFIG` second (`resolveConfigPath` in drill's and umr's
+`main.go`), then thread that path into their own `config.Load(path)` decoder.
+`wpmodule.LoadConfig` is the alternative, but it reads `WAYPOINT_MODULE_CONFIG`
+only and returns `(false, nil)` when that variable is unset, so a `main()` using
+it must export the resolved path into the environment the way it exports
+`WAYPOINT_MODULE_CREDS`. Bridging only the creds flag and then calling
+`LoadConfig` silently discards the operator's config.
+
+Either way, treat every key as optional with an in-code default, so a rover
+enabled with an empty config still starts:
 
 ```toml
 # example config.toml, schema is module-defined
@@ -326,87 +341,48 @@ password        = "<secret>"
 poll_interval_s = 5
 ```
 
-`creds.env` is `KEY=value` lines. Load the NATS user and authenticate with it:
-
-```go
-// loadCredsEnv reads WAYPOINT_NATS_USER / WAYPOINT_NATS_PASSWORD from creds.env.
-func loadCredsEnv(path string) (user, pass string, err error) {
-    f, err := os.Open(path)
-    if err != nil {
-        return "", "", err
-    }
-    defer f.Close()
-    sc := bufio.NewScanner(f)
-    for sc.Scan() {
-        line := strings.TrimSpace(sc.Text())
-        if line == "" || strings.HasPrefix(line, "#") {
-            continue
-        }
-        k, v, ok := strings.Cut(line, "=")
-        if !ok {
-            continue
-        }
-        switch k {
-        case "WAYPOINT_NATS_USER":
-            user = v
-        case "WAYPOINT_NATS_PASSWORD":
-            pass = v
-        }
-    }
-    return user, pass, sc.Err()
-}
-```
-
-Then connect, authenticating with those credentials and reconnecting forever
-(the bus or the agent can restart under you):
-
-```go
-nc, err := nats.Connect(natsURL,
-    nats.UserInfo(user, pass),
-    nats.MaxReconnects(-1),
-    nats.ReconnectWait(2*time.Second),
-)
-```
-
 ### 6.3 Signaling readiness
 
-The unit is `Type=notify`. Call `sd_notify(READY=1)` **as soon as the process is
-alive and connected to NATS**, not after slow external work completes:
+The unit is `Type=notify`, and the SDK sends `READY=1` for you, immediately
+after your `setup` callback returns. That ordering is the whole contract:
+**`setup` must return before any slow external work**, so start slow work in a
+goroutine and let `setup` return.
 
-```go
-import "github.com/coreos/go-systemd/v22/daemon"
-// ...
-daemon.SdNotify(false, daemon.SdNotifyReady)
-```
+Why this matters: systemd's default `TimeoutStartSec` is 90s. If `setup` blocks
+on something slow (a router login, an LTE attach, a device that takes a minute
+to warm up), systemd kills the module mid-startup and you get a restart storm.
+The umr module is the worked case: its router login retries in a goroutine
+because the router can take one to two minutes to accept a login after power-on.
 
-Why this matters: systemd's default `TimeoutStartSec` is 90s. If your module
-blocks readiness on something slow (a router login, an LTE attach, a device that
-takes a minute to warm up), systemd will kill it mid-startup and you get a
-restart storm. Signal ready early; gate **health** (not readiness) on the slow
-dependency, so the agent keeps the module flagged unhealthy until the real work
-succeeds, without restarting it.
+Gate **health** (not readiness) on the slow dependency if you want an unhealthy
+flag while the dependency is down. The SDK's built-in `health.ready` responder
+answers unconditionally, so a module that keeps it reports "process alive", and
+the dependency's state has to surface as stale or N/A panel data instead.
 
 ### 6.4 Answering health probes
 
-Subscribe to your health subject and reply immediately. The agent probes every
-`interval_s` and marks the module unhealthy after repeated misses:
+The SDK subscribes to `waypoint.<rover>.module.<id>.health.ready` and replies
+`"ok"` for you. The agent probes every `interval_s` and marks the module
+unhealthy after repeated misses, so a wedged process is caught without any code
+of yours.
 
-```go
-subject := fmt.Sprintf("waypoint.%s.module.example.health.ready", roverID)
-nc.Subscribe(subject, func(m *nats.Msg) { m.Respond([]byte("ok")) })
-```
-
-If you want "healthy" to mean "the external thing is actually working," only
-register this responder (or only reply `"ok"`) once your last poll succeeded.
+To make "healthy" mean "the external thing is actually working", point
+`[health].probe` at a different name, declare that subject under
+`[permissions].subscribe`, and serve it yourself with `m.Subscribe`, replying
+only once your last poll succeeded. The agent then probes your responder instead
+of the SDK's unconditional one.
 
 ### 6.5 Graceful shutdown
 
-Handle `SIGINT`/`SIGTERM` and drain. systemd sends `SIGTERM` on stop and update:
+The SDK handles `SIGINT`/`SIGTERM` and drains the connection. Your own loops
+select on `m.Done()`, which closes when the signal arrives:
 
 ```go
-ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-defer cancel()
-defer nc.Drain()
+select {
+case <-m.Done():
+    return
+case <-ticker.C:
+}
 ```
 
 ### 6.6 Owning a protobuf message (optional)
@@ -422,11 +398,11 @@ the generated TS to decode.
 ## 7. The systemd unit
 
 `systemd/waypoint-module-<id>.service` (baked into the image at
-`/usr/lib/systemd/system/`). The reference module's unit:
+`/usr/lib/systemd/system/`). The umr module's unit:
 
 ```ini
 [Unit]
-Description=Waypoint module: umr (Ubiquiti Mobile Router connectivity)
+Description=Waypoint module - umr (Ubiquiti Mobile Router connectivity)
 After=waypoint-agent.service
 Requires=waypoint-agent.service
 
@@ -481,7 +457,7 @@ mechanics:
 
 `build/Makefile` is written to run **from the repo root** (`make -f build/Makefile
 raw`); its recipe paths are root-relative, so `make -C build` will not work. The
-reference module's:
+umr module's:
 
 ```makefile
 # Run from the repo ROOT: `make raw` or `make -f build/Makefile raw`.
@@ -566,66 +542,32 @@ configure. The signer identity is the module repo's own release workflow,
 derived from a short-lived GitHub Actions OIDC token, and the proxy pins that
 identity on first registration.
 
-`.github/workflows/release.yml` (copy verbatim, change only the asset names):
+Copy `.github/workflows/release.yml` from `waypointos/waypoint-drill` and change
+only the asset names. Write your own only if you reproduce the job split below;
+it is a security boundary, not a style choice.
 
-The reference module's workflow (note the dashboard build step and that the
-manifest generator runs from its own `build/` module):
+The workflow is **two jobs**, and the split is the point:
 
-```yaml
-name: Release
-on:
-  push:
-    tags: ['v*']
+- `build` holds no privileges at all (`permissions: contents: read`,
+  `persist-credentials: false`). It clones the monorepo as a sibling, builds the
+  dashboard panel and the `.raw`, generates `manifest.json` from its own
+  `build/` module, and uploads them as an artifact with
+  `if-no-files-found: error`.
+- `release` is the only job with `contents: write` and `id-token: write`. It
+  downloads the artifact, signs the `.raw` with cosign keyless
+  (`--new-bundle-format`), and publishes the release.
 
-permissions:
-  contents: write
-  id-token: write   # cosign keyless OIDC; the proxy pins this workflow's SAN
+The top-level `permissions:` is empty, so every job starts with nothing and
+declares what it needs. Keeping the OIDC token out of the job that runs your
+build and your dependencies is what stops a compromised build step from minting
+a signing identity.
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with: { go-version-file: go.mod }
-      - uses: pnpm/action-setup@v4
-        with: { version: 9 }
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: dashboard/pnpm-lock.yaml
-      - run: sudo apt-get update && sudo apt-get install -y squashfs-tools
-      - uses: sigstore/cosign-installer@v3
-      - name: Set VERSION
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
-      - name: Build dashboard panel
-        run: cd dashboard && pnpm install --frozen-lockfile && pnpm build
-      - name: Build .raw
-        run: make -f build/Makefile raw VERSION="${VERSION}"
-      - name: Sign .raw (cosign keyless)
-        run: |
-          cosign sign-blob --yes --new-bundle-format \
-            --bundle "dist/umr-${VERSION}.raw.cosign" \
-            "dist/umr-${VERSION}.raw"
-      - name: Manifest
-        run: |
-          SHA="$(sha256sum "dist/umr-${VERSION}.raw" | cut -d' ' -f1)"
-          (cd build && go run ./manifest -toml ../module.toml \
-            -version "${VERSION}" -sha256 "${SHA}") > dist/manifest.json
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            dist/umr-${{ env.VERSION }}.raw
-            dist/umr-${{ env.VERSION }}.raw.cosign
-            dist/manifest.json
-```
-
-`id-token: write` lets the job mint a GitHub OIDC token; cosign exchanges it at
-Fulcio for a signing cert whose SAN is this workflow's identity, which the proxy
-pins at registration time. No secrets. A module without a UI drops the pnpm/node
-setup and the dashboard build step; a module whose daemon and manifest generator
-share one `go.mod` runs `go run ./build/manifest` directly instead of `cd build`.
+`id-token: write` lets the release job mint a GitHub OIDC token; cosign
+exchanges it at Fulcio for a signing cert whose SAN is that workflow's identity,
+which the proxy pins at registration time. No secrets. A module without a UI
+drops the pnpm/node setup and the dashboard build step; a module whose daemon and
+manifest generator share one `go.mod` runs `go run ./build/manifest` directly
+instead of `cd build`.
 
 A `v*` tag triggers a release that publishes three assets:
 
@@ -676,9 +618,10 @@ path is for development and air-gapped rovers.
 
 ## 11. Testing and diagnostics
 
-- **Unit-test the daemon** like any Go program. Keep the NATS publish loop, the
-  config parsing, and the external-API mapping in separate packages so they test
-  in isolation (the umr module splits `config`, `poller`, and `publisher`).
+- **Unit-test the daemon** like any Go program. Keep the config parsing and the
+  external-API mapping in separate packages so they test in isolation (the umr
+  module splits `config` and `poller`). The publish loop's lifecycle belongs to
+  the SDK, so there is nothing of your own to test there.
 - **Build the `.raw` locally** with `make -f build/Makefile raw` on any host with
   `squashfs-tools`.
 - **Exercise the attach path on the rover.** systemd portable mechanics only run
@@ -710,8 +653,9 @@ trusted root.
 - **Never touch `/dev/ttyAMA*`.** That UART is core's safety-critical servo pipe.
   It is excluded from the hardware allow-list on purpose. Module serial access is
   USB only (`ttyUSB`/`ttyACM`).
-- **Signal `READY=1` early; gate health, not readiness, on slow dependencies.**
-  Otherwise systemd's 90s start timeout turns a slow boot into a restart storm.
+- **Return from `setup` before slow work.** The SDK signals `READY=1` the moment
+  it returns, so a `setup` that waits on a slow dependency turns systemd's 90s
+  start timeout into a restart storm. Start the slow work in a goroutine.
 - **Ship the rootfs skeleton in the `.raw`.** The empty `dev/proc/sys/...` dirs
   and `etc/machine-id`, `etc/resolv.conf` are required for the portable
   namespace. Missing them is the classic NAMESPACE/226 attach failure.
@@ -732,29 +676,23 @@ trusted root.
 
 ---
 
-## 13. Worked example: the umr (Connectivity) module
+## 13. Worked examples
 
-`waypoint-ubiquiti-mobile-router` is the canonical shipping module. It is a Go
-daemon that polls a Ubiquiti Mobile Router on the rover LAN through the router's
-local portal and publishes a connectivity snapshot. It demonstrates every part
-of this guide:
+Two modules ship publicly, and between them they exercise everything in this
+guide. Read the repository next to the operator document.
 
-- **Manifest** with `name = "umr"`, `label = "Connectivity"`, a single publish
-  subject `waypoint.*.module.umr.stats`, a `ready` health probe, and a
-  `[ui.static]` tab `m-umr`.
-- **Config** (`host`, `password`, `poll_interval_s`) supplied per rover at enable
-  time, read from the agent-written `config.toml`.
-- **Auth** from `creds.env`, connecting to the bus as the minted `module-umr`
-  user.
-- **Early readiness, gated health.** It signals `READY=1` once NATS is connected,
-  then retries the router login in a loop, because the router can take a minute
-  to attach LTE on first boot. Health stays unhealthy until a poll succeeds.
-- **Own protobuf** (`UmrStats`) published on `module.umr.stats`, decoded by a
-  static dashboard panel.
-- **N/A as a first-class state.** Fields the router does not report render as a
-  muted `N/A` with a one-line reason, never a sentinel zero.
+- **drill** (`waypointos/waypoint-drill`, released and installed per
+  [docs/setup/drill-module.md](setup/drill-module.md)) is the template: SDK
+  `main()` with the flag-to-env bridge, a `[component]` class, `requires` on the
+  servo-control and teleop-input capabilities, its own `.proto`, and an
+  interactive dashboard tab.
+- **umr** (`waypointos/waypoint-umr`, operator document
+  [docs/setup/umr.md](setup/umr.md)) is the smallest complete case: no hardware,
+  no component, one poll loop against a router's local API. It shows
+  `provides = ["uplink"]`, a config with an in-code default for every key, a
+  `setup` that returns before the router login succeeds, and N/A as a
+  first-class state in its panel.
 
-The operator-facing behavior of this module is documented in `docs/setup/umr.md`.
-Read that alongside this guide to see the system end to end: a module repo, its
-release, its registration, and what the operator sees.
+Read either alongside this guide to see the system end to end: a module repo,
+its release, its registration, and what the operator sees.
 ```

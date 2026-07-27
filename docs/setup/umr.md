@@ -14,9 +14,22 @@ Read-only. The module never writes back to the router.
 
 ## Enabling
 
-UMR is enabled through the proxy's module registry. See
-[no-rebuild-modules.md](no-rebuild-modules.md) for the registration and
-enablement flow. At enablement time, supply the configuration TOML:
+UMR is enabled through the proxy's module registry. The general mechanics are in
+[no-rebuild-modules.md](no-rebuild-modules.md); the module-specific steps are:
+
+1. Sign in to the proxy as an admin and open `/admin/modules` (equivalently,
+   `POST /api/admin/modules` with `{"source_repo_url": "..."}`).
+2. Register the source repository `https://github.com/waypointos/waypoint-umr`.
+   The proxy fetches the latest release, verifies the cosign signature against
+   the repository's own release workflow identity, and records the module.
+3. Enable it on a rover:
+   `POST /api/admin/rovers/{roverID}/modules/umr` with
+   `{"version": "0.2.0", "config_toml": "..."}`. The proxy publishes the rover's
+   desired module state; the agent fetches the `.raw`, attaches it, and starts
+   the unit within seconds.
+
+The `config_toml` carries the router address, the owner password, and the poll
+period:
 
 ```toml
 host             = "https://192.168.105.1"
@@ -24,9 +37,58 @@ password         = "<owner password>"
 poll_interval_s  = 5
 ```
 
+Every key is optional and the values above are the module's own defaults, except
+the password, which has no useful default: without it the module reaches the
+router but every login is rejected.
+
 Within ~5 seconds of the agent picking up the module, the dashboard's
 `CONNECTION` tab appears for this rover (`infra.modules` reports the module
 healthy).
+
+## Release
+
+The module lives in its own repository and ships as a signed portable service,
+like every other no-rebuild module.
+
+### 1. Repository
+
+`waypointos/waypoint-umr` on GitHub, public. It carries `build/` (arm64 static
+build plus squashfs packaging) and `.github/workflows/release.yml` (tag-triggered
+release with cosign keyless signing), both already in the tree.
+
+### 2. Monorepo access
+
+The module builds against the monorepo SDK through `replace` directives, so both
+workflows clone the monorepo next to the checkout:
+`https://github.com/waypointos/waypoint.git`. The monorepo is public, so the
+clone needs no deploy key and no Actions secret.
+
+### 3. Tag a release
+
+Tag and push:
+
+    git tag v0.2.0
+    git push origin v0.2.0
+
+The `v*` tag triggers the workflow. Confirm the GitHub Release carries three
+assets:
+
+- `umr-0.2.0.raw`
+- `umr-0.2.0.raw.cosign`
+- `manifest.json`
+
+There is no signing key to manage: cosign keyless derives the identity from the
+workflow's OIDC token, which is why the workflow requests
+`permissions: id-token: write`.
+
+### 4. Register and enable
+
+Follow [Enabling](#enabling) above. The workflow identity the proxy verifies
+against is pinned on first registration and a later re-pin is refused, so moving
+the repository means clearing the registry entry rather than re-registering over
+it. `MODULE_TOKEN_KEY` is not involved: it is needed only for a private module
+repository, see
+[proxy-module-token-key.md](proxy-module-token-key.md).
 
 ## What the tab shows
 
@@ -38,7 +100,8 @@ healthy).
 
 ## Diagnosing N/A states
 
-The dashboard renders each cell as either a value or `N/A: <reason>`. The reasons:
+The dashboard renders each cell as either a value or `N/A — <reason>`. The
+reasons:
 
 | Reason text | Means | Fix |
 |---|---|---|
@@ -46,6 +109,17 @@ The dashboard renders each cell as either a value or `N/A: <reason>`. The reason
 | `not on LTE` | The current WAN is wifi or ethernet, so LTE-only fields (RSRP/RSRQ/RSSI/band) are not reported. | Expected. |
 | `not on wifi` | The current WAN is LTE or ethernet, so the wifi SSID/bars are not reported. | Expected. |
 | `unreported` | The router itself didn't include the field in the InfoDump (firmware variation). | Open an issue with the firmware version. |
+
+## Health semantics
+
+The health probe answers as soon as the process is alive on the bus, so a
+healthy module means "the daemon is running", not "the router is reachable". A
+router that is off, unreachable, or rejecting the password leaves the module
+healthy while the panel goes stale and its cells fall back to the N/A states
+above. Read the table, not the health flag, when connectivity looks wrong. This
+is the accepted trade-off for the SDK's readiness ordering: the module signals
+ready before its first successful router login, which is what keeps a slow
+router boot from turning into a systemd restart storm.
 
 ## What's not exposed
 

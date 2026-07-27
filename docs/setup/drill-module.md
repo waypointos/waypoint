@@ -19,7 +19,7 @@ signing), both already in the tree.
 ## 2. Monorepo access
 
 The module builds against the monorepo SDK through `replace` directives, so
-the release workflow clones the monorepo next to the checkout:
+both workflows clone the monorepo next to the checkout:
 `https://github.com/waypointos/waypoint.git`. The monorepo is public, so the
 clone needs no deploy key or Actions secret.
 
