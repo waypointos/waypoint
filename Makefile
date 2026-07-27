@@ -1,4 +1,4 @@
-.PHONY: all sim agent dashboard proto test fmt clean foundation-smoke embed-dashboard embed-proxy-dashboard proxy proxy-test proxy-init-operator proxy-smoke fleet-smoke cameras-smoke auth-smoke release-image release-proxy
+.PHONY: all sim agent dashboard proto test fmt clean foundation-smoke embed-dashboard embed-proxy-dashboard proxy proxy-test proxy-init-operator proxy-smoke fleet-smoke cameras-smoke auth-smoke release-image release-proxy web-stub
 
 all: proto
 	@echo "Run 'make sim' / 'make agent' / 'make dashboard' in separate terminals."
@@ -15,7 +15,16 @@ agent:
 dashboard:
 	cd dashboard && pnpm dev
 
-test:
+# agent/web and proxy/web go:embed dist/, which only exists after a
+# dashboard build; give fresh checkouts a stub so Go code compiles. The
+# real build (embed-dashboard / embed-proxy-dashboard) replaces it.
+web-stub:
+	@for d in agent/web/dist proxy/web/dist; do \
+	  mkdir -p $$d; \
+	  [ -f $$d/index.html ] || printf '<!doctype html><title>dashboard not embedded; run make embed-dashboard</title>\n' > $$d/index.html; \
+	done
+
+test: web-stub
 	cd agent && go test ./...
 	cd sim && go test ./...
 	cd sdk && go test ./...

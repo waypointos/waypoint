@@ -20,6 +20,9 @@ jobs:
         with:
           go-version-file: agent/go.mod
           cache-dependency-path: '**/go.sum'
+      # agent/web and proxy/web go:embed the dashboard build, which is not
+      # checked in; stub it so the packages compile without a pnpm build.
+      - run: make web-stub
       - run: cd agent && go test ./...
       - run: cd sim && go test ./...
       - run: cd sdk && go test ./...
