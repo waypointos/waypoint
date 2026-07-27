@@ -253,6 +253,7 @@ func (m *Manager) Run(ctx context.Context) {
 	}
 	m.reconcileFn = reconciler.Reconcile
 	reconciler.EnsureCreds = m.ensureModuleCreds
+	reconciler.SyncConfig = m.writeDesiredConfig
 	reconciler.OnAttach = func(id string, mf *Manifest) { m.onModuleAttached(ctx, id, mf) }
 	reconciler.OnDetach = func(id string) { m.onModuleDetached(id) }
 
@@ -488,6 +489,23 @@ func provisionCachedDesiredCreds(cachePath, rawRoot, runtimeDir, roverID string,
 		ids = append(ids, d.Id)
 	}
 	return ids
+}
+
+// writeDesiredConfig writes only config.toml, so a config change reaches a
+// module that already holds its NATS user (ensureModuleCreds is a no-op then).
+func (m *Manager) writeDesiredConfig(_ context.Context, d *waypointv1.ModuleDesired) error {
+	dir := filepath.Join(m.opts.RuntimeDir, d.Id)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return fmt.Errorf("modules: config dir %s: %w", d.Id, err)
+	}
+	cfg := desiredModuleConfig(d, m.roverConfig)
+	if cfg == nil {
+		cfg = map[string]any{}
+	}
+	if err := writeTOML(filepath.Join(dir, "config.toml"), cfg); err != nil {
+		return fmt.Errorf("modules: write config %s: %w", d.Id, err)
+	}
+	return nil
 }
 
 // desiredModuleConfig resolves a module's config for the boot-time config.toml
