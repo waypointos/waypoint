@@ -3,6 +3,12 @@
 Generated from conventional commits by the release targets in the root
 Makefile. Do not edit by hand.
 
+## 0.15.1 (2026-07-27)
+
+### Bug fixes
+
+- **modules:** stabilize module tab order across snapshots
+
 ## 0.15.0 (2026-07-27)
 
 First release from the public repository; the proxy is now licensed
