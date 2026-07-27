@@ -1,0 +1,55 @@
+name: ci
+on:
+  pull_request: {}
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: agent/go.mod
+          cache-dependency-path: '**/go.sum'
+      - run: cd agent && go test ./...
+      - run: cd sim && go test ./...
+      - run: cd sdk && go test ./...
+      - run: cd protocol/platform && go test ./...
+      - run: cd proxy && go test ./...
+
+  dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      # pnpm version comes from packageManager in package.json.
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - run: cd dashboard && pnpm install --frozen-lockfile
+      - run: cd dashboard && pnpm test
+      - run: cd dashboard && pnpm build
+
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends protobuf-compiler libprotobuf-dev libgtest-dev
+      - run: cmake -S core -B core/build -DWP_CORE_BUILD_TESTS=ON
+      - run: cmake --build core/build -j"$(nproc)"
+      - run: ctest --test-dir core/build --output-on-failure
+
+  firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - run: make -C firmware/servo-relay/test check
