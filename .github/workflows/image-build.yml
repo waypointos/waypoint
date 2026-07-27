@@ -112,12 +112,19 @@ jobs:
           export WAYPOINT_VERSION="$version"
           make -C image image-prod
 
+      # The raw card image exceeds GitHub's 2 GiB release-asset limit; ship
+      # it xz-compressed (Raspberry Pi Imager and Etcher flash .img.xz
+      # directly). The .swu stays uncompressed: swupdate consumes it as-is.
+      - name: Compress card image
+        working-directory: image/output/prod/images
+        run: xz -T0 -f waypoint.img
+
       - name: Sign artifacts (cosign keyless)
         working-directory: image/output/prod/images
         run: |
           set -euo pipefail
           version="${REF_NAME#image-v}"
-          for f in waypoint-prod-"$version".swu waypoint.img; do
+          for f in waypoint-prod-"$version".swu waypoint.img.xz; do
             cosign sign-blob \
               --yes \
               --bundle "$f.cosign" \
@@ -128,14 +135,14 @@ jobs:
         working-directory: image/output/prod/images
         run: |
           set -euo pipefail
-          sha256sum waypoint.img waypoint-prod-*.swu > SHA256SUMS
+          sha256sum waypoint.img.xz waypoint-prod-*.swu > SHA256SUMS
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           files: |
-            image/output/prod/images/waypoint.img
-            image/output/prod/images/waypoint.img.cosign
+            image/output/prod/images/waypoint.img.xz
+            image/output/prod/images/waypoint.img.xz.cosign
             image/output/prod/images/waypoint-prod-*.swu
             image/output/prod/images/waypoint-prod-*.swu.cosign
             image/output/prod/images/SHA256SUMS

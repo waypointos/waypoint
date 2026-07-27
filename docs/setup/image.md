@@ -114,8 +114,10 @@ make release-image     # updates CHANGELOG.md, prints the commands
 ```
 
 Pushing the tag triggers `image-build.yml`: a clean Buildroot build,
-cosign signing, and a GitHub Release carrying `waypoint.img`,
-`waypoint-prod-<ver>.swu`, their `.cosign` bundles, and `SHA256SUMS`.
+cosign signing, and a GitHub Release carrying `waypoint.img.xz` (the raw
+image exceeds GitHub's 2 GiB asset limit; Raspberry Pi Imager and Etcher
+flash `.img.xz` directly), `waypoint-prod-<ver>.swu`, their `.cosign`
+bundles, and `SHA256SUMS`.
 Expect 30 to 45 minutes. `make release-proxy` is the same flow for the
 proxy line (`proxy/CHANGELOG.md`, `proxy-v*` tags).
 
