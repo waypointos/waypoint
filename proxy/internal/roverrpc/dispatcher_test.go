@@ -213,7 +213,17 @@ func TestDispatcher_LeafBackedRoverGetsReply(t *testing.T) {
 	}
 	defer agentNC.Close()
 
-	resp, err := agentNC.Request("waypoint."+roverID+".rpc.basemap_tile", []byte("REQ"), 3*time.Second)
+	// The dispatcher's subscription interest crosses the leaf connection
+	// asynchronously; retry no-responders until it propagates.
+	var resp *nats.Msg
+	requestDeadline := time.Now().Add(5 * time.Second)
+	for {
+		resp, err = agentNC.Request("waypoint."+roverID+".rpc.basemap_tile", []byte("REQ"), 3*time.Second)
+		if !errors.Is(err, nats.ErrNoResponders) || time.Now().After(requestDeadline) {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
 	if err != nil {
 		t.Fatalf("rover->proxy request failed (the original bug): %v", err)
 	}
