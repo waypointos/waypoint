@@ -157,6 +157,23 @@ func TestSnapshot_RuntimeOrigin(t *testing.T) {
 	require.Equal(t, waypointv1.ModuleOrigin_MODULE_ORIGIN_LOCAL, snap.Modules[0].Origin)
 }
 
+// Runtime modules live in a map, whose range order Go randomizes per pass. The
+// dashboard derives tab order from this list, so it must be sorted by id.
+func TestSnapshot_RuntimeOrderIsStable(t *testing.T) {
+	p := NewSnapshotPublisher(nil, "rover", nil)
+	for _, id := range []string{"umr", "so100", "power-monitor", "drill"} {
+		p.SetRuntimeModule(id, id, "0.1.0", UIBinding{Kind: UIKindStatic, TabID: "m-" + id}, waypointv1.ModuleOrigin_MODULE_ORIGIN_LOCAL)
+	}
+	want := []string{"drill", "power-monitor", "so100", "umr"}
+	for i := 0; i < 50; i++ {
+		var got []string
+		for _, m := range p.buildSnapshot().Modules {
+			got = append(got, m.Id)
+		}
+		require.Equal(t, want, got)
+	}
+}
+
 // A module present both as a baked spec and a reconciler-attached runtime entry
 // must surface once (runtime wins) so the dashboard shows a single tab.
 func TestSnapshot_RuntimeShadowsBakedSpec(t *testing.T) {
