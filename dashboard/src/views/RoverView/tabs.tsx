@@ -10,6 +10,7 @@ import { ModulesManagePanel } from './panels/ModulesManagePanel';
 import { EpisodesPanel } from './panels/EpisodesPanel';
 import { ModulePanel } from './ModulePanel';
 import { ModuleIframe } from './ModuleIframe';
+import { ModuleTabFrame } from './ModuleTabFrame';
 
 export type RoverTab = {
   id: string;
@@ -39,10 +40,15 @@ function modulePanelFor(moduleId: string, kind: ModuleUI_Kind): ComponentType<{ 
   const key = `${kind}:${moduleId}`;
   let comp = modulePanelCache.get(key);
   if (!comp) {
-    comp =
-      kind === ModuleUI_Kind.PROXY
-        ? () => <ModuleIframe moduleId={moduleId} />
-        : ({ roverId }) => <ModulePanel moduleId={moduleId} roverId={roverId ?? ''} />;
+    comp = ({ roverId }) => (
+      <ModuleTabFrame moduleId={moduleId} roverId={roverId ?? ''}>
+        {kind === ModuleUI_Kind.PROXY ? (
+          <ModuleIframe moduleId={moduleId} />
+        ) : (
+          <ModulePanel moduleId={moduleId} roverId={roverId ?? ''} />
+        )}
+      </ModuleTabFrame>
+    );
     modulePanelCache.set(key, comp);
   }
   return comp;

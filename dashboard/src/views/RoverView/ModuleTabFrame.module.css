@@ -1,0 +1,44 @@
+.frame {
+  position: relative;
+}
+
+/* Sits over the module's own content so a panel that fills the tab keeps its
+   full width; the module never has to leave room for host chrome. */
+.chrome {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.gear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-fg-3);
+  cursor: pointer;
+}
+
+.gear:hover {
+  color: var(--color-fg);
+  border-color: var(--color-fg-4);
+}
+
+.gear:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.err {
+  color: var(--color-fault);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding-bottom: var(--space-sm);
+  word-break: break-word;
+}
