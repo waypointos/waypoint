@@ -76,6 +76,15 @@ func TestModulesRepo_SetDesired(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, got, 1)
 	require.Equal(t, "0.1.0", got[0].DesiredVersion)
+
+	// A version-only bump must keep the config: for many modules it is the only
+	// credential, and losing it silently breaks the module on the next update.
+	require.NoError(t, repo.SetDesiredVersion(context.Background(), "rover-01", "x", "0.2.0", u.ID))
+	got, err = repo.DesiredForRover(context.Background(), "rover-01")
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+	require.Equal(t, "0.2.0", got[0].DesiredVersion)
+	require.Equal(t, "[modules_config.x]\nhost = \"https://test\"\n", got[0].ConfigTOML)
 }
 
 func TestModulesRepo_Marketplace(t *testing.T) {

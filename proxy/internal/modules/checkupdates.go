@@ -100,9 +100,7 @@ func (c *CheckUpdater) CheckModule(ctx context.Context, moduleID string) (*Check
 			if !rm.AutoUpdate || rm.DesiredVersion == res.Latest {
 				continue
 			}
-			if err := c.Repo.SetDesired(ctx, db.SetDesiredInput{
-				RoverID: rm.RoverID, ModuleID: moduleID, DesiredVersion: res.Latest, UpdatedBy: mod.RegisteredBy,
-			}); err != nil {
+			if err := c.Repo.SetDesiredVersion(ctx, rm.RoverID, moduleID, res.Latest, mod.RegisteredBy); err != nil {
 				return nil, err
 			}
 			_ = c.Repo.SetAutoUpdate(ctx, rm.RoverID, moduleID, true)

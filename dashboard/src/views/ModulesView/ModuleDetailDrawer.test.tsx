@@ -36,8 +36,9 @@ describe('ModuleDetailDrawer', () => {
     render(<ModuleDetailDrawer module={mod} open onClose={() => {}} onChanged={() => {}} />);
     await waitFor(() => screen.getByText('Rover Two'));
     fireEvent.click(screen.getByRole('button', { name: /install 1\.5\.0/i }));
+    // No configToml: a deploy must not overwrite the rover's stored module config.
     await waitFor(() => expect(api.deployModule).toHaveBeenCalledWith('power', [
-      { roverId: 'r2', version: '1.5.0', autoUpdate: false, configToml: '' },
+      { roverId: 'r2', version: '1.5.0', autoUpdate: false },
     ]));
   });
 

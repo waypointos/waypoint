@@ -637,7 +637,9 @@ type deployRover struct {
 	RoverID    string `json:"rover_id"`
 	Version    string `json:"version"`
 	AutoUpdate bool   `json:"auto_update"`
-	ConfigTOML string `json:"config_toml"`
+	// Omitted (nil) keeps the rover's stored config; the config form is the
+	// only caller that means to replace it.
+	ConfigTOML *string `json:"config_toml"`
 }
 type deployRequest struct {
 	Rovers []deployRover `json:"rovers"`
@@ -701,10 +703,15 @@ func (a *API) HandleDeploy(w http.ResponseWriter, r *http.Request) {
 	}
 	var results []result
 	for _, rv := range in.Rovers {
-		err := a.repo.SetDesired(r.Context(), db.SetDesiredInput{
-			RoverID: rv.RoverID, ModuleID: moduleID, DesiredVersion: rv.Version,
-			ConfigTOML: rv.ConfigTOML, UpdatedBy: user.ID,
-		})
+		var err error
+		if rv.ConfigTOML == nil {
+			err = a.repo.SetDesiredVersion(r.Context(), rv.RoverID, moduleID, rv.Version, user.ID)
+		} else {
+			err = a.repo.SetDesired(r.Context(), db.SetDesiredInput{
+				RoverID: rv.RoverID, ModuleID: moduleID, DesiredVersion: rv.Version,
+				ConfigTOML: *rv.ConfigTOML, UpdatedBy: user.ID,
+			})
+		}
 		if err == nil {
 			err = a.repo.SetAutoUpdate(r.Context(), rv.RoverID, moduleID, rv.AutoUpdate)
 		}

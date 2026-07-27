@@ -70,3 +70,50 @@ func TestAPI_Marketplace_And_Deploy(t *testing.T) {
 	require.Equal(t, "1.0.0", out.Modules[0].LatestVersion)
 	require.Len(t, out.Modules[0].Rovers, 2)
 }
+
+// A marketplace deploy carries no config_toml, so it must not clear the config
+// an operator entered through the module config form.
+func TestAPI_Deploy_PreservesConfigWhenOmitted(t *testing.T) {
+	pool := newTestPool(t)
+	repo := db.NewModulesRepo(pool)
+	u, err := db.NewUsersRepo(pool).UpsertFromWorkOS(context.Background(), "wk_admin_cfg", "admincfg@example.com")
+	require.NoError(t, err)
+	ctx := authkit.WithUser(context.Background(), &authkit.CurrentUser{ID: u.ID, Email: u.Email, IsAdmin: true})
+
+	_, err = pool.Exec(ctx,
+		`INSERT INTO rovers (id, name, account_pubkey, enrolled_by_user_id) VALUES ($1, $2, $3, $4)`,
+		"rc1", "rc1", "pubkey-rc1", u.ID)
+	require.NoError(t, err)
+	require.NoError(t, repo.RegisterModule(ctx, db.RegisterModuleInput{
+		ModuleID: "umr", DisplayName: "Connectivity", SourceRepoURL: "https://github.com/waypointos/waypoint-umr",
+		ExpectedIdentitySAN: ".*", RegisteredBy: u.ID, RepoVisibility: "public",
+	}))
+	cfg := "[modules_config.umr]\npassword = \"secret\"\n"
+	require.NoError(t, repo.SetDesired(ctx, db.SetDesiredInput{
+		RoverID: "rc1", ModuleID: "umr", DesiredVersion: "0.3.0", ConfigTOML: cfg, UpdatedBy: u.ID,
+	}))
+
+	api := NewAPI(repo, NewDiskBlobStore(t.TempDir()), http.DefaultClient)
+	deploy := func(body []byte) {
+		req := httptest.NewRequest("POST", "/api/admin/modules/umr/deploy", bytes.NewReader(body)).WithContext(ctx)
+		req.SetPathValue("moduleID", "umr")
+		rec := httptest.NewRecorder()
+		api.HandleDeploy(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	}
+	desiredFor := func() db.DesiredRow {
+		rows, err := repo.DesiredForRover(ctx, "rc1")
+		require.NoError(t, err)
+		require.Len(t, rows, 1)
+		return rows[0]
+	}
+
+	deploy([]byte(`{"rovers":[{"rover_id":"rc1","version":"0.4.0","auto_update":true}]}`))
+	got := desiredFor()
+	require.Equal(t, "0.4.0", got.DesiredVersion)
+	require.Equal(t, cfg, got.ConfigTOML, "an omitted config_toml must keep the stored config")
+
+	// An explicit empty string still clears it: that is the form saying "no config".
+	deploy([]byte(`{"rovers":[{"rover_id":"rc1","version":"0.4.0","auto_update":true,"config_toml":""}]}`))
+	require.Empty(t, desiredFor().ConfigTOML)
+}
