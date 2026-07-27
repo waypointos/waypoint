@@ -17,19 +17,13 @@ Read-only. The module never writes back to the router.
 UMR is enabled through the proxy's module registry. The general mechanics are in
 [no-rebuild-modules.md](no-rebuild-modules.md); the module-specific steps are:
 
-1. Sign in to the proxy as an admin and open `/admin/modules` (equivalently,
-   `POST /api/admin/modules` with `{"source_repo_url": "..."}`).
+1. Sign in to the proxy as an admin and open `/admin/modules`.
 2. Register the source repository `https://github.com/waypointos/waypoint-umr`.
    The proxy fetches the latest release, verifies the cosign signature against
    the repository's own release workflow identity, and records the module.
-3. Enable it on a rover:
-   `POST /api/admin/rovers/{roverID}/modules/umr` with
-   `{"version": "0.4.0", "config_toml": "..."}`. The proxy publishes the rover's
-   desired module state; the agent fetches the `.raw`, attaches it, and starts
-   the unit within seconds.
-
-The `config_toml` carries the router address, the owner password, and the poll
-period:
+3. Open the rover's `MODULES` tab and press **Enable on this rover** on the
+   `umr` row. The config form opens before the module is enabled: enter the
+   router address, the owner password, and the poll period.
 
 ```toml
 host             = "https://192.168.105.1"
@@ -44,6 +38,20 @@ router but every login is rejected.
 Within ~5 seconds of the agent picking up the module, the dashboard's
 `CONNECTION` tab appears for this rover (`infra.modules` reports the module
 healthy).
+
+## Changing the password later
+
+Either the gear in the `CONNECTION` tab's top-right corner or the gear on the
+rover's `MODULES` tab reopens the same form. Saving republishes the rover's
+desired state; the agent rewrites `config.toml` and restarts the module, so the
+new password takes effect in seconds with no reboot.
+
+The equivalent API call is
+`POST /api/admin/rovers/{roverID}/modules/umr` with
+`{"version": "0.4.0", "config_toml": "..."}`. Note that `config_toml` is a
+document the *agent* parses, so the keys go inside a `[modules_config.umr]`
+table; the form adds that wrapper for you. Sending the flat keys above with no
+table header is silently equivalent to sending no config at all.
 
 ## Release
 
@@ -105,7 +113,7 @@ reasons:
 
 | Reason text | Means | Fix |
 |---|---|---|
-| `router login failing` | Module is reaching the UMR HTTP API but the password is being rejected. | Re-check the password in the module configuration; restart the agent. |
+| `router login failing` | Module is reaching the UMR HTTP API but the password is being rejected, including when no password is configured at all. | Re-enter the password with the gear in this tab (see [Changing the password later](#changing-the-password-later)). |
 | `not on LTE` | The current WAN is wifi or ethernet, so LTE-only fields (RSRP/RSRQ/RSSI/band) are not reported. | Expected. |
 | `not on wifi` | The current WAN is LTE or ethernet, so the wifi SSID/bars are not reported. | Expected. |
 | `unreported` | The router itself didn't include the field in the InfoDump (firmware variation). | Open an issue with the firmware version. |

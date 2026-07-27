@@ -341,6 +341,12 @@ password        = "<secret>"
 poll_interval_s = 5
 ```
 
+The file is flat, as above. Operators edit these keys in the dashboard's module
+config form and the agent stores them per rover inside a `[modules_config.<id>]`
+table, but that wrapper never reaches the module. An edit rewrites `config.toml`
+and restarts the unit, so reading the file once at startup is enough; document
+each key in the module's README, since the form cannot know the schema.
+
 ### 6.3 Signaling readiness
 
 The unit is `Type=notify`, and the SDK sends `READY=1` for you, immediately
@@ -598,8 +604,9 @@ documented in `docs/setup/no-rebuild-modules.md`; the short version:
 1. **Register** (proxy admin, `/admin/modules`): paste the module repo URL and
    id. The proxy fetches the latest release, verifies the signature, pins the
    signer identity (trust on first use), and records the module in the registry.
-2. **Enable per rover**: set the desired version and the per-rover
-   `config_toml`. The proxy publishes `waypoint.<rover>.modules.desired`.
+2. **Enable per rover** (rover → MODULES tab → Enable on this rover): the
+   config form collects the per-rover `config_toml` alongside the desired
+   version. The proxy publishes `waypoint.<rover>.modules.desired`.
 3. **Reconcile** (on the rover, automatic): the agent's reconciler picks up the
    desired set within seconds, fetches the `.raw` (verifying the sha256 and the
    signature), attaches it with `portablectl`, writes `config.toml` and

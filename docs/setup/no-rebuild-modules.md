@@ -44,9 +44,12 @@ rover fetch of those versions then fails until a newer version is ingested.
 
 ## Enabling a module on a rover
 
-1. Navigate to the rover's settings → MODULES tab (future iteration; in v1
-   this is operated via `POST /api/admin/rovers/{roverID}/modules/{moduleID}`
-   with `{ "version": "0.1.0", "config_toml": "..." }`).
+1. Open the rover's MODULES tab and press **Enable on this rover**. The config
+   form opens first, so a module that needs credentials has them before it ever
+   starts; the gear on the row (or in the module's own tab) reopens it later.
+   The equivalent call is `POST /api/admin/rovers/{roverID}/modules/{moduleID}`
+   with `{ "version": "0.1.0", "config_toml": "..." }`, where `config_toml`
+   holds the module's keys inside a `[modules_config.<id>]` table.
 2. The proxy publishes `waypoint.<rover-id>.modules.desired`. The rover's
    reconciler picks it up within seconds, fetches the `.raw`, attaches it
    via `portablectl`, and starts the unit.
