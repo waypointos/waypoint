@@ -34,7 +34,7 @@ export function ModuleDetailDrawer({ module, open, onClose, onChanged }: Props) 
   async function deployOne(roverId: string, version: string, autoUpdate: boolean) {
     setBusy(true);
     try {
-      await deployModule(module.moduleId, [{ roverId, version, autoUpdate, configToml: '' }]);
+      await deployModule(module.moduleId, [{ roverId, version, autoUpdate }]);
       onChanged();
     } finally {
       setBusy(false);

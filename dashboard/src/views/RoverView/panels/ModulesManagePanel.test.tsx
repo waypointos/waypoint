@@ -228,7 +228,7 @@ describe('ModulesManagePanel — proxy mode', () => {
     await waitFor(() => expect(screen.getByText('0.1.0')).toBeInTheDocument());
   });
 
-  it('clicking Enable calls setRoverDesired with latest version then refreshes', async () => {
+  it('Enable collects config first, then sets desired at the latest version', async () => {
     mockListRegistered.mockResolvedValue([
       {
         moduleId: 'power-monitor',
@@ -237,12 +237,62 @@ describe('ModulesManagePanel — proxy mode', () => {
         versions: [{ version: '0.2.0', ingestedAt: '2026-05-01T00:00:00Z' }],
       },
     ]);
+    mockSetDesired.mockResolvedValue(undefined);
     renderPanel();
     await waitFor(() => expect(screen.getByTestId('enable-power-monitor')).toBeInTheDocument());
 
     fireEvent.click(screen.getByTestId('enable-power-monitor'));
+    const box = await screen.findByLabelText('Module config TOML');
+    expect(mockSetDesired).not.toHaveBeenCalled();
+
+    fireEvent.change(box, { target: { value: 'shunt_ohms = 0.01\n' } });
+    fireEvent.click(screen.getByTestId('save-module-config'));
     await waitFor(() =>
-      expect(mockSetDesired).toHaveBeenCalledWith('rover-dev', 'power-monitor', '0.2.0', ''),
+      expect(mockSetDesired).toHaveBeenCalledWith(
+        'rover-dev',
+        'power-monitor',
+        '0.2.0',
+        '[modules_config.power-monitor]\nshunt_ohms = 0.01\n',
+      ),
+    );
+  });
+
+  it('gear on an enabled module edits its config, keeping the pinned version', async () => {
+    mockUseMe.mockReturnValue({ mode: 'proxy', isAdmin: true } as never);
+    mockListRegistered.mockResolvedValue([
+      {
+        moduleId: 'umr',
+        displayName: 'Connectivity',
+        sourceRepoUrl: 'https://github.com/waypointos/waypoint-umr',
+        versions: [{ version: '0.4.0', ingestedAt: '2026-07-27T00:00:00Z' }],
+      },
+    ]);
+    mockListDesired.mockResolvedValue([
+      {
+        moduleId: 'umr',
+        version: '0.4.0',
+        configToml: '[modules_config.umr]\nhost = "https://192.168.105.1"\n',
+        updatedAt: '2026-07-27T00:00:00Z',
+      },
+    ]);
+    mockSetDesired.mockResolvedValue(undefined);
+    renderPanel();
+    await waitFor(() => expect(screen.getByTestId('configure-umr')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('configure-umr'));
+    // The stored table wrapper is the agent's concern; the operator sees flat keys.
+    const box = (await screen.findByLabelText('Module config TOML')) as HTMLTextAreaElement;
+    expect(box.value).toBe('host = "https://192.168.105.1"\n');
+
+    fireEvent.change(box, { target: { value: 'host = "https://10.0.0.1"\npassword = "pw"\n' } });
+    fireEvent.click(screen.getByTestId('save-module-config'));
+    await waitFor(() =>
+      expect(mockSetDesired).toHaveBeenCalledWith(
+        'rover-dev',
+        'umr',
+        '0.4.0',
+        '[modules_config.umr]\nhost = "https://10.0.0.1"\npassword = "pw"\n',
+      ),
     );
   });
 

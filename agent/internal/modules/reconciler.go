@@ -56,8 +56,12 @@ type Reconciler struct {
 	// be granted its NATS creds live (the module reads creds.env on startup). nil
 	// disables (tests, boot-provisioned modules already have creds).
 	EnsureCreds func(ctx context.Context, d *waypointv1.ModuleDesired) error
+	// SyncConfig writes the module's per-rover config.toml from the desired
+	// entry, before every start. nil disables (tests).
+	SyncConfig func(ctx context.Context, d *waypointv1.ModuleDesired) error
 
-	current map[string]string // moduleID → currently-attached raw path
+	current       map[string]string // moduleID → currently-attached raw path
+	currentConfig map[string]string // moduleID → config_toml last written
 }
 
 // DefaultModuleMountRoot is where the agent mounts attached module images
@@ -91,6 +95,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *waypointv1.DesiredM
 	if r.current == nil {
 		r.current = map[string]string{}
 	}
+	if r.currentConfig == nil {
+		r.currentConfig = map[string]string{}
+	}
 	want := map[string]*waypointv1.ModuleDesired{}
 	for _, m := range desired.Modules {
 		want[m.Id] = m
@@ -114,6 +121,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *waypointv1.DesiredM
 	for id, m := range want {
 		dest := r.rawDest(id, m.Version)
 		if r.current[id] == dest {
+			if err := r.applyConfigChange(ctx, id, m); err != nil {
+				slog.Warn(fmt.Sprintf("reconcile: config %s: %v", id, err))
+			}
 			continue // already attached at the desired version
 		}
 		if _, err := os.Stat(dest); os.IsNotExist(err) {
@@ -154,11 +164,18 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *waypointv1.DesiredM
 				continue
 			}
 		}
+		if r.SyncConfig != nil {
+			if err := r.SyncConfig(ctx, m); err != nil {
+				slog.Warn(fmt.Sprintf("reconcile: config %s: %v", id, err))
+				continue
+			}
+		}
 		if err := r.Supervisor.Start(ctx, id); err != nil {
 			slog.Warn(fmt.Sprintf("reconcile: start %s: %v", id, err))
 			continue
 		}
 		r.current[id] = dest
+		r.currentConfig[id] = m.GetConfigToml()
 		if r.OnAttach != nil {
 			r.OnAttach(id, manifest)
 		}
@@ -183,6 +200,28 @@ func (r *Reconciler) attach(ctx context.Context, id, dest string) error {
 		return fmt.Errorf("%w (detach for retry: %v)", err, detachErr)
 	}
 	return r.Portable.Attach(ctx, dest)
+}
+
+// applyConfigChange rewrites config.toml and restarts an already-attached module
+// whose per-rover config changed. A module reads config.toml once at startup, so
+// without the restart an operator's edit would sit unread until the next reboot.
+func (r *Reconciler) applyConfigChange(ctx context.Context, id string, m *waypointv1.ModuleDesired) error {
+	if r.currentConfig[id] == m.GetConfigToml() {
+		return nil
+	}
+	if r.SyncConfig != nil {
+		if err := r.SyncConfig(ctx, m); err != nil {
+			return fmt.Errorf("write config: %w", err)
+		}
+	}
+	if err := r.Supervisor.Stop(ctx, id); err != nil {
+		return fmt.Errorf("stop: %w", err)
+	}
+	if err := r.Supervisor.Start(ctx, id); err != nil {
+		return fmt.Errorf("start: %w", err)
+	}
+	r.currentConfig[id] = m.GetConfigToml()
+	return nil
 }
 
 // readManifest mounts module <id>'s attached image read-only and parses its

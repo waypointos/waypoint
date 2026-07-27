@@ -191,6 +191,50 @@ func TestReconcile_DetachRemovedModule(t *testing.T) {
 	require.Equal(t, []string{"old"}, sup.stopped)
 }
 
+// A config edit arrives as the same id at the same version, so the reconciler
+// must notice the changed config_toml, rewrite it, and restart the module.
+func TestReconcile_ConfigChangeRewritesAndRestarts(t *testing.T) {
+	root := t.TempDir()
+	port := newFakePortable()
+	sup := &fakeSupervisor{}
+	var written []string
+	r := &Reconciler{
+		RootDir:    root,
+		Portable:   port,
+		Fetcher:    &fakeFetcher{bytes: map[string][]byte{"https://p/x.raw": []byte("raw")}},
+		Supervisor: sup,
+		SyncConfig: func(_ context.Context, d *waypointv1.ModuleDesired) error {
+			written = append(written, d.GetConfigToml())
+			return nil
+		},
+	}
+	desired := func(cfg string) *waypointv1.DesiredModuleSet {
+		return &waypointv1.DesiredModuleSet{Modules: []*waypointv1.ModuleDesired{
+			{Id: "umr", Version: "0.4.0", RawUrl: "https://p/x.raw", ConfigToml: cfg},
+		}}
+	}
+
+	require.NoError(t, r.Reconcile(context.Background(), desired("")))
+	require.Equal(t, []string{"umr"}, sup.started)
+	require.Equal(t, []string{""}, written)
+
+	// Same desired set again: nothing to do.
+	require.NoError(t, r.Reconcile(context.Background(), desired("")))
+	require.Equal(t, []string{"umr"}, sup.started)
+	require.Len(t, written, 1)
+
+	cfg := "[modules_config.umr]\npassword = \"secret\"\n"
+	require.NoError(t, r.Reconcile(context.Background(), desired(cfg)))
+	require.Equal(t, []string{cfg}, written[1:], "changed config must be rewritten")
+	require.Equal(t, []string{"umr"}, sup.stopped, "module must restart to reread config.toml")
+	require.Equal(t, []string{"umr", "umr"}, sup.started)
+
+	// Settled: a repeat of the new config does not restart it again.
+	require.NoError(t, r.Reconcile(context.Background(), desired(cfg)))
+	require.Equal(t, []string{"umr"}, sup.stopped)
+	require.Equal(t, []string{"umr", "umr"}, sup.started)
+}
+
 func TestReconcile_VersionUpgrade(t *testing.T) {
 	root := t.TempDir()
 	port := newFakePortable()

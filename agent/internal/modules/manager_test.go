@@ -328,6 +328,27 @@ func TestProvisionCachedDesiredCreds_WritesConfigFromDesired(t *testing.T) {
 	require.Contains(t, string(data), "192.168.105.1", "config.toml must carry the module's per-rover settings")
 }
 
+// writeDesiredConfig is what a live config edit rides: it must unwrap
+// [modules_config.<id>] into the flat config.toml the module reads, without
+// needing the module's NATS creds (which it already holds by then).
+func TestWriteDesiredConfig_UnwrapsModuleTable(t *testing.T) {
+	runtime := t.TempDir()
+	m := &Manager{opts: Options{RuntimeDir: runtime}}
+	d := &waypointv1.ModuleDesired{
+		Id:         "umr",
+		Version:    "0.4.0",
+		ConfigToml: "[modules_config.umr]\nhost = \"https://192.168.105.1\"\npassword = \"secret\"\n",
+	}
+
+	require.NoError(t, m.writeDesiredConfig(context.Background(), d))
+
+	data, err := os.ReadFile(filepath.Join(runtime, "umr", "config.toml"))
+	require.NoError(t, err)
+	require.Contains(t, string(data), "192.168.105.1")
+	require.Contains(t, string(data), "secret")
+	require.NotContains(t, string(data), "modules_config", "the table wrapper is the agent's, not the module's")
+}
+
 // TestProvisionCachedDesiredCreds_FallsBackToRoverConfig verifies that when the
 // desired entry carries no ConfigToml (config still lives in modules.toml), the
 // module's config.toml is written from the rover's modules.toml config. This

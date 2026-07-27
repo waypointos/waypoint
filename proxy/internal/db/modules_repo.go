@@ -155,6 +155,21 @@ func (r *ModulesRepo) SetDesired(ctx context.Context, in SetDesiredInput) error 
 	return err
 }
 
+// SetDesiredVersion pins a version and leaves config_toml alone. A version-only
+// change (auto-update, marketplace deploy) must not wipe the per-rover config an
+// operator entered, which is often the module's only credential.
+func (r *ModulesRepo) SetDesiredVersion(ctx context.Context, roverID, moduleID, version string, updatedBy uuid.UUID) error {
+	_, err := r.pool.Exec(ctx, `
+		INSERT INTO rover_module_state (rover_id, module_id, desired_version, config_toml, updated_by, updated_at)
+		VALUES ($1, $2, $3, '', $4, NOW())
+		ON CONFLICT (rover_id, module_id) DO UPDATE SET
+		  desired_version = EXCLUDED.desired_version,
+		  updated_by      = EXCLUDED.updated_by,
+		  updated_at      = NOW()
+	`, roverID, moduleID, version, updatedBy)
+	return err
+}
+
 func (r *ModulesRepo) DesiredForRover(ctx context.Context, roverID string) ([]DesiredRow, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT rover_id, module_id, COALESCE(desired_version,''), COALESCE(config_toml,''), updated_by, updated_at

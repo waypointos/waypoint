@@ -4,6 +4,7 @@
 //   LOCAL:  upload .raw + cosign bundle, verify signer SAN, install/uninstall via agent HTTP API.
 //   PROXY:  show running snapshot, registry list with per-rover desired state, register new modules.
 import { useEffect, useRef, useState } from 'react';
+import { Settings } from 'lucide-react';
 import { Panel } from '@/ui/primitives/Panel';
 import { Button } from '@/ui/primitives/Button';
 import { Chip } from '@/ui/primitives/Chip';
@@ -23,12 +24,12 @@ import {
   listRegistered,
   registerModule,
   listRoverDesired,
-  setRoverDesired,
   unpinRoverModule,
   deleteModule,
   type RegisteredModule,
   type DesiredModule,
 } from '../proxyModulesApi';
+import { ModuleConfigDialog } from '../ModuleConfigDialog';
 import styles from './ModulesManagePanel.module.css';
 
 type Props = { roverId?: string };
@@ -85,18 +86,14 @@ export function ModulesManagePanel({ roverId = '' }: Props) {
 
   useEffect(() => { if (isProxy && roverId) void refreshProxy(); }, [isProxy, roverId]);
 
-  async function handleEnable(moduleId: string, version: string) {
-    setProxyBusy(moduleId);
-    setError(null);
-    try {
-      await setRoverDesired(roverId, moduleId, version, '');
-      await refreshProxy();
-    } catch (e) {
-      setError(String((e as Error).message ?? e));
-    } finally {
-      setProxyBusy(null);
-    }
-  }
+  // Enabling and reconfiguring are the same POST, so both open the config
+  // dialog: a module that needs credentials gets them before it ever starts.
+  const [configTarget, setConfigTarget] = useState<{
+    moduleId: string;
+    version: string;
+    configToml: string;
+    intent: 'enable' | 'edit';
+  } | null>(null);
 
   async function handleDisable(moduleId: string) {
     setProxyBusy(moduleId);
@@ -460,20 +457,43 @@ export function ModulesManagePanel({ roverId = '' }: Props) {
                         <td>
                           <div className={styles.rowActions}>
                             {desiredEntry ? (
-                              <Button
-                                size="sm"
-                                disabled={isEnabling}
-                                onClick={() => void handleDisable(m.moduleId)}
-                                data-testid={`disable-${m.moduleId}`}
-                              >
-                                Disable on this rover
-                              </Button>
+                              <>
+                                <Button
+                                  size="sm"
+                                  disabled={isEnabling}
+                                  onClick={() => void handleDisable(m.moduleId)}
+                                  data-testid={`disable-${m.moduleId}`}
+                                >
+                                  Disable on this rover
+                                </Button>
+                                <button
+                                  type="button"
+                                  className={styles.configBtn}
+                                  disabled={isEnabling}
+                                  title={`Configure ${m.moduleId}`}
+                                  aria-label={`Configure ${m.moduleId}`}
+                                  onClick={() => setConfigTarget({
+                                    moduleId: m.moduleId,
+                                    version: desiredEntry.version,
+                                    configToml: desiredEntry.configToml,
+                                    intent: 'edit',
+                                  })}
+                                  data-testid={`configure-${m.moduleId}`}
+                                >
+                                  <Settings size={13} />
+                                </button>
+                              </>
                             ) : (
                               <Button
                                 size="sm"
                                 variant="primary"
                                 disabled={isEnabling || !latestVersion}
-                                onClick={() => void handleEnable(m.moduleId, latestVersion)}
+                                onClick={() => setConfigTarget({
+                                  moduleId: m.moduleId,
+                                  version: latestVersion,
+                                  configToml: '',
+                                  intent: 'enable',
+                                })}
                                 data-testid={`enable-${m.moduleId}`}
                               >
                                 Enable on this rover
@@ -536,6 +556,19 @@ export function ModulesManagePanel({ roverId = '' }: Props) {
             )}
           </Panel>
         </>
+      )}
+
+      {configTarget && (
+        <ModuleConfigDialog
+          open
+          roverId={roverId}
+          moduleId={configTarget.moduleId}
+          version={configTarget.version}
+          configToml={configTarget.configToml}
+          intent={configTarget.intent}
+          onSaved={() => void refreshProxy()}
+          onClose={() => setConfigTarget(null)}
+        />
       )}
     </div>
   );

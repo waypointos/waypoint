@@ -95,7 +95,9 @@ export type MarketplaceModule = {
   rovers: MarketplaceRover[];
 };
 export type CheckResult = { ingested: string[]; latest: string; autoUpdatedRovers: string[] };
-export type DeployRover = { roverId: string; version: string; autoUpdate: boolean; configToml: string };
+// configToml omitted keeps whatever config the rover already has; the proxy only
+// replaces it when the key is present.
+export type DeployRover = { roverId: string; version: string; autoUpdate: boolean; configToml?: string };
 
 export async function listMarketplace(): Promise<MarketplaceModule[]> {
   const r = await ok(await fetch('/api/admin/marketplace', { credentials: 'include' }));
@@ -129,6 +131,13 @@ export async function checkModuleUpdates(moduleId: string): Promise<CheckResult>
 export async function deployModule(moduleId: string, rovers: DeployRover[]): Promise<void> {
   await ok(await fetch(`/api/admin/modules/${encodeURIComponent(moduleId)}/deploy`, {
     method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ rovers: rovers.map((rv) => ({ rover_id: rv.roverId, version: rv.version, auto_update: rv.autoUpdate, config_toml: rv.configToml })) }),
+    body: JSON.stringify({
+      rovers: rovers.map((rv) => ({
+        rover_id: rv.roverId,
+        version: rv.version,
+        auto_update: rv.autoUpdate,
+        ...(rv.configToml === undefined ? {} : { config_toml: rv.configToml }),
+      })),
+    }),
   }));
 }
