@@ -1,9 +1,11 @@
 package modules
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 // PortableImage is the subset of portablectl + systemd-dissect behaviour the
@@ -25,7 +27,14 @@ type runner interface {
 type osRunner struct{}
 
 func (osRunner) Run(_ context.Context, c *exec.Cmd) error {
+	// Capture stderr: portablectl and systemd-dissect report the actual reason
+	// there, and a bare "exit status 1" in the agent log is undiagnosable.
+	var stderr bytes.Buffer
+	c.Stderr = &stderr
 	if err := c.Run(); err != nil {
+		if msg := strings.TrimSpace(stderr.String()); msg != "" {
+			return fmt.Errorf("%s: %w (%s)", c.Args[0], err, msg)
+		}
 		return fmt.Errorf("%s: %w", c.Args[0], err)
 	}
 	return nil
