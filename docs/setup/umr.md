@@ -24,7 +24,7 @@ UMR is enabled through the proxy's module registry. The general mechanics are in
    the repository's own release workflow identity, and records the module.
 3. Enable it on a rover:
    `POST /api/admin/rovers/{roverID}/modules/umr` with
-   `{"version": "0.2.0", "config_toml": "..."}`. The proxy publishes the rover's
+   `{"version": "0.4.0", "config_toml": "..."}`. The proxy publishes the rover's
    desired module state; the agent fetches the `.raw`, attaches it, and starts
    the unit within seconds.
 
@@ -67,14 +67,14 @@ clone needs no deploy key and no Actions secret.
 
 Tag and push:
 
-    git tag v0.2.0
-    git push origin v0.2.0
+    git tag v0.4.0
+    git push origin v0.4.0
 
 The `v*` tag triggers the workflow. Confirm the GitHub Release carries three
 assets:
 
-- `umr-0.2.0.raw`
-- `umr-0.2.0.raw.cosign`
+- `umr-0.4.0.raw`
+- `umr-0.4.0.raw.cosign`
 - `manifest.json`
 
 There is no signing key to manage: cosign keyless derives the identity from the
