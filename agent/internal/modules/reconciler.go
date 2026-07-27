@@ -122,7 +122,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *waypointv1.DesiredM
 				continue
 			}
 		}
-		if err := r.Portable.Attach(ctx, dest); err != nil {
+		if err := r.attach(ctx, id, dest); err != nil {
 			slog.Warn(fmt.Sprintf("reconcile: attach %s: %v", id, err))
 			continue
 		}
@@ -164,6 +164,25 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *waypointv1.DesiredM
 		}
 	}
 	return nil
+}
+
+// attach attaches the image, retrying once behind a detach. A --runtime attach
+// lives in /run and outlives both a failed start and the agent process, while
+// the map that records it does not. portablectl refuses to attach over an
+// existing attachment, so without the retry an image left attached by an
+// earlier pass wedges the module out of the snapshot until the next reboot.
+func (r *Reconciler) attach(ctx context.Context, id, dest string) error {
+	err := r.Portable.Attach(ctx, dest)
+	if err == nil {
+		return nil
+	}
+	// Stop is best-effort: portablectl will not detach a running unit, and a
+	// unit that is already inactive (or absent) makes this a no-op.
+	_ = r.Supervisor.Stop(ctx, id)
+	if detachErr := r.Portable.Detach(ctx, id); detachErr != nil {
+		return fmt.Errorf("%w (detach for retry: %v)", err, detachErr)
+	}
+	return r.Portable.Attach(ctx, dest)
 }
 
 // readManifest mounts module <id>'s attached image read-only and parses its

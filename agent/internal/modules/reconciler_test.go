@@ -2,6 +2,8 @@ package modules
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,6 +30,11 @@ func (f *fakePortable) Attach(_ context.Context, rawPath string) error {
 	// Mirror real portablectl: the portable name is the image filename stem
 	// (no version truncation), e.g. .../power-monitor.raw -> power-monitor.
 	name := strings.TrimSuffix(filepath.Base(rawPath), ".raw")
+	// Real portablectl exits non-zero rather than attaching over an existing
+	// attachment; the fake must too, or reconcile bugs stay invisible in tests.
+	if _, ok := f.attached[name]; ok {
+		return fmt.Errorf("portablectl: image %s is already attached", name)
+	}
 	f.attached[name] = rawPath
 	return nil
 }
@@ -64,12 +71,16 @@ func (f *fakeFetcher) Fetch(_ context.Context, url, _, dest string) error {
 }
 
 type fakeSupervisor struct {
-	started []string
-	stopped []string
-	active  bool
+	started  []string
+	stopped  []string
+	active   bool
+	startErr error
 }
 
 func (f *fakeSupervisor) Start(_ context.Context, moduleID string) error {
+	if f.startErr != nil {
+		return f.startErr
+	}
 	f.started = append(f.started, moduleID)
 	return nil
 }
@@ -102,6 +113,64 @@ func TestReconcile_AttachNewModule(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, port.Attached(), "power-monitor")
 	require.Equal(t, []string{"power-monitor"}, sup.started)
+}
+
+// A --runtime attach lives in /run and outlives both a failed start and the
+// agent process, while r.current is in-memory. Reconcile must recover from an
+// attached-but-untracked image instead of wedging on portablectl's refusal to
+// attach over it.
+func TestReconcile_RecoversFromUntrackedAttach(t *testing.T) {
+	root := t.TempDir()
+	dest := filepath.Join(root, "modules/drill/0.1.0/drill.raw")
+	require.NoError(t, os.MkdirAll(filepath.Dir(dest), 0o755))
+	require.NoError(t, os.WriteFile(dest, []byte("raw"), 0o644))
+
+	port := newFakePortable()
+	port.attached["drill"] = dest // attached by an earlier pass, never tracked
+	sup := &fakeSupervisor{}
+	var attachedIDs []string
+	r := &Reconciler{
+		RootDir:    root,
+		Portable:   port,
+		Fetcher:    &fakeFetcher{},
+		Supervisor: sup,
+		OnAttach:   func(id string, _ *Manifest) { attachedIDs = append(attachedIDs, id) },
+	}
+	desired := &waypointv1.DesiredModuleSet{Modules: []*waypointv1.ModuleDesired{
+		{Id: "drill", Version: "0.1.0", RawUrl: "https://p/drill.raw"},
+	}}
+
+	require.NoError(t, r.Reconcile(context.Background(), desired))
+	require.Equal(t, []string{"drill"}, sup.started, "module must start despite the stale attach")
+	require.Equal(t, []string{"drill"}, attachedIDs, "OnAttach must fire so the module reaches the snapshot")
+	require.Contains(t, port.Attached(), "drill")
+}
+
+// The failure observed on hardware: the first pass attaches, then dies before
+// tracking the module. Every later pass must still be able to bring it up.
+func TestReconcile_StartFailureRecoversOnNextPass(t *testing.T) {
+	root := t.TempDir()
+	port := newFakePortable()
+	sup := &fakeSupervisor{startErr: errors.New("unit failed")}
+	var attachedIDs []string
+	r := &Reconciler{
+		RootDir:    root,
+		Portable:   port,
+		Fetcher:    &fakeFetcher{bytes: map[string][]byte{"https://p/drill.raw": []byte("raw")}},
+		Supervisor: sup,
+		OnAttach:   func(id string, _ *Manifest) { attachedIDs = append(attachedIDs, id) },
+	}
+	desired := &waypointv1.DesiredModuleSet{Modules: []*waypointv1.ModuleDesired{
+		{Id: "drill", Version: "0.1.0", RawUrl: "https://p/drill.raw"},
+	}}
+
+	require.NoError(t, r.Reconcile(context.Background(), desired))
+	require.Empty(t, attachedIDs, "a failed start must not surface the module")
+
+	sup.startErr = nil
+	require.NoError(t, r.Reconcile(context.Background(), desired))
+	require.Equal(t, []string{"drill"}, sup.started)
+	require.Equal(t, []string{"drill"}, attachedIDs, "the retry must recover, not wedge on the stale attach")
 }
 
 func TestReconcile_DetachRemovedModule(t *testing.T) {
