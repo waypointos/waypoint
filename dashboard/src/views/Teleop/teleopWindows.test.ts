@@ -20,6 +20,17 @@ describe('resolveTeleopWindows', () => {
     expect(resolveTeleopWindows([mod('so100', false, {})], 'local')).toEqual([]);
   });
 
+  it('orders windows by label, not snapshot order', () => {
+    const mods = [
+      mod('umr', true, { label: 'Connectivity' }),
+      mod('so100', true, { label: 'Arm' }),
+      mod('drill', true, { label: 'Drill' }),
+    ];
+    const labels = (ms: ModuleInfo[]) => resolveTeleopWindows(ms, 'local').map((w) => w.label);
+    expect(labels(mods)).toEqual(['Arm', 'Connectivity', 'Drill']);
+    expect(labels([...mods].reverse())).toEqual(['Arm', 'Connectivity', 'Drill']);
+  });
+
   it('over proxy, only PROXY-origin windows show', () => {
     const local = mod('so100', true, {}, ModuleOrigin.LOCAL);
     const proxy = mod('p', true, {}, ModuleOrigin.PROXY);

@@ -2,6 +2,8 @@ package modules
 
 import (
 	"context"
+	"maps"
+	"slices"
 	"sync"
 	"time"
 
@@ -158,7 +160,10 @@ func (p *SnapshotPublisher) buildSnapshot() *waypointv1.ModuleSnapshot {
 		}
 		msg.Modules = append(msg.Modules, info)
 	}
-	for id, rm := range p.runtime {
+	// Sorted: map order would otherwise reshuffle the dashboard's module tabs
+	// on every snapshot.
+	for _, id := range slices.Sorted(maps.Keys(p.runtime)) {
+		rm := p.runtime[id]
 		info := &waypointv1.ModuleInfo{
 			Id: id, Label: rm.label, Version: rm.version,
 			TabId: rm.ui.TabID, Healthy: p.healthy[id], Ui: uiToProto(rm.ui),

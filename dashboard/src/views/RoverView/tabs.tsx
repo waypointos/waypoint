@@ -68,6 +68,8 @@ export function resolveTabs(modules: ModuleInfo[], sessionMode: Mode): RoverTab[
         panel,
         moduleId,
       };
-    });
+    })
+    // Snapshot order is not guaranteed stable; sort so tabs never swap places.
+    .sort((a, b) => a.label.localeCompare(b.label) || a.id.localeCompare(b.id));
   return [...BUILTIN_TABS, ...moduleTabs];
 }

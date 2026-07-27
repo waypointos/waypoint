@@ -22,5 +22,7 @@ export function resolveTeleopWindows(modules: ModuleInfo[], sessionMode: Mode): 
       label: m.ui!.teleop!.label || m.id,
       entry: m.ui!.teleop!.entry,
       bindings: m.ui!.teleop!.bindings,
-    }));
+    }))
+    // Snapshot order is not guaranteed stable; sort so the rail never reorders.
+    .sort((a, b) => a.label.localeCompare(b.label) || a.windowId.localeCompare(b.windowId));
 }

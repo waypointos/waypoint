@@ -65,6 +65,17 @@ describe('resolveTabs', () => {
     expect(tabs.find(t => t.id === 'm-pm')).toBeUndefined();
   });
 
+  it('orders module tabs by label, not snapshot order', () => {
+    const modules = [
+      info({ id: 'umr', label: 'Connectivity', ui: { kind: ModuleUI_Kind.STATIC, tabId: 'm-umr', lanOnly: false } }),
+      info({ id: 'so100', label: 'Arm', ui: { kind: ModuleUI_Kind.STATIC, tabId: 'm-so100', lanOnly: false } }),
+      info({ id: 'pm', label: 'Power Monitor', ui: { kind: ModuleUI_Kind.STATIC, tabId: 'm-pm', lanOnly: false } }),
+    ];
+    const ids = (ms: ModuleInfo[]) => resolveTabs(ms, 'local').filter(t => t.moduleId).map(t => t.id);
+    expect(ids(modules)).toEqual(['m-so100', 'm-umr', 'm-pm']);
+    expect(ids([...modules].reverse())).toEqual(['m-so100', 'm-umr', 'm-pm']);
+  });
+
   it('proxy mode: hides lan_only module even if proxy-origin STATIC', () => {
     const tabs = resolveTabs([
       info({ id: 'pm', origin: ModuleOrigin.PROXY, ui: { kind: ModuleUI_Kind.STATIC, tabId: 'm-pm', lanOnly: true } }),
