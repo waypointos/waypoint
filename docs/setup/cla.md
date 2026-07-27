@@ -8,15 +8,13 @@ the repository.
 
 ## One-time maintainer setup
 
-No tokens or secrets to create. Because signatures are stored in this same
-repository, the built-in `GITHUB_TOKEN` does everything. Two steps:
+No tokens, secrets, or repository settings to create. The workflow's
+`permissions` block grants the built-in `GITHUB_TOKEN` the write scopes it
+needs (that block overrides the repository's read-only Actions default), and
+signatures are stored in this same repository. One step:
 
-1. **Allow Actions to write and comment on PRs:** repo Settings > Actions >
-   General > Workflow permissions > enable "Read and write permissions" and
-   "Allow GitHub Actions to create and approve pull requests."
-
-2. **Push `CLA.md` to the default branch** so the `path-to-document` URL in the
-   workflow resolves. (It points at `main`; the relicense commit handles this.)
+1. **Push `CLA.md` to the default branch** so the `path-to-document` URL in the
+   workflow resolves.
 
 That's it. The first pull request after this will exercise the bot.
 

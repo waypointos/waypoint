@@ -1,9 +1,9 @@
 name: CLA Assistant
 
-# One-time setup: enable "Read and write permissions" for Actions
-# (see docs/setup/cla.md). No personal access token is needed because
-# signatures are stored in this same repo (signatures/cla.json on the
-# cla-signatures branch); the built-in GITHUB_TOKEN is sufficient.
+# No repo settings or tokens needed: the permissions block below grants
+# the built-in GITHUB_TOKEN the write scopes this job uses, overriding the
+# repository's read-only default. Signatures are stored in this same repo
+# (signatures/cla.json on the cla-signatures branch).
 
 on:
   issue_comment:
