@@ -3,6 +3,16 @@
 Generated from conventional commits by the release targets in the root
 Makefile. Do not edit by hand.
 
+## 0.16.0 (2026-07-27)
+
+### Features
+
+- **dashboard:** add per-rover module config form
+
+### Bug fixes
+
+- **proxy:** keep per-rover module config on version-only updates
+
 ## 0.15.1 (2026-07-27)
 
 ### Bug fixes
