@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+// Simulation control surface. Handlers exist only when core runs its sim
+// driver; on hardware these subjects have no responder and are inert.
+
+// cmd.sim_scenario - mutate the servo behavior model at runtime. Per-servo
+// fields apply when servo_id is set; global fields apply regardless.
+message SimScenario {
+  optional uint32 servo_id = 1;
+  optional bool absent = 2;                 // servo stops responding on the bus
+  optional uint32 hard_stop_min_ticks = 3;  // position-mode hard stop window
+  optional uint32 hard_stop_max_ticks = 4;
+  optional double stall_current_a = 5;      // current at a hard stop
+  optional double temperature_offset_c = 6;
+
+  optional double voltage_sag_factor = 7;   // global: scales bus voltage sag
+  optional uint64 reset_seed = 8;           // global: reseed the model PRNG
+  optional bool clear = 9;                  // global: drop all overrides
+}
+
+// rpc.sim_advance - controlled-clock time grant. The handler blocks the NATS
+// reader thread until the loop has consumed the whole grant, so each advance
+// is atomic: messages published after it queue until the reply.
+message SimAdvanceRequest {
+  uint64 advance_ms = 1;
+}
+message SimAdvanceResponse {
+  uint64 virtual_now_mono_ns = 1;
+  optional string error = 2;  // set when the clock is not in controlled mode
+}
+
+// rpc.sim_info - sim status probe.
+message SimInfoRequest {}
+message SimInfo {
+  bool sim_active = 1;
+  string clock_mode = 2;  // "real" | "sim-realtime" | "sim-controlled"
+  uint64 virtual_now_mono_ns = 3;
+  uint64 seed = 4;
+  uint32 override_count = 5;
+  uint32 malformed_frames = 6;  // SimUart resync counter
+}

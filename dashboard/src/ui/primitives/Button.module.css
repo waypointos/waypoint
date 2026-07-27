@@ -1,0 +1,33 @@
+.btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border);
+  color: var(--color-fg);
+  padding: 6px 11px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background var(--motion-fast);
+}
+.btn:hover  { background: rgba(255, 255, 255, 0.07); }
+.btn:active { background: rgba(255, 255, 255, 0.10); }
+.btn:disabled { opacity: 0.4; cursor: default; }
+
+.primary { background: var(--color-accent); border-color: var(--color-accent); color: white; }
+.primary:hover { background: var(--color-accent-hover); }
+
+.danger { color: var(--color-fault); border-color: var(--color-fault); background: transparent; }
+.danger:hover { background: var(--color-fault); color: white; }
+
+/* Compact size for dense toolbars; aligns with 11px mono filter controls. */
+.sm { padding: 3px 8px; }
+
+/* Icon-only: square, equal padding, no label gap — keeps the glyph centered. */
+.iconOnly { padding: 6px; gap: 0; }
+.sm.iconOnly { padding: 5px; }
+
+.icon { display: inline-flex; align-items: center; justify-content: center; }

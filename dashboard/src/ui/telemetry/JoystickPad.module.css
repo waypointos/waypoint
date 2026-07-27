@@ -1,0 +1,94 @@
+.pad {
+  width: 200px;
+  height: 200px;
+  background: var(--hud-bg);
+  backdrop-filter: blur(8px) saturate(1.1);
+  position: relative;
+  border: 1px solid var(--color-border);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  border-radius: 50%;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+  filter: grayscale(1);
+}
+.disabled .knob {
+  box-shadow: none;
+}
+
+.disabledHint {
+  position: absolute;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-fg-3);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.pad::before, .pad::after { content: ''; position: absolute; background: rgba(255, 255, 255, 0.06); }
+.pad::before { left: 50%; top: 10px; bottom: 10px; width: 1px; transform: translateX(-50%); }
+.pad::after  { top: 50%; left: 10px; right: 10px; height: 1px; transform: translateY(-50%); }
+
+.ring {
+  position: absolute;
+  inset: 26px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+}
+
+.trace {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.dead {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  transform: translate(-50%, -50%);
+  border: 1px dashed var(--color-fg-4);
+  border-radius: 50%;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.knob {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  background: var(--color-accent);
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(10, 132, 255, 0.4);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.lab {
+  position: absolute;
+  font-size: 10px;
+  color: var(--color-fg-4);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.labTop    { top: 6px;    left: 50%; transform: translateX(-50%); }
+.labBot    { bottom: 6px; left: 50%; transform: translateX(-50%); }
+.labLeft   { left: 6px;   top: 50%;  transform: translateY(-50%); }
+.labRight  { right: 6px;  top: 50%;  transform: translateY(-50%); }

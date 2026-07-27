@@ -1,0 +1,115 @@
+/* EpisodesPanel: recorded episode browser.
+ * Tokens only; no inline colors. */
+
+.layout {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: auto;
+}
+
+.hint {
+  color: var(--color-fg-3);
+  font-size: 12px;
+  margin: 0;
+}
+
+.error {
+  color: var(--color-fault);
+  font-size: 12px;
+  margin-bottom: var(--space-sm);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.main {
+  min-width: 0;
+}
+
+.label {
+  font-size: 13px;
+  color: var(--color-fg);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-fg-3);
+}
+
+.dot {
+  color: var(--color-fg-4);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+/* Download anchor styled to read as a small secondary button. */
+.download {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-fg-2);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  padding: 4px var(--space-sm);
+  transition: border-color var(--motion);
+}
+
+.download:hover {
+  border-color: var(--color-fg-4);
+  color: var(--color-fg);
+}
+
+.empty {
+  padding: var(--space-xl) 0;
+  text-align: center;
+}
+
+.emptyTitle {
+  font-size: 13px;
+  color: var(--color-fg-2);
+}
+
+.emptyHint {
+  font-size: 12px;
+  color: var(--color-fg-3);
+  margin-top: var(--space-xs);
+}
+
+.confirmText {
+  font-size: 13px;
+  color: var(--color-fg-2);
+  margin: 0 0 var(--space-lg);
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}

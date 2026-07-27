@@ -1,0 +1,77 @@
+/* dashboard/src/views/AdminModulesView.module.css
+ *
+ * Shell mirrors AdminUsersView. Two-Panel stack (REGISTER, REGISTERED MODULES).
+ */
+
+.shell { display: grid; grid-template-columns: 200px 1fr; grid-template-rows: auto 1fr; min-height: 100vh; }
+.body  { display: flex; flex-direction: column; min-width: 0; }
+.content { padding: 18px 22px; flex: 1; display: flex; flex-direction: column; gap: var(--space-lg); }
+
+.title h1 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.title .sub {
+  color: var(--color-fg-3);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  margin-top: 3px;
+  letter-spacing: 0.02em;
+}
+
+.form { display: flex; flex-direction: column; gap: var(--space-md); }
+.field { display: flex; flex-direction: column; gap: var(--space-xs); }
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--color-fg-3);
+  text-transform: uppercase;
+}
+
+.input {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.input:focus { outline: none; border-color: var(--color-accent); }
+
+.actions { display: flex; align-items: center; gap: var(--space-md); }
+
+.error {
+  color: var(--color-fault);
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+.empty {
+  color: var(--color-fg-3);
+  font-size: 12px;
+  padding: var(--space-md) 0;
+}
+
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-md); }
+.row { padding: var(--space-md); background: var(--color-surface-2); border: 1px solid var(--color-border); }
+.rowMain { display: flex; align-items: baseline; gap: var(--space-md); }
+.displayName { font-size: 13px; color: var(--color-fg); }
+.moduleId { font-family: var(--font-mono); font-size: 11px; color: var(--color-fg-3); }
+.rowMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  margin-top: var(--space-xs);
+  font-size: 11px;
+  color: var(--color-fg-3);
+}
+.rowMeta a { color: var(--color-accent); text-decoration: none; word-break: break-all; }
+.rowMeta a:hover { text-decoration: underline; }
+.versionCount { font-family: var(--font-mono); flex-shrink: 0; }

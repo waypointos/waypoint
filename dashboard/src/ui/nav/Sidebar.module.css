@@ -1,0 +1,125 @@
+.sb {
+  background: var(--color-chrome);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  transition: width var(--motion);
+}
+
+.brand {
+  /* Lives in the shell grid row 1 as a sibling of TopBar, so the row's
+     auto height equalizes the two — borders align without pixel guesses. */
+  padding: 0 16px;
+  background: var(--color-chrome);
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+.brand img {
+  height: 28px;
+  width: auto;
+  max-width: 100%;
+  display: block;
+}
+.brandCollapsed { padding: 0; justify-content: center; }
+.brandMark {
+  width: 18px; height: 18px;
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+}
+.brandMark span:nth-child(1) { background: white; }
+.brandMark span:nth-child(4) { background: white; }
+.brandMark span:nth-child(2),
+.brandMark span:nth-child(3) { background: transparent; }
+
+.nav { padding: 6px 8px; }
+
+.bottom {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.meta {
+  padding: 8px 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-3);
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.bottomNav {
+  padding: 4px 8px 6px;
+  border-top: 1px solid var(--color-border);
+}
+
+.userCard {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.userMeta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.userEmail {
+  font-size: 11.5px;
+  color: var(--color-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userRole {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-fg-3);
+}
+
+.logout {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-fg-3);
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color var(--motion-fast), border-color var(--motion-fast), background var(--motion-fast);
+}
+.logout:hover {
+  color: var(--color-fault);
+  border-color: var(--color-fault);
+  background: rgba(255, 69, 58, 0.08);
+}
+.logout:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.collapsed .bottomNav { padding: 4px 0 6px; }
+.collapsed .userCard {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding: 10px 0;
+  gap: 8px;
+}
+.collapsed .userMeta { display: none; }

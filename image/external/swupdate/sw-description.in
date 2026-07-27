@@ -1,0 +1,46 @@
+software = {
+    version = "{WAYPOINT_VERSION}";
+    description = "Waypoint OS {WAYPOINT_VERSION} ({WAYPOINT_VARIANT})";
+
+    hardware-compatibility: [ "rpi5" ];
+
+    /* Device addressing uses PARTUUID symlinks (/dev/disk/by-partuuid/...)
+       instead of /dev/mmcblk0pN. On real Pi 5 the rootfs partitions are
+       /dev/mmcblk0p{2,3}; under QEMU they're /dev/vda{2,3}. PARTUUIDs are
+       baked into the GPT at genimage time and are stable across both. */
+
+    {WAYPOINT_VARIANT} = {
+        copy-1: {
+            images: (
+                {
+                    filename = "rootfs.squashfs";
+                    device = "/dev/disk/by-partuuid/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+                    sha256 = "{ROOTFS_SHA256}";
+                    install-if-different = true;
+                }
+            );
+            scripts: (
+                {
+                    filename = "switch-to-a.sh";
+                    type = "postinstall";
+                }
+            );
+        };
+        copy-2: {
+            images: (
+                {
+                    filename = "rootfs.squashfs";
+                    device = "/dev/disk/by-partuuid/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+                    sha256 = "{ROOTFS_SHA256}";
+                    install-if-different = true;
+                }
+            );
+            scripts: (
+                {
+                    filename = "switch-to-b.sh";
+                    type = "postinstall";
+                }
+            );
+        };
+    };
+}

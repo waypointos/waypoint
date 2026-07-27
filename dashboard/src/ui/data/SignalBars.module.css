@@ -1,0 +1,28 @@
+.row {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: var(--space-xs);
+  height: 1em;
+}
+
+.bar {
+  width: 0.22em;
+  background: var(--color-fg-3);
+  border-radius: 1px;
+}
+
+.bar[data-active="true"] {
+  background: var(--color-fg);
+}
+
+.label {
+  margin-left: var(--space-sm);
+  font-family: var(--font-mono);
+  color: var(--color-fg-3);
+  font-size: 0.85em;
+}
+
+.na {
+  font-family: var(--font-mono);
+  color: var(--color-fg-3);
+}

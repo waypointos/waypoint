@@ -1,0 +1,25 @@
+name        = "example"
+label       = "Example"
+version     = "0.1.0"
+api_version = "1"
+language    = "go"
+entrypoint  = "waypoint-module-example"
+
+# Subjects must stay inside this module's sandbox: waypoint.*.module.example.*
+# The literal "*" is the rover-id wildcard the agent substitutes when it mints
+# the module's NATS user. The health subject below must be subscribed so the
+# agent's probe reaches the daemon.
+[permissions]
+publish   = ["waypoint.*.module.example.stats"]
+subscribe = ["waypoint.*.module.example.health.ready"]
+
+[health]
+probe       = "ready"
+interval_s  = 5
+timeout_s   = 2
+
+# Exactly one of [ui.static] or [ui.proxy]; tab_id must start with "m-".
+# Omit the whole [ui...] block for a headless module.
+[ui.static]
+tab_id = "m-example"
+bundle = "/dashboard/panel.js"

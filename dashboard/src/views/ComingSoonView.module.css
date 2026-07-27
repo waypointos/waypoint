@@ -1,0 +1,51 @@
+.shell { display: grid; grid-template-columns: 200px 1fr; grid-template-rows: auto 1fr; min-height: 100vh; }
+.body  { display: flex; flex-direction: column; min-width: 0; }
+.content { padding: 18px 22px; flex: 1; }
+
+.title h1 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.title .sub {
+  color: var(--color-fg-3);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  margin-top: 3px;
+  letter-spacing: 0.02em;
+}
+
+.empty {
+  padding: var(--space-xl) var(--space-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.headline {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-fg-2);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--color-fg-3);
+  max-width: 360px;
+  line-height: 1.5;
+}

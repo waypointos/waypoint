@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+import "google/protobuf/timestamp.proto";
+import "messages/common.proto";
+
+// telemetry.uplink — connectivity uplink signal. Published by the agent, which
+// mirrors it from a connectivity module's module.<id>.uplink subject (the module
+// declares `provides = ["uplink"]`). Measurement fields are optional so N/A
+// stays first-class: ethernet and offline links carry no signal_bars.
+message UplinkTelemetry {
+  google.protobuf.Timestamp t = 1;
+  optional uint32 signal_bars     = 2;  // current bars; absent for ethernet/offline
+  optional uint32 signal_bars_max = 3;  // self-describing scale, e.g. 4
+  optional string mode            = 4;  // "wifi" | "lte" | "ethernet"
+  optional bool   online          = 5;
+
+  Stamp stamp = 6;  // capture-time dual stamp (module-set; agent relays untouched)
+}

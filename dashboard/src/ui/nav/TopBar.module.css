@@ -1,0 +1,11 @@
+.top {
+  padding: 10px 18px;
+  background: var(--color-chrome);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 48px;
+}
+.left  { display: flex; align-items: center; gap: 12px; }
+.right { display: flex; align-items: center; gap: 6px; }

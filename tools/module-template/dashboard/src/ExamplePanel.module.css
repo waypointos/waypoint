@@ -1,0 +1,34 @@
+.panel {
+  background: var(--wp-bg);
+  color: var(--wp-fg);
+  border: 1px solid var(--wp-line);
+  padding: 16px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--wp-line);
+}
+
+.label {
+  color: var(--wp-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+}
+
+.value {
+  color: var(--wp-fg);
+}
+
+.na {
+  color: var(--wp-muted);
+  font-style: italic;
+}
+
+.count {
+  color: var(--wp-accent);
+}

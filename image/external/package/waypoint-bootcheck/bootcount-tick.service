@@ -1,0 +1,13 @@
+[Unit]
+Description=Decrement bootcount on probationary boots
+DefaultDependencies=no
+After=local-fs.target
+Before=waypoint-agent.service sysinit.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/waypoint-bootcount-tick
+RemainAfterExit=true
+
+[Install]
+WantedBy=sysinit.target

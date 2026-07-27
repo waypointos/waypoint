@@ -1,0 +1,17 @@
+version: v2
+modules:
+  - path: .
+lint:
+  use:
+    - STANDARD
+  # The project intentionally lays out .proto files under messages/ rather than
+  # waypoint/v1/ — that path convention is asserted at the bus subject layer,
+  # not the filesystem. Allow our chosen layout.
+  except:
+    - PACKAGE_DIRECTORY_MATCH
+  ignore_only:
+    PACKAGE_VERSION_SUFFIX:
+      - foxglove/compressed_video.proto
+breaking:
+  use:
+    - FILE

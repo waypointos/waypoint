@@ -1,0 +1,8 @@
+{
+  "joint_name_to_bus_id": {
+    "arm_1": 1, "arm_2": 2, "arm_3": 3, "arm_4": 4, "arm_5": 5,
+    "gripper": 6
+  },
+  "platform_owned_bus_ids": [],
+  "wheel_speeds": []
+}

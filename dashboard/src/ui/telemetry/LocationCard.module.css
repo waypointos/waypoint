@@ -1,0 +1,28 @@
+/* Fixed-height map frame inside the Overview card. */
+.frame {
+  position: relative;
+  height: 320px;
+  margin-top: var(--space-sm);
+}
+
+/* Coordinate / status readout, bottom-left over the map. */
+.hud {
+  position: absolute;
+  left: var(--space-sm);
+  bottom: var(--space-sm);
+  z-index: 2;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-3);
+  background: var(--color-bg-overlay);
+  border: 1px solid var(--color-border);
+  padding: 3px 7px;
+}
+
+/* Map fills the wide dialog body. */
+.dialogMap {
+  position: relative;
+  height: 100%;
+  min-height: 360px;
+}

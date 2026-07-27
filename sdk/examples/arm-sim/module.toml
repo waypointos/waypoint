@@ -1,0 +1,16 @@
+name        = "arm-sim"
+label       = "Sim Arm"
+version     = "0.1.0"
+api_version = "1"
+language    = "go"
+entrypoint  = "arm-sim"
+requires    = ["servo-control"]
+
+[component]
+class = "arm"
+state_rate_hz = 10
+
+[health]
+probe      = "ready"
+interval_s = 5
+timeout_s  = 2

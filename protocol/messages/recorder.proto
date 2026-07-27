@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+import "google/protobuf/timestamp.proto";
+import "messages/common.proto";
+
+// Episodic recorder control and status. The recorder lives in the agent and
+// writes one MCAP container + JSON sidecar per episode (see docs/setup/episodes.md).
+
+message RecorderStartRequest {
+  string task_label = 1;
+}
+
+message RecorderStartResponse {
+  bool ok = 1;
+  string episode_id = 2;
+  string reason = 3;  // set when refused: low disk, already recording
+}
+
+message RecorderStopRequest {
+  bool success = 1;
+  string notes = 2;
+}
+
+message RecorderStopResponse {
+  bool ok = 1;
+  EpisodeMeta summary = 2;
+  string reason = 3;  // set when refused: not recording
+}
+
+enum RecorderState {
+  RECORDER_STATE_UNSPECIFIED = 0;
+  RECORDER_STATE_IDLE = 1;
+  RECORDER_STATE_RECORDING = 2;
+}
+
+// Published on event.recorder: on every state transition, on refused starts,
+// every second while recording, and periodically while idle so sessions can
+// render the control's availability ahead of pressing it.
+message RecorderEvent {
+  Stamp stamp = 1;
+  RecorderState state = 2;
+  string episode_id = 3;
+  double elapsed_s = 4;
+  uint64 bytes_written = 5;
+  bool can_start = 6;
+  string reason = 7;  // refusal or auto-stop reason; empty otherwise
+}
+
+message EpisodeStream {
+  string subject = 1;  // rover-relative, e.g. telemetry.drive or camera.cam0/h264
+  string message = 2;  // fully qualified schema name
+  uint64 count = 3;
+}
+
+message EpisodeMeta {
+  string episode_id = 1;
+  string platform_id = 2;
+  string rover_id = 3;
+  string task_label = 4;
+  google.protobuf.Timestamp start = 5;
+  google.protobuf.Timestamp end = 6;
+  double duration_s = 7;
+  optional bool success = 8;  // unset on crashed episodes; N/A is first-class
+  string notes = 9;
+  bool crashed = 10;
+  uint64 bytes = 11;
+  repeated EpisodeStream streams = 12;
+  uint32 format_version = 13;
+  uint64 video_frames_dropped = 14;
+}
+
+message EpisodeListRequest {}
+
+message EpisodeList {
+  repeated EpisodeMeta episodes = 1;
+}

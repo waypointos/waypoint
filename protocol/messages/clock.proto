@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+import "google/protobuf/timestamp.proto";
+import "messages/common.proto";
+
+// infra.clock — per-boot clock anchor so a recorder can map monotonic capture
+// stamps to wall time. Published by the agent at startup, on NTP sync-state
+// change, and re-announced every 60 s (NATS core has no retention).
+message ClockAnchor {
+  string boot_id = 1;
+  google.protobuf.Timestamp wall_at_mono_zero = 2;  // wall-clock estimate of the boot instant
+  bool ntp_synced = 3;
+  Stamp stamp = 4;
+}

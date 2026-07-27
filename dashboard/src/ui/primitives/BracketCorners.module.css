@@ -1,0 +1,12 @@
+/* dashboard/src/ui/primitives/BracketCorners.module.css */
+.corner {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--color);
+  pointer-events: none;
+}
+.tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+.tr { top: 0; right: 0; border-left: none; border-bottom: none; }
+.bl { bottom: 0; left: 0; border-right: none; border-top: none; }
+.br { bottom: 0; right: 0; border-left: none; border-top: none; }

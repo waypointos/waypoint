@@ -1,0 +1,17 @@
+[Unit]
+Description=Waypoint first-boot identity install
+# Must run before either daemon that depends on /data/waypoint/identity.toml.
+Before=waypoint-agent.service waypoint-core.service
+After=local-fs.target
+Wants=local-fs.target
+# Guard makes this a true one-shot: once the file is on /data it never
+# runs again. Wiping /data re-arms it, which is what we want.
+ConditionPathExists=!/data/waypoint/identity.toml
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/waypoint-firstboot-identity
+
+[Install]
+WantedBy=multi-user.target

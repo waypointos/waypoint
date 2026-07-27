@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+// ImageState is published on waypoint.<rover>.infra.system.image every 60s
+// (also referenced as "system.image" in subjects.toml).
+message ImageState {
+  string version    = 1;
+  string variant    = 2;  // "prod" or "dev"
+  string partition  = 3;  // "A" or "B"
+  int32  bootcount  = 4;
+  string built_at   = 5;
+}
+
+// ApplyImageRequest is published on waypoint.<rover>.rpc.apply_image by the
+// proxy when an operator clicks "Apply update" in the admin UI.
+message ApplyImageRequest {
+  string url                       = 1;  // signed URL to the .swu (GitHub Release asset)
+  optional string expected_sha256  = 2;
+  optional string version          = 3;  // informational, for logging
+}
+
+message ApplyImageResponse {
+  // "accepted" / "error"
+  string status        = 1;
+  optional string error = 2;
+}

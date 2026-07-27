@@ -1,0 +1,15 @@
+.row { display: flex; gap: 4px; }
+.pill {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 0;
+  border: 1px solid var(--color-border);
+  color: var(--color-fg-3);
+}
+.ok   { border-color: rgba(48, 209, 88, 0.4);  color: var(--color-ok); }
+.warn { border-color: rgba(255, 204, 0, 0.5);  color: var(--color-caution); }
+.off  { border-color: var(--color-border-soft); color: var(--color-fg-4); }

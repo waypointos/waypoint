@@ -1,0 +1,38 @@
+/* Map canvas fills its parent; the parent sets the height. */
+.map {
+  width: 100%;
+  height: 100%;
+  background: var(--color-bg);
+}
+
+/* Pulsing rover position marker in the accent. */
+.roverDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-tint), 0 0 12px rgba(10, 132, 255, 0.6);
+  animation: roverPulse 2s ease-out infinite;
+}
+
+@keyframes roverPulse {
+  0%   { box-shadow: 0 0 0 3px var(--color-accent-tint), 0 0 12px rgba(10, 132, 255, 0.6); }
+  70%  { box-shadow: 0 0 0 12px rgba(10, 132, 255, 0), 0 0 12px rgba(10, 132, 255, 0.6); }
+  100% { box-shadow: 0 0 0 3px rgba(10, 132, 255, 0), 0 0 12px rgba(10, 132, 255, 0.6); }
+}
+
+/* Tone MapLibre's controls toward the console palette. */
+.map :global(.maplibregl-ctrl-group) {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  box-shadow: none;
+}
+.map :global(.maplibregl-ctrl-group button + button) { border-top: 1px solid var(--color-border); }
+.map :global(.maplibregl-ctrl button) { background: var(--color-surface); }
+.map :global(.maplibregl-ctrl button:hover) { background: var(--color-surface-2); }
+.map :global(.maplibregl-ctrl-attrib) {
+  background: var(--color-bg-overlay);
+  color: var(--color-fg-3);
+}
+.map :global(.maplibregl-ctrl-attrib a) { color: var(--color-fg-2); }

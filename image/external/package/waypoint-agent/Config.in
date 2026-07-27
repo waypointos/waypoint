@@ -1,0 +1,7 @@
+config BR2_PACKAGE_WAYPOINT_AGENT
+    bool "waypoint-agent"
+    depends on BR2_PACKAGE_HOST_GO_TARGET_ARCH_SUPPORTS
+    select BR2_PACKAGE_HOST_GO
+    help
+      The Waypoint Go agent daemon.
+      https://github.com/waypointos/waypoint

@@ -1,0 +1,19 @@
+Waypoint
+Copyright 2026 Batu Ergun
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use the files in this project except in compliance with the
+License. You may obtain a copy of the License in the LICENSE file or at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+--------------------------------------------------------------------------------
+Third-party components
+
+This product bundles glyph tiles derived from the Noto Sans font under
+dashboard/public/mapfonts/, copyright the Noto Project Authors, licensed
+under the SIL Open Font License, Version 1.1 (see
+dashboard/public/mapfonts/OFL.txt). Other bundled third-party code
+(core/third_party/, firmware/servo-relay/test/unity/) carries its license
+in the file headers or in an accompanying license file in the same
+directory.

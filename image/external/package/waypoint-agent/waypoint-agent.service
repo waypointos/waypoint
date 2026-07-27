@@ -1,0 +1,54 @@
+[Unit]
+Description=Waypoint Agent
+# We deliberately do NOT depend on network-online.target. ConnMan is our
+# network manager on Waypoint OS, and ConnMan does not satisfy systemd's
+# network-online.target out of the box — its only provider here is
+# systemd-networkd-wait-online.service, which we don't run, so the target
+# would block forever. The agent's outbound code (Sigstore TUF, optional
+# proxy leaf node) has its own retries, so an early start is fine.
+#
+# time-sync.target IS depended on because Pi 5 has no RTC: at boot the
+# clock is at the image build timestamp, and any wss:// dial against the
+# proxy fails TLS until timesyncd catches up. Gating the agent on
+# time-sync.target (which only flips active once systemd-time-wait-sync
+# observes a successful sync — enabled in post-build.sh) avoids the
+# 30+ second handshake-failure storm on every boot.
+After=local-fs.target time-sync.target
+Wants=local-fs.target time-sync.target
+# Bulk data lives on the store partition (see WAYPOINT_*_DIR below). The
+# fstab entry uses nofail, which makes systemd-fstab-generator drop the
+# mount's Before=local-fs.target ordering, so After=local-fs.target alone
+# does NOT guarantee the store is mounted first. Order on the mount unit
+# explicitly. Wants (not Requires) keeps the nofail spirit: a missing/bad
+# store device still lets the agent boot (writes fall back to /data).
+After=data-waypoint-store.mount
+Wants=data-waypoint-store.mount
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=2
+# Identity path is the writable data partition. waypoint-firstboot
+# populates this from either the FAT32 boot-partition commissioning
+# file (production) or a baked dev template (dev-image fallback), so
+# the agent always reads from /data and never from a read-only rootfs
+# path. See image/external/package/waypoint-firstboot.
+Environment=WAYPOINT_IDENTITY=/data/waypoint/identity.toml
+# Bulk data (module .raw images, episode recordings, module-private state)
+# lives on the dedicated grow-to-fill "store" partition, not the small
+# /data config partition. These override the agent's /data/waypoint
+# defaults; the store partition is mounted at /data/waypoint/store (see
+# fstab in post-build.sh) and grown to fill the card by waypoint-resize.
+Environment=WAYPOINT_MODULE_RAW_DIR=/data/waypoint/store
+Environment=WAYPOINT_MODULE_STATE_DIR=/data/waypoint/store/module-state
+Environment=WAYPOINT_EPISODES_DIR=/data/waypoint/store/episodes
+# Variant-specific env (dev images set WAYPOINT_SKIP_VERIFY=1 here).
+# The `-` prefix means "missing file is not an error" — prod images
+# deliberately do not ship this file.
+EnvironmentFile=-/etc/waypoint/agent.env
+# /data/waypoint/dev/waypoint-agent is preferred if it exists (dev images only).
+ExecStartPre=/bin/sh -c '[ -x /data/waypoint/dev/waypoint-agent ] && cp /data/waypoint/dev/waypoint-agent /usr/bin/waypoint-agent || true'
+ExecStart=/usr/bin/waypoint-agent -identity=${WAYPOINT_IDENTITY}
+
+[Install]
+WantedBy=multi-user.target

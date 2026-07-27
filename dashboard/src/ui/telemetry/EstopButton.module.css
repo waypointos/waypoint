@@ -1,0 +1,17 @@
+.estop, .clear {
+  width: 100%;
+  padding: 12px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  background: transparent;
+}
+.estop { color: var(--color-fault); border: 1px solid var(--color-fault); }
+.estop:hover:not(:disabled) { background: var(--color-fault); color: var(--color-fg); }
+.clear { color: var(--color-ok); border: 1px solid var(--color-ok); }
+.clear:hover:not(:disabled) { background: var(--color-ok); color: var(--color-bg); }
+.estop:disabled, .clear:disabled { opacity: 0.38; cursor: not-allowed; }

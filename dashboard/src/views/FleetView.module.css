@@ -1,0 +1,11 @@
+.shell { display: grid; grid-template-columns: 200px 1fr; grid-template-rows: auto 1fr; min-height: 100vh; }
+.body  { display: flex; flex-direction: column; min-width: 0; }
+.content { padding: 18px 22px; flex: 1; }
+.title h1 { margin: 0; font-size: 14px; font-weight: 500; font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.title .sub { color: var(--color-fg-3); font-size: 11px; font-family: var(--font-mono); margin-top: 3px; letter-spacing: 0.02em; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.toolbar .left { display: flex; gap: 6px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+.empty { padding: var(--space-xl); text-align: center; }
+.emptyTitle { font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fg-2); margin-bottom: var(--space-xs); }
+.emptyHint  { font-size: 12px; color: var(--color-fg-3); }

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+// diag.log — one record per slog.Record emitted by the agent.
+// Mirrors what would land on stderr/journald, in structured form.
+message LogRecord {
+  int64  ts_ns  = 1;             // unix nanoseconds
+  string level  = 2;             // "debug" | "info" | "warn" | "error"
+  string msg    = 3;
+  optional string source = 4;    // optional slog group/source ("agent.motors")
+  map<string,string> fields = 5; // structured key/value attributes (strings only)
+}

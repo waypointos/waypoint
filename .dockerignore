@@ -1,0 +1,38 @@
+# Keep the docker build context lean. The proxy Dockerfile needs the
+# pnpm workspace root + dashboard/ + protocol/ + proxy/ source.
+# Everything below is rebuilt inside the container, secret, or unrelated
+# to the proxy image.
+
+.git
+.github
+
+# Build artifacts that are regenerated inside the image.
+node_modules
+dashboard/node_modules
+dashboard/dist
+proxy/web/dist
+proxy/bin
+
+# Vendored deps + caches for sibling Go modules; not used by the proxy
+# build at all, and they're huge.
+agent/vendor
+agent/web/dist
+agent/.local
+agent/bin
+
+# Local secrets / dev state.
+**/.env
+**/.env.local
+proxy/operator.nk
+proxy/operator.pub
+
+# C++ core / image / firmware build outputs.
+core/build
+image/output
+firmware/servo-relay/build
+
+# Editor noise.
+.DS_Store
+.idea
+.vscode
+*.swp

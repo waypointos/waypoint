@@ -1,0 +1,21 @@
+.wrap { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--color-border); }
+.item {
+  padding: 8px 0;
+  text-align: center;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-fg-3);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.item + .item { border-left: 1px solid var(--color-border); }
+.item.on { background: var(--color-accent); color: var(--color-fg); }
+.item:disabled { opacity: 0.38; cursor: not-allowed; }
+.cap { display: flex; align-items: center; gap: 8px; }
+.cap input { flex: 1; accent-color: var(--color-accent); }
+.capLbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fg-3); }
+.capVal { font-family: var(--font-mono); font-size: 11px; color: var(--color-fg-2); width: 36px; text-align: right; }

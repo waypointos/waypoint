@@ -1,0 +1,20 @@
+/* Fixed width so changing digit counts can never move the panel edge. */
+.wrap {
+  width: 178px;
+  text-align: right;
+  font-family: var(--font-mono);
+  background: var(--hud-bg);
+  border: 1px solid var(--color-border);
+  padding: 8px 12px 9px;
+  backdrop-filter: blur(8px) saturate(1.1);
+}
+.v { font-size: 28px; color: var(--color-fg); line-height: 1; font-variant-numeric: tabular-nums; }
+.u { font-size: 11px; color: var(--color-fg-3); letter-spacing: 0.1em; margin-left: 5px; }
+.sub {
+  font-size: 9px;
+  color: var(--color-fg-4);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 5px;
+  white-space: pre;
+}

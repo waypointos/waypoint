@@ -1,0 +1,15 @@
+name        = "sensor-minimal"
+label       = "Demo Sensor"
+version     = "0.1.0"
+api_version = "1"
+language    = "go"
+entrypoint  = "sensor-minimal"
+
+[component]
+class = "sensor"
+state_rate_hz = 2
+
+[health]
+probe      = "ready"
+interval_s = 5
+timeout_s  = 2

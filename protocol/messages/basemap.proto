@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+// Request a single XYZ vector tile from the proxy's basemap origin.
+message BasemapTileRequest {
+  uint32 z = 1;
+  uint32 x = 2;
+  uint32 y = 3;
+}
+
+// Tile bytes (gzipped MVT). found=false means the proxy has no such tile
+// (out of coverage / above maxzoom); the agent then serves an empty tile.
+message BasemapTileResponse {
+  bool found = 1;
+  bytes data = 2;
+  string content_encoding = 3; // typically "gzip"
+}

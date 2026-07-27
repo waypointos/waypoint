@@ -1,0 +1,40 @@
+#!/usr/bin/env expect -f
+
+# Boot → on partition A → apply broken .swu → 3 reboot attempts fail
+# → bootcount-tick reverts → final state is partition A again.
+set timeout 480
+
+spawn image/scripts/qemu-run.sh --headless --dev
+
+expect "waypoint login:"; send "root\r"
+expect "# "; send "grep partition /etc/waypoint/image.toml\r"
+expect -re "partition\\s*=\\s*\"A\""
+
+# Fetch then apply locally — matches the OTA smoke flow.
+# Same direction as the OTA smoke: from A → B with the broken rootfs.
+send "wget -O /tmp/update.swu http://10.0.2.2:8000/waypoint-dev-0.5.2-broken.swu\r"
+expect "# "
+send "swupdate -e dev,copy-2 -i /tmp/update.swu\r"
+expect -re "SWUPDATE successful|Update successful"
+
+send "reboot\r"
+
+# Probationary boots: each one the broken agent fails to start,
+# bootcount-tick decrements, eventually swaps cmdline.txt back to A and
+# reboots once more. Wait for the eventual return-to-A login prompt.
+expect {
+    -re "waypoint login:" { }
+    timeout               { send_user "\n\[-\] no login after broken-agent reboot loop\n"; exit 1 }
+}
+send "root\r"
+expect "# "; send "grep partition /etc/waypoint/image.toml\r"
+expect {
+    -re "partition\\s*=\\s*\"A\"" { send_user "\n\[+\] reverted to partition A\n" }
+    timeout                        { send_user "\n\[-\] rollback FAILED — stuck on B\n"; exit 1 }
+}
+expect "# "; send "test -f /data/waypoint/bootcount && echo PRESENT || echo CLEARED\r"
+expect "CLEARED"
+send_user "\n\[+\] rollback smoke PASS\n"
+
+send "poweroff\r"
+expect eof

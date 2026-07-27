@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package waypoint.module.example.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/waypointos/waypoint-module-example/protocol/gen/go;examplev1";
+
+// ExampleStats is the snapshot this template module publishes on
+// waypoint.<rover-id>.module.example.stats. Replace it with whatever your
+// module actually reports. Nullable fields use `optional` so the dashboard can
+// render a first-class "N/A" instead of a sentinel zero.
+message ExampleStats {
+  google.protobuf.Timestamp t = 1;
+  int64           count   = 2;
+  optional string message = 3;
+}

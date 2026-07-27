@@ -1,0 +1,6 @@
+config BR2_PACKAGE_WAYPOINT_BOOTCHECK
+    bool "waypoint-bootcheck"
+    default y
+    help
+      Tiny helper that clears /data/waypoint/bootcount on successful boot.
+      Runs once waypoint-agent has published a healthy heartbeat.

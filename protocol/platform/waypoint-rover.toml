@@ -1,0 +1,169 @@
+# Canonical platform descriptor for the Waypoint rover. Single source of truth
+# for the robot's shape; consumed by core, agent, dashboard, sim, recorder.
+# Schema reference: protocol/platform/SCHEMA.md
+schema = 1
+
+[platform]
+id = "waypoint-rover"
+name = "Waypoint Rover"
+vehicle_class = "diff_drive_rover"
+
+[drivers.main]                   # kind is the real/sim switch
+kind = "sts3215"
+port = "/dev/ttyAMA0"
+baud = 1000000
+
+# Arm servos 1..6: module-owned (so100). Limits omitted; the module calibrates
+# its own hard stops.
+[[joints]]
+name = "arm_1"
+driver = "main"
+bus_id = 1
+type = "revolute"
+ownership = "module"
+command_interfaces = ["position"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+
+[[joints]]
+name = "arm_2"
+driver = "main"
+bus_id = 2
+type = "revolute"
+ownership = "module"
+command_interfaces = ["position"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+
+[[joints]]
+name = "arm_3"
+driver = "main"
+bus_id = 3
+type = "revolute"
+ownership = "module"
+command_interfaces = ["position"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+
+[[joints]]
+name = "arm_4"
+driver = "main"
+bus_id = 4
+type = "revolute"
+ownership = "module"
+command_interfaces = ["position"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+
+[[joints]]
+name = "arm_5"
+driver = "main"
+bus_id = 5
+type = "revolute"
+ownership = "module"
+command_interfaces = ["position"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+
+[[joints]]
+name = "arm_6"
+driver = "main"
+bus_id = 6
+type = "gripper"
+ownership = "module"
+command_interfaces = ["position"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+
+# Drive wheels 7..10: platform-owned. This ownership field is the data form of
+# the drive-wheel guard currently hardcoded in core and the agent broker.
+# Left-side wheels are mirror-mounted: invert = true.
+[[joints]]
+name = "wheel_back_left"
+driver = "main"
+bus_id = 7
+type = "wheel"
+ownership = "platform"
+invert = true
+command_interfaces = ["velocity"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+[joints.limits]
+velocity_radps = 10.0
+
+[[joints]]
+name = "wheel_back_right"
+driver = "main"
+bus_id = 8
+type = "wheel"
+ownership = "platform"
+command_interfaces = ["velocity"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+[joints.limits]
+velocity_radps = 10.0
+
+[[joints]]
+name = "wheel_front_right"
+driver = "main"
+bus_id = 9
+type = "wheel"
+ownership = "platform"
+command_interfaces = ["velocity"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+[joints.limits]
+velocity_radps = 10.0
+
+[[joints]]
+name = "wheel_front_left"
+driver = "main"
+bus_id = 10
+type = "wheel"
+ownership = "platform"
+invert = true
+command_interfaces = ["velocity"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+[joints.limits]
+velocity_radps = 10.0
+
+# Drill servos 11..12: module-owned, continuous rotation.
+[[joints]]
+name = "drill_1"
+driver = "main"
+bus_id = 11
+type = "wheel"
+ownership = "module"
+command_interfaces = ["velocity"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+
+[[joints]]
+name = "drill_2"
+driver = "main"
+bus_id = 12
+type = "wheel"
+ownership = "module"
+command_interfaces = ["velocity"]
+state_interfaces = ["position", "velocity", "load", "current", "voltage", "temperature"]
+
+[kinematics]                     # values from core/src/main.cpp.
+# track_width_m: core says 0.30, sim and dashboard said 0.35. Core's value is
+# carried here because core drives the wheels; verify against measured
+# hardware and correct this single line if needed.
+model = "diff_drive"
+wheel_radius_m = 0.07425
+track_width_m = 0.30
+wheels = { front_left = "wheel_front_left", front_right = "wheel_front_right", back_left = "wheel_back_left", back_right = "wheel_back_right" }
+
+[modes]                          # mirrors the mode machine
+available = ["manual", "safe", "estop"]
+
+[observations]                   # consumed by the recorder
+[[observations.streams]]
+subject = "telemetry.drive"
+message = "waypoint.v1.DriveTelemetry"
+rate_hz = 50
+
+[[observations.streams]]
+subject = "telemetry.motors"
+message = "waypoint.v1.MotorTelemetry"
+rate_hz = 20
+
+[[observations.streams]]
+subject = "telemetry.power"
+message = "waypoint.v1.PowerTelemetry"
+rate_hz = 1
+
+[actions]
+altitudes = ["joint_position", "body_twist"]

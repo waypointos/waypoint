@@ -1,0 +1,176 @@
+/* dashboard/src/ui/forms/EnrollRoverWizard.module.css */
+
+.head {
+  padding: var(--space-md) var(--space-lg) var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--color-fg-4);
+  text-transform: uppercase;
+}
+.title {
+  margin: 4px 0 2px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+.subtitle {
+  font-size: 12px;
+  color: var(--color-fg-3);
+  line-height: 1.5;
+}
+
+.pane {
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+.label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-fg-3);
+}
+.input {
+  background: var(--color-bg-elev-1);
+  border: 1px solid var(--color-border);
+  color: var(--color-fg);
+  padding: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  width: 100%;
+  outline: none;
+  transition: border-color var(--motion-fast);
+}
+.input:focus { border-color: var(--color-accent); }
+.fieldErr {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-fault);
+}
+
+.err {
+  font-size: 12px;
+  color: var(--color-fault);
+  font-family: var(--font-mono);
+  padding: var(--space-xs) var(--space-sm);
+  border-left: 2px solid var(--color-fault);
+  background: rgba(255, 69, 58, 0.06);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  padding: var(--space-sm) var(--space-lg);
+}
+
+.sectionHead {
+  display: inline-flex;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--color-fg-2);
+  text-transform: uppercase;
+}
+.sectionHead .bk { color: var(--color-fg-4); margin: 0 var(--space-xs); }
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  font-size: 13px;
+  color: var(--color-fg-2);
+  line-height: 1.55;
+}
+
+.linkRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-accent);
+}
+.linkRow a { color: inherit; }
+.linkRow a:hover { text-decoration: underline; }
+
+.inlineCode {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  color: var(--color-fg);
+  background: var(--color-bg-elev-1);
+  border: 1px solid var(--color-border-soft);
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+.filePath {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  color: var(--color-accent);
+  background: var(--color-accent-tint);
+  border: 1px solid transparent;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+
+.statusLine {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color var(--motion-fast);
+}
+.statusLine.waiting { color: var(--color-caution); }
+.statusLine.online  { color: var(--color-ok); }
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 0 currentColor;
+}
+.statusLine.waiting .statusDot {
+  animation: hb 1.6s infinite ease-out;
+}
+@keyframes hb {
+  0%   { box-shadow: 0 0 0 0   rgba(255, 204, 0, 0.55); }
+  70%  { box-shadow: 0 0 0 10px rgba(255, 204, 0, 0);    }
+  100% { box-shadow: 0 0 0 0   rgba(255, 204, 0, 0);    }
+}
+
+.subjectLine {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-fg-4);
+}
+
+.checkLater {
+  background: none;
+  border: none;
+  color: var(--color-fg-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  padding: 6px 11px;
+}
+.checkLater:hover { color: var(--color-fg); }

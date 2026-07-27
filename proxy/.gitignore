@@ -1,0 +1,5 @@
+bin/
+dist/
+*.env
+operator.nk
+operator.pub

@@ -1,0 +1,58 @@
+/* dashboard/src/ui/primitives/FloatingWindow.module.css */
+
+.window {
+  position: fixed;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-chrome);
+  border-bottom: 1px solid var(--color-border);
+  cursor: grab;
+  user-select: none;
+}
+.titlebar:active { cursor: grabbing; }
+
+.title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-fg-2);
+}
+.bracket { color: var(--color-fg-4); }
+
+.controls { display: flex; gap: var(--space-xs); }
+.ctl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-fg-3);
+  cursor: pointer;
+}
+.ctl:hover { color: var(--color-fg); border-color: var(--color-border); }
+
+.body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+
+.resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 50%, var(--color-fg-4) 50%);
+}

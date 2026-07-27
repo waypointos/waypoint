@@ -1,0 +1,43 @@
+# git-cliff configuration (https://git-cliff.org/docs/configuration).
+# Shared by both release lines. The root Makefile release targets pass
+# --tag-pattern and --include-path to scope each line:
+#   image (image-v*): agent/ core/ dashboard/ protocol/ image/
+#   proxy (proxy-v*): proxy/ dashboard/ protocol/
+
+[changelog]
+header = """
+# Changelog
+
+Generated from conventional commits by the release targets in the root
+Makefile. Do not edit by hand.
+
+"""
+body = """
+## {{ version | trim_start_matches(pat="image-v") | trim_start_matches(pat="proxy-v") }} ({{ timestamp | date(format="%Y-%m-%d") }})
+
+{% for group, commits in commits | group_by(attribute="group") %}\
+### {{ group | striptags | trim }}
+
+{% for commit in commits %}\
+- {% if commit.scope %}**{{ commit.scope }}:** {% endif %}{% if commit.breaking %}[breaking] {% endif %}{{ commit.message }}
+{% endfor %}
+{% endfor %}
+"""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+# Only user-visible change types make the changelog; the rest are skipped.
+commit_parsers = [
+  { message = "^feat", group = "<!-- 0 -->Features" },
+  { message = "^fix", group = "<!-- 1 -->Bug fixes" },
+  { message = "^perf", group = "<!-- 2 -->Performance" },
+  { message = "^revert", group = "<!-- 3 -->Reverts" },
+  { message = ".*", skip = true },
+]
+protect_breaking_commits = true
+sort_commits = "newest"
+
+[bump]
+initial_tag = "0.1.0"

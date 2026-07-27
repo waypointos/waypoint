@@ -1,0 +1,60 @@
+/* dashboard/src/ui/forms/ApplyImageDialog.module.css */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-fg-3);
+}
+
+.input {
+  background: var(--color-bg-elev-1);
+  border: 1px solid var(--color-border);
+  color: var(--color-fg);
+  padding: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  width: 100%;
+  outline: none;
+  transition: border-color var(--motion-fast);
+}
+.input:focus { border-color: var(--color-accent); }
+
+.warn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--color-caution);
+  padding: var(--space-xs) var(--space-sm);
+  border-left: 2px solid var(--color-caution);
+  background: rgba(255, 204, 0, 0.06);
+}
+
+.err {
+  font-size: 12px;
+  color: var(--color-fault);
+  font-family: var(--font-mono);
+  padding: var(--space-xs) var(--space-sm);
+  border-left: 2px solid var(--color-fault);
+  background: rgba(255, 69, 58, 0.06);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  padding-top: var(--space-xs);
+}

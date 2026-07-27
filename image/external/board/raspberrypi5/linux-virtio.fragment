@@ -1,0 +1,35 @@
+# Kernel options bcm2712_defconfig leaves off that Waypoint needs.
+#
+# bcm2712_defconfig is geared for stock Raspberry Pi OS — Pi 5 hardware,
+# ext4 root from SD. Waypoint diverges on two axes:
+#   1. Squashfs read-only root (BR2_TARGET_ROOTFS_SQUASHFS=y produces it
+#      but does NOT enable the in-kernel driver) — needed on Pi AND QEMU.
+#   2. Virtio MMIO/PCI bus + virtio-blk/net drivers — needed so the same
+#      kernel that ships to the Pi can also boot under qemu-system-aarch64
+#      -M virt for the swupdate OTA smokes. Keeps test/prod parity.
+#
+# GPT partition support is pinned explicitly even though it's usually on
+# in bcm2712_defconfig — our PARTUUID-based root lookup depends on it.
+#
+# Total cost: roughly 50 KB on a 23 MB kernel. Negligible.
+
+CONFIG_VIRTIO=y
+CONFIG_VIRTIO_MMIO=y
+CONFIG_VIRTIO_PCI=y
+CONFIG_VIRTIO_BLK=y
+CONFIG_VIRTIO_NET=y
+CONFIG_VIRTIO_CONSOLE=y
+
+# GPT support — the .img is GPT-partitioned, so PARTUUID lookup at
+# rootwait needs the EFI/GUID partition parser. Almost always already on
+# in bcm2712_defconfig, but pinning it here makes the dependency explicit.
+CONFIG_PARTITION_ADVANCED=y
+CONFIG_EFI_PARTITION=y
+
+# Squashfs root — BR2_TARGET_ROOTFS_SQUASHFS only tells Buildroot to
+# *produce* the squashfs image; it doesn't enable the in-kernel driver.
+# bcm2712_defconfig is tuned for ext4 root, so we have to add squashfs
+# explicitly. XZ matches BR2_TARGET_ROOTFS_SQUASHFS_XZ.
+CONFIG_SQUASHFS=y
+CONFIG_SQUASHFS_XZ=y
+CONFIG_SQUASHFS_ZSTD=y

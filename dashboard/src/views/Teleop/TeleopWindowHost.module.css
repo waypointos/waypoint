@@ -1,0 +1,10 @@
+/* Sits below the teleop top strip, left of the speed readout. */
+.dock { position: absolute; top: 54px; right: 206px; display: flex; gap: var(--space-xs); z-index: 200; }
+.chip { background: var(--color-surface); color: var(--color-fg); border: 1px solid var(--color-border); padding: var(--space-xs) var(--space-sm); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; }
+.chipOn { border-color: var(--color-accent); color: var(--color-accent); }
+.window { position: absolute; z-index: 300; background: var(--color-bg-elev-1); border: 1px solid var(--color-border); display: flex; flex-direction: column; }
+.bar { display: flex; align-items: center; justify-content: space-between; padding: var(--space-xs) var(--space-sm); cursor: move; border-bottom: 1px solid var(--color-border); }
+.title { color: var(--color-fg-2); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+.close { background: none; border: none; color: var(--color-fg-2); cursor: pointer; }
+.body { flex: 1; min-height: 0; }
+.resize { position: absolute; right: 0; bottom: 0; width: 14px; height: 14px; cursor: nwse-resize; }

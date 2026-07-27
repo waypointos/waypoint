@@ -1,0 +1,15 @@
+.bar {
+  height: 4px;
+  background: var(--color-border);
+  position: relative;
+  overflow: hidden;
+}
+.bar > i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--color-fg-2);
+}
+.bar > i.warn { background: var(--color-caution); }
+.bar > i.fault { background: var(--color-fault); }

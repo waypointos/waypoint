@@ -1,0 +1,7 @@
+/* Reserves room below the 5px band for the measured underline, so rows of
+   AxisBars keep consistent rhythm without per-caller margins. */
+.bar { position: relative; display: block; height: 5px; margin-bottom: 4px; background: var(--color-raise); }
+.zero { position: absolute; left: 50%; top: -1px; bottom: -1px; width: 1px; background: var(--color-fg-4); }
+.cmd { position: absolute; top: 0; bottom: 0; background: var(--color-accent); }
+.meas { position: absolute; top: 6px; height: 2px; background: var(--color-fg-3); }
+.sat { background: var(--color-caution); }

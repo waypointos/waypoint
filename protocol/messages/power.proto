@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+import "google/protobuf/timestamp.proto";
+import "messages/common.proto";
+
+// telemetry.power — 1 Hz
+message PowerTelemetry {
+  google.protobuf.Timestamp t = 1;
+
+  // From servo bus.
+  optional double bus_voltage_v   = 2;
+
+  // Aggregate from servo current readings (sum).
+  optional double current_draw_a  = 3;
+
+  // Reserved until a fuel-gauge module ships. Always unset in v1.
+  optional double battery_percent  = 4;
+  optional double runtime_estimate_minutes = 5;
+
+  Stamp stamp = 6;  // capture-time dual stamp
+}

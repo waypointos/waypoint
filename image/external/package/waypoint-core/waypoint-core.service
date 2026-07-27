@@ -1,0 +1,37 @@
+[Unit]
+Description=Waypoint Core (safety-critical)
+After=waypoint-agent.service
+Requires=waypoint-agent.service
+
+[Service]
+Type=simple
+# Default rover ID is empty. waypoint-firstboot parses identity.toml on
+# first boot and writes the real one to /data/waypoint/core.env. Dev
+# images additionally bake an /etc/waypoint/core.env so the QEMU smoke
+# can run before firstboot has provisioned /data. The `-` prefix on
+# both EnvironmentFile lines keeps them optional, and ORDER MATTERS:
+# /data is loaded LAST so a real commissioning write wins over the
+# baked QEMU defaults (firstboot explicitly clears CORE_ARGS in the
+# commissioned case to keep --servo-mock from leaking onto real hardware).
+#
+# WAYPOINT_CORE_ARGS is the extension point for variant-specific flags.
+# ExecStart pins --servo-port /dev/ttyACM0: the Bus Servo Driver HAT's
+# CH343 reaches the Pi as a USB CDC-ACM device (HAT switch on USB, ESP32
+# bypassed). Dev sets WAYPOINT_CORE_ARGS=--servo-mock, which — appended
+# after --servo-port and last-flag-wins in Args::parse — overrides the
+# port so the same binary runs under QEMU without a real bus.
+Environment=WAYPOINT_ROVER_ID=
+Environment=WAYPOINT_CORE_ARGS=
+EnvironmentFile=-/etc/waypoint/core.env
+EnvironmentFile=-/data/waypoint/core.env
+ExecStartPre=/bin/sh -c 'until [ -S /run/waypoint/nats.sock ]; do sleep 0.2; done'
+ExecStart=/usr/bin/waypoint-core --socket /run/waypoint/nats.sock --rover-id ${WAYPOINT_ROVER_ID} --servo-port /dev/ttyACM0 $WAYPOINT_CORE_ARGS
+Restart=on-failure
+RestartSec=1
+# Priority bump so the control loop is preempted as little as possible.
+Nice=-10
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=10
+
+[Install]
+WantedBy=multi-user.target

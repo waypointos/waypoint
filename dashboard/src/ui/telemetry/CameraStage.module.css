@@ -1,0 +1,81 @@
+.stage {
+  position: relative;
+}
+
+/* PiPs sit absolute over the main tile, bottom-right. Multiple PiPs
+   are not yet a real case (the rover has 2 cameras), so a single anchor
+   point is fine. */
+.pip {
+  position: absolute;
+  /* Sit above the main .frame regardless of render order, so the PiP
+     stays clickable after a swap. */
+  z-index: 1;
+  bottom: var(--space-lg);
+  right: var(--space-lg);
+  width: 240px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+
+.pip:hover,
+.pip:focus-visible {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+/* Floating PiP (Teleop): position/size driven by useDragResize. The whole
+   body is the swap/drag target; only the corner handle resizes. */
+.pipFloat {
+  position: fixed;
+  z-index: 320;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 150ms ease;
+}
+.pipFloat:hover,
+.pipFloat:focus-visible {
+  border-color: var(--color-fg-4);
+  outline: none;
+}
+
+.pipResize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  opacity: 0;
+  transition: opacity 150ms ease;
+  z-index: 2;
+}
+.pipFloat:hover .pipResize { opacity: 1; }
+.pipResize::after {
+  content: '';
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 8px;
+  height: 8px;
+  border-right: 1px solid var(--color-fg-3);
+  border-bottom: 1px solid var(--color-fg-3);
+}
+
+.pipLabel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--space-xs) var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-fg-2);
+  background: linear-gradient(to top, var(--color-bg-overlay) 0%, transparent 100%);
+  pointer-events: none;
+}

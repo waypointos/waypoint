@@ -1,0 +1,16 @@
+version: v2
+plugins:
+  # Go
+  - remote: buf.build/protocolbuffers/go:v1.34.2
+    out: gen/go
+    opt:
+      - paths=source_relative
+  # TypeScript (ES module form, browser-friendly)
+  - remote: buf.build/bufbuild/es:v1.10.0
+    out: gen/ts
+    opt:
+      - target=ts
+      # protoc-gen-es v1 expects a leading dot here. Without it, the generator
+      # concatenates and produces broken `./foo_pbjs` imports — see commit
+      # restoring `.js` after dashboard alerts_pb consumption broke.
+      - import_extension=.js

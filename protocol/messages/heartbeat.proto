@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package waypoint.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/waypointos/waypoint/protocol/gen/go;waypointv1";
+
+// Heartbeat -- agent -> core at 500 ms cadence. Core's safety watchdog
+// resets on every heartbeat; if 500 ms pass with no heartbeat, core
+// drops out of Manual mode and safe-stops the drive.
+//
+// The proxy's fleet-liveness consumer also listens on this subject to
+// update the rover's last_seen timestamp.
+//
+// Payload is intentionally minimal -- the timestamp aids debugging but
+// the subject's presence is what kicks the watchdog.
+message Heartbeat {
+  google.protobuf.Timestamp t = 1;
+}
