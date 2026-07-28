@@ -203,7 +203,7 @@ describe('ModulesManagePanel — proxy mode', () => {
         moduleId: 'power-monitor',
         displayName: 'Power Monitor',
         sourceRepoUrl: 'https://github.com/example/power-monitor',
-        versions: [{ version: '0.2.0', ingestedAt: '2026-05-01T00:00:00Z' }],
+        versions: [{ version: '0.2.0', ingestedAt: '2026-05-01T00:00:00Z', configFields: [] }],
       },
     ]);
     renderPanel();
@@ -218,7 +218,7 @@ describe('ModulesManagePanel — proxy mode', () => {
         moduleId: 'power-monitor',
         displayName: 'Power Monitor',
         sourceRepoUrl: 'https://github.com/example/power-monitor',
-        versions: [{ version: '0.2.0', ingestedAt: '2026-05-01T00:00:00Z' }],
+        versions: [{ version: '0.2.0', ingestedAt: '2026-05-01T00:00:00Z', configFields: [] }],
       },
     ]);
     mockListDesired.mockResolvedValue([
@@ -234,7 +234,7 @@ describe('ModulesManagePanel — proxy mode', () => {
         moduleId: 'power-monitor',
         displayName: 'Power Monitor',
         sourceRepoUrl: 'https://github.com/example/power-monitor',
-        versions: [{ version: '0.2.0', ingestedAt: '2026-05-01T00:00:00Z' }],
+        versions: [{ version: '0.2.0', ingestedAt: '2026-05-01T00:00:00Z', configFields: [] }],
       },
     ]);
     mockSetDesired.mockResolvedValue(undefined);
@@ -264,7 +264,7 @@ describe('ModulesManagePanel — proxy mode', () => {
         moduleId: 'umr',
         displayName: 'Connectivity',
         sourceRepoUrl: 'https://github.com/waypointos/waypoint-umr',
-        versions: [{ version: '0.4.0', ingestedAt: '2026-07-27T00:00:00Z' }],
+        versions: [{ version: '0.4.0', ingestedAt: '2026-07-27T00:00:00Z', configFields: [] }],
       },
     ]);
     mockListDesired.mockResolvedValue([
@@ -303,7 +303,7 @@ describe('ModulesManagePanel — proxy mode', () => {
         moduleId: 'power-monitor',
         displayName: 'Power Monitor',
         sourceRepoUrl: 'https://github.com/example/power-monitor',
-        versions: [{ version: '0.2.0', ingestedAt: '2026-05-20T00:00:00Z' }],
+        versions: [{ version: '0.2.0', ingestedAt: '2026-05-20T00:00:00Z', configFields: [] }],
       },
     ]);
     mockListDesired.mockResolvedValue([
@@ -325,7 +325,7 @@ describe('ModulesManagePanel — proxy mode', () => {
         moduleId: 'power-monitor',
         displayName: 'Power Monitor',
         sourceRepoUrl: 'https://github.com/example/power-monitor',
-        versions: [{ version: '0.2.0', ingestedAt: '2026-05-20T00:00:00Z' }],
+        versions: [{ version: '0.2.0', ingestedAt: '2026-05-20T00:00:00Z', configFields: [] }],
       },
     ]);
     mockListDesired.mockResolvedValue([]);

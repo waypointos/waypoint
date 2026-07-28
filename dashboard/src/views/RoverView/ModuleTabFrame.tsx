@@ -6,6 +6,7 @@ import { Settings } from 'lucide-react';
 import { useMe } from '@/state/mode';
 import { ModuleConfigDialog } from './ModuleConfigDialog';
 import { listRoverDesired } from './proxyModulesApi';
+import { useRoverContext } from './RoverContext';
 import styles from './ModuleTabFrame.module.css';
 
 type Props = {
@@ -16,6 +17,9 @@ type Props = {
 
 export function ModuleTabFrame({ moduleId, roverId, children }: Props) {
   const me = useMe();
+  const { modules } = useRoverContext();
+  // The running module's own schema, straight off the infra.modules snapshot.
+  const fields = modules.find((m) => m.id === moduleId)?.configFields ?? [];
   const [open, setOpen] = useState(false);
   const [version, setVersion] = useState('');
   const [configToml, setConfigToml] = useState('');
@@ -65,6 +69,7 @@ export function ModuleTabFrame({ moduleId, roverId, children }: Props) {
           moduleId={moduleId}
           version={version}
           configToml={configToml}
+          fields={fields}
           onSaved={() => undefined}
           onClose={() => setOpen(false)}
         />
