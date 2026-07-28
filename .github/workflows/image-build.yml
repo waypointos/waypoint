@@ -18,7 +18,11 @@ on:
 # Buildroot build. docker/build-push-action still caches the buildroot
 # build-environment image layers (content-addressed, release-scoped).
 #
-# Expected timing (ubuntu-latest): ~30-45 min per release (clean build).
+# Expected timing (ubuntu-latest, 4 vCPU): image-v0.1.0 took 2h10m of clean
+# Buildroot build. BR2_PER_PACKAGE_DIRECTORIES in waypoint_prod_defconfig
+# lets Buildroot build packages concurrently, which is what makes -j on this
+# runner worth anything. Larger runners need a paid plan; measure before
+# buying one.
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -81,29 +85,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildroot-dl-release-${{ env.BUILDROOT_VERSION }}-${{ hashFiles('image/Dockerfile.buildroot', 'image/external/configs/**', 'image/external/board/**', 'image/external/swupdate/sw-description.in') }}-
 
-      # Force application packages to rebuild against the current
-      # agent/, core/, dashboard/ source trees regardless of cache hit.
-      # `<pkg>-dirclean` removes the per-package build dir + stamp so
-      # Buildroot re-extracts source and re-runs build commands. On a
-      # fully cold run the output dir doesn't exist and we skip.
-      - name: Force-rebuild application packages
+      # Per-package directories trade disk for parallelism: every package
+      # gets its own rsynced host/ and target/ tree. The runner's default
+      # ~25 GB of free space is tight for that, and an ENOSPC here costs a
+      # full rebuild, so drop preinstalled toolchains this build never uses.
+      # /opt/hostedtoolcache is left alone — setup-go and setup-node put the
+      # Go and pnpm toolchains there.
+      - name: Free runner disk space
         run: |
           set -euo pipefail
-          if [ ! -d image/output/prod ]; then
-            echo "No restored output; skipping dirclean."
-            exit 0
-          fi
-          docker run --rm \
-            -v "$PWD":/src \
-            -v "$PWD/image/output":/work/output \
-            -w /buildroot \
-            -e BR2_DL_DIR=/work/dl \
-            waypoint-buildroot:${{ env.BUILDROOT_VERSION }} \
-            bash -c "make BR2_EXTERNAL=/src/image/external O=/work/output/prod \
-              waypoint-agent-dirclean \
-              waypoint-core-dirclean \
-              waypoint-dashboard-dirclean \
-              waypoint-bootcheck-dirclean"
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc \
+                      /usr/local/share/boost /usr/local/.ghcup
+          df -h /
 
       - name: Build prod image
         run: |
