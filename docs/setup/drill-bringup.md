@@ -21,7 +21,7 @@ Installing and enabling the module is a separate document,
 
       journalctl -u waypoint-module-drill -f
 
-- Both sample containers are empty and the carousel is free to turn.
+- All three sample containers are empty and the carousel is free to turn.
 - The mechanism is clear: nothing in the lift path, no tooling on the auger,
   full travel unobstructed.
 - The estop is within reach of a second person, and the rover can be cut at
@@ -208,7 +208,7 @@ Preconditions, all required:
 - Step 2 passed: a downward jog reads positive `height_ticks`.
 - The axis is calibrated and the carriage is parked inside the top band,
   `height_norm` at or below `top_band_fraction` (0.03 by default).
-- Both containers are empty.
+- All three containers are empty.
 - The auger is stopped and nothing is in the carousel path.
 
 As in step 5 there is no throttle: `switch` runs at the full `switch_speed`,
@@ -219,6 +219,13 @@ section 2, and raise it again only once the direction is known good.
 The `switch` button stays disabled until the interlock allows it and shows
 its refusal reason when it does not. Hold it briefly and watch the
 mechanism, not the screen.
+
+The mechanical interlock that is meant to hold the drill core against rotation
+while it is lowered is not confirmed by the CAD solids: the barrel bore is a
+constant radius at every angle and height, and the core's flats clear it by
+1.00 mm, so nothing keys the two together. Watch the core itself during this
+test and stop if it turns with the carousel. The software top-band interlock
+is a separate mechanism and is unaffected.
 
 - The ratchet engages and advances the carousel by one position: the default
   `switch_direction = "ccw"` is correct. Done.
