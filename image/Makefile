@@ -46,6 +46,11 @@ JOBS ?= $(shell sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)
 #      are owned by the host user, so `make clean` etc. don't need sudo.
 USER_FLAGS ?= --user $(shell id -u):$(shell id -g)
 
+# Extra flags for the build container. Empty by default; set it when the
+# build shares a host with other work, e.g.
+# `make image-prod JOBS=6 DOCKER_RUN_EXTRA=--cpus=7`.
+DOCKER_RUN_EXTRA ?=
+
 # Local Buildroot packages whose sources live in this repo (SITE_METHOD=local).
 # Each one keeps a stable VERSION across iterations, which means Buildroot's
 # extract/build stamps cache aggressively — source edits do NOT propagate
@@ -109,7 +114,7 @@ endif
 
 image-prod: vendor-agent embed-dashboard docker-image build-volume
 	mkdir -p output/prod/images ccache dl
-	$(DOCKER) run --rm $(USER_FLAGS) \
+	$(DOCKER) run --rm $(USER_FLAGS) $(DOCKER_RUN_EXTRA) \
 	  -v $(SRC):/src \
 	  $(OUTPUT_MOUNT) \
 	  -v $(CURDIR)/output:/work/output \
@@ -130,7 +135,7 @@ image-prod: vendor-agent embed-dashboard docker-image build-volume
 
 image-dev: vendor-agent embed-dashboard docker-image build-volume
 	mkdir -p output/dev/images ccache dl
-	$(DOCKER) run --rm $(USER_FLAGS) \
+	$(DOCKER) run --rm $(USER_FLAGS) $(DOCKER_RUN_EXTRA) \
 	  -v $(SRC):/src \
 	  $(OUTPUT_MOUNT) \
 	  -v $(CURDIR)/output:/work/output \

@@ -5,6 +5,13 @@
 # Buildroot versions — re-run `make menuconfig` + `make savedefconfig`
 # after pinning to a new Buildroot release.
 
+# Per-package host/target directories. Buildroot only builds packages
+# concurrently when this is set; without it `-jN` parallelizes inside a
+# single package and leaves cores idle across every configure phase.
+# Costs disk (each package gets an rsynced host/target tree) and requires
+# packages to declare their dependencies honestly.
+BR2_PER_PACKAGE_DIRECTORIES=y
+
 # Architecture
 BR2_aarch64=y
 BR2_cortex_a76=y
