@@ -99,13 +99,13 @@ denied subjects, that agent is the cause and the rover needs a newer image.
 
 Supply this as the `config_toml` at enable time (proxy) or at confirm time
 (local). Every key is optional and the values below are the module's own
-defaults, so a first install can send nothing at all and set the wiring signs
-during bring-up.
+defaults, so a first install can send nothing at all.
 
 ```toml
-# Wiring signs. Confirm both on the rover before drilling: see drill-bringup.md.
-lift_up_sign     = 1
-auger_drill_sign = 1
+# Wiring signs for the reference assembly. Confirm both on the rover before
+# drilling anyway: see drill-bringup.md.
+lift_up_sign     = -1
+auger_drill_sign = -1
 # "ccw" turns opposite the drill sign, "cw" turns with it.
 switch_direction = "ccw"
 
@@ -113,17 +113,12 @@ switch_direction = "ccw"
 lift_id  = 11
 auger_id = 12
 
-# Speeds in raw ticks per second. An unhomed lift always jogs at slow_jog_speed.
+# Speeds in raw ticks per second. A lift with no top anchor always jogs at
+# slow_jog_speed.
 jog_speed      = 400
 slow_jog_speed = 150
 drill_speed    = 800
 switch_speed   = 300
-
-# Stall detection for the home and travel-calibration procedures.
-stall_load      = 600
-stall_ticks     = 10
-stall_speed_eps = 20
-stall_delta_eps = 8
 
 # Switch interlock window, as a fraction of travel measured from the top.
 top_band_fraction = 0.03
@@ -139,7 +134,7 @@ stale_input_ms   = 150
 # Optional. Set it to make height_mm available; without it that field stays N/A.
 # mm_per_tick = 0.05
 
-# Optional. Where the calibrated travel span is persisted.
+# Optional. Where the marked travel span is persisted.
 # state_path = "/var/lib/waypoint-module-drill/calibration.toml"
 ```
 
