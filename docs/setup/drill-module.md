@@ -113,11 +113,17 @@ switch_direction = "ccw"
 lift_id  = 11
 auger_id = 12
 
-# Speeds in raw ticks per second. A lift with no top anchor always jogs at
-# slow_jog_speed.
+# Speeds in raw ticks per second, against 4096 ticks per revolution. A lift
+# with no top anchor always jogs at slow_jog_speed.
+#
+# drill_speed and switch_speed are ceilings, not fixed rates: the auger speed
+# slider sends a throttle of 0.05 to 1.0 and the daemon multiplies. The default
+# 3200 is roughly the STS3215's own free-run limit, so 100 per cent means as
+# fast as the servo goes. switch_speed stays low on purpose, which keeps the
+# ratchet gentle even at full slider.
 jog_speed      = 400
 slow_jog_speed = 150
-drill_speed    = 800
+drill_speed    = 3200
 switch_speed   = 300
 
 # Switch interlock window, as a fraction of travel measured from the top.
