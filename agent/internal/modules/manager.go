@@ -349,7 +349,7 @@ func (m *Manager) onModuleAttached(ctx context.Context, id string, manifest *Man
 	if m.isLocalID(id) {
 		origin = waypointv1.ModuleOrigin_MODULE_ORIGIN_LOCAL
 	}
-	m.pub.SetRuntimeModule(id, manifest.Label, manifest.Version, manifest.UI, origin)
+	m.pub.SetRuntimeModule(id, *manifest, origin)
 	pctx, cancel := context.WithCancel(ctx)
 	m.pollersMu.Lock()
 	if m.healthPollers == nil {

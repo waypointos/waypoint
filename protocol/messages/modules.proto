@@ -24,6 +24,22 @@ message ModuleInfo {
   ModuleUI ui       = 7;   // unset when module declares no UI
   ModuleOrigin origin = 8; // who asked for this module
   ModuleComponent component = 9;  // unset when module declares no [component]
+  repeated ModuleConfigField config_fields = 10; // manifest [[config.fields]]; empty = no schema
+}
+
+// One editable setting in a module's per-rover config (manifest
+// [[config.fields]]). Lets the dashboard render a real form instead of asking
+// an operator to hand-write TOML; empty means the module declared no schema.
+message ModuleConfigField {
+  string key   = 1;  // TOML key written to the module's config.toml
+  string label = 2;  // human label shown in the form
+  // Input treatment: text | url | password | number | bool. Left open rather
+  // than an enum so a module may declare a type an older dashboard predates;
+  // unknown values render as text.
+  string type          = 3;
+  string default_value = 4;  // shown as the placeholder, never written on the operator's behalf
+  string help          = 5;  // optional one-line hint under the field
+  bool   required      = 6;
 }
 
 // Component class a module serves (manifest [component]); lets consumers

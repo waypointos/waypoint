@@ -1,7 +1,23 @@
 // Typed client for the proxy's admin module-registry endpoints. Cookie-session
 // (admin) auth; used only in proxy mode (see modulesApi.ts for the local agent API).
 
-export type RegisteredVersion = { version: string; ingestedAt: string };
+// Mirrors waypoint.v1.ModuleConfigField. The registry echoes a version's schema
+// from its release manifest so the enable form can render fields before the
+// module is attached and publishing its own schema on infra.modules.
+export type ConfigFieldSpec = {
+  key: string;
+  label: string;
+  type: string;
+  defaultValue: string;
+  help: string;
+  required: boolean;
+};
+
+export type RegisteredVersion = {
+  version: string;
+  ingestedAt: string;
+  configFields: ConfigFieldSpec[];
+};
 export type RegisteredModule = {
   moduleId: string;
   displayName: string;
@@ -27,13 +43,26 @@ async function ok(r: Response): Promise<Response> {
 export async function listRegistered(): Promise<RegisteredModule[]> {
   const r = await ok(await fetch('/api/admin/modules', { credentials: 'include' }));
   const body = (await r.json()) as {
-    modules: Array<{ module_id: string; display_name: string; source_repo_url: string; versions: Array<{ version: string; ingested_at: string }> }>;
+    modules: Array<{
+      module_id: string; display_name: string; source_repo_url: string;
+      versions: Array<{
+        version: string; ingested_at: string;
+        config_fields?: Array<{ key: string; label: string; type: string; default: string; help: string; required: boolean }>;
+      }>;
+    }>;
   };
   return (body.modules ?? []).map((m) => ({
     moduleId: m.module_id,
     displayName: m.display_name,
     sourceRepoUrl: m.source_repo_url,
-    versions: (m.versions ?? []).map((v) => ({ version: v.version, ingestedAt: v.ingested_at })),
+    versions: (m.versions ?? []).map((v) => ({
+      version: v.version,
+      ingestedAt: v.ingested_at,
+      configFields: (v.config_fields ?? []).map((f) => ({
+        key: f.key, label: f.label, type: f.type,
+        defaultValue: f.default, help: f.help, required: f.required,
+      })),
+    })),
   }));
 }
 

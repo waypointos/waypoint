@@ -22,18 +22,22 @@ UMR is enabled through the proxy's module registry. The general mechanics are in
    The proxy fetches the latest release, verifies the cosign signature against
    the repository's own release workflow identity, and records the module.
 3. Open the rover's `MODULES` tab and press **Enable on this rover** on the
-   `umr` row. The config form opens before the module is enabled: enter the
-   router address, the owner password, and the poll period.
+   `umr` row. The config form opens before the module is enabled, with a field
+   per setting the module declares:
 
-```toml
-host             = "https://192.168.105.1"
-password         = "<owner password>"
-poll_interval_s  = 5
-```
+| Field | Key | Default |
+|---|---|---|
+| Router URL | `host` | `https://192.168.105.1` |
+| Owner password | `password` | none, required |
+| Poll interval (s) | `poll_interval_s` | `5` |
 
-Every key is optional and the values above are the module's own defaults, except
-the password, which has no useful default: without it the module reaches the
-router but every login is rejected.
+A field left blank keeps the module's own default, which is why only the
+password is required: without it the module reaches the router but every login is
+rejected. The password is masked, with a reveal toggle for checking a typo.
+
+The fields come from the module's manifest, so a `umr` release that predates the
+`[[config.fields]]` schema shows a raw TOML box instead. Both forms write the
+same `config.toml`.
 
 Within ~5 seconds of the agent picking up the module, the dashboard's
 `CONNECTION` tab appears for this rover (`infra.modules` reports the module
@@ -50,8 +54,15 @@ The equivalent API call is
 `POST /api/admin/rovers/{roverID}/modules/umr` with
 `{"version": "0.4.0", "config_toml": "..."}`. Note that `config_toml` is a
 document the *agent* parses, so the keys go inside a `[modules_config.umr]`
-table; the form adds that wrapper for you. Sending the flat keys above with no
-table header is silently equivalent to sending no config at all.
+table; the form adds that wrapper for you. Sending flat keys with no table
+header is silently equivalent to sending no config at all:
+
+```toml
+[modules_config.umr]
+host             = "https://192.168.105.1"
+password         = "<owner password>"
+poll_interval_s  = 5
+```
 
 ## Release
 

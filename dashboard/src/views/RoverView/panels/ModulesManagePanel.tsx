@@ -28,6 +28,7 @@ import {
   deleteModule,
   type RegisteredModule,
   type DesiredModule,
+  type ConfigFieldSpec,
 } from '../proxyModulesApi';
 import { ModuleConfigDialog } from '../ModuleConfigDialog';
 import styles from './ModulesManagePanel.module.css';
@@ -93,6 +94,7 @@ export function ModulesManagePanel({ roverId = '' }: Props) {
     version: string;
     configToml: string;
     intent: 'enable' | 'edit';
+    fields: ConfigFieldSpec[];
   } | null>(null);
 
   async function handleDisable(moduleId: string) {
@@ -477,6 +479,9 @@ export function ModulesManagePanel({ roverId = '' }: Props) {
                                     version: desiredEntry.version,
                                     configToml: desiredEntry.configToml,
                                     intent: 'edit',
+                                    // The pinned version's schema, which an older
+                                    // pin may declare differently from the latest.
+                                    fields: m.versions.find((v) => v.version === desiredEntry.version)?.configFields ?? [],
                                   })}
                                   data-testid={`configure-${m.moduleId}`}
                                 >
@@ -493,6 +498,7 @@ export function ModulesManagePanel({ roverId = '' }: Props) {
                                   version: latestVersion,
                                   configToml: '',
                                   intent: 'enable',
+                                  fields: m.versions[0]?.configFields ?? [],
                                 })}
                                 data-testid={`enable-${m.moduleId}`}
                               >
@@ -565,6 +571,7 @@ export function ModulesManagePanel({ roverId = '' }: Props) {
           moduleId={configTarget.moduleId}
           version={configTarget.version}
           configToml={configTarget.configToml}
+          fields={configTarget.fields}
           intent={configTarget.intent}
           onSaved={() => void refreshProxy()}
           onClose={() => setConfigTarget(null)}

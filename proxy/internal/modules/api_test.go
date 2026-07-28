@@ -355,6 +355,60 @@ func TestAPI_HandleServeStatic(t *testing.T) {
 	require.Equal(t, http.StatusNotFound, serve("umr", "").Code)
 }
 
+// The registry echoes each version's config schema out of its stored release
+// manifest, which is the only source the enable form has: the module is not
+// attached yet, so it is not publishing a schema on infra.modules.
+func TestHandleList_EchoesConfigSchema(t *testing.T) {
+	pool := newTestPool(t)
+	repo := db.NewModulesRepo(pool)
+	api := NewAPI(repo, NewDiskBlobStore(t.TempDir()), http.DefaultClient)
+	ctx := context.Background()
+	u, err := db.NewUsersRepo(pool).UpsertFromWorkOS(ctx, "wk_schema", "schema@example.com")
+	require.NoError(t, err)
+
+	require.NoError(t, repo.RegisterModule(ctx, db.RegisterModuleInput{
+		ModuleID: "umr", DisplayName: "Connectivity", SourceRepoURL: "https://github.com/waypointos/waypoint-umr",
+		ExpectedIdentitySAN: "^test$", RegisteredBy: u.ID,
+	}))
+	manifest := []byte(`{"name":"umr","label":"Connectivity","version":"0.5.0","config":{"fields":[
+		{"key":"host","label":"Router URL","type":"url","default":"https://192.168.105.1"},
+		{"key":"password","label":"Owner password","type":"password","required":true}]}}`)
+	require.NoError(t, repo.IngestVersion(ctx, db.IngestVersionInput{
+		ModuleID: "umr", Version: "0.5.0", RawPath: "/p", RawSha256: "s", ManifestJSON: manifest,
+	}))
+	// A version predating the schema must simply carry none.
+	require.NoError(t, repo.IngestVersion(ctx, db.IngestVersionInput{
+		ModuleID: "umr", Version: "0.4.0", RawPath: "/p", RawSha256: "s",
+		ManifestJSON: []byte(`{"name":"umr","version":"0.4.0"}`),
+	}))
+
+	rr := httptest.NewRecorder()
+	api.HandleList(rr, httptest.NewRequest("GET", "/api/admin/modules", nil))
+	require.Equal(t, 200, rr.Code)
+
+	var body struct {
+		Modules []struct {
+			ModuleID string `json:"module_id"`
+			Versions []struct {
+				Version      string        `json:"version"`
+				ConfigFields []configField `json:"config_fields"`
+			} `json:"versions"`
+		} `json:"modules"`
+	}
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &body))
+	require.Len(t, body.Modules, 1)
+	byVersion := map[string][]configField{}
+	for _, v := range body.Modules[0].Versions {
+		byVersion[v.Version] = v.ConfigFields
+	}
+	require.Len(t, byVersion["0.5.0"], 2)
+	require.Equal(t, configField{
+		Key: "host", Label: "Router URL", Type: "url", Default: "https://192.168.105.1",
+	}, byVersion["0.5.0"][0])
+	require.True(t, byVersion["0.5.0"][1].Required)
+	require.Empty(t, byVersion["0.4.0"])
+}
+
 func TestHandleListDesired(t *testing.T) {
 	pool := newTestPool(t)
 	repo := db.NewModulesRepo(pool)

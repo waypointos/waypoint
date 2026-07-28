@@ -194,16 +194,7 @@ func (a *API) HandleRegister(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "fetch manifest: "+err.Error(), http.StatusFailedDependency)
 		return
 	}
-	var manifest struct {
-		Name    string `json:"name"`
-		Label   string `json:"label"`
-		Version string `json:"version"`
-		UI      struct {
-			Static *struct {
-				Bundle string `json:"bundle"`
-			} `json:"static"`
-		} `json:"ui"`
-	}
+	var manifest releaseManifest
 	if err := json.Unmarshal(manifestRaw, &manifest); err != nil {
 		http.Error(w, "parse manifest: "+err.Error(), http.StatusUnprocessableEntity)
 		return
@@ -292,6 +283,49 @@ func (a *API) HandleRegister(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// releaseManifest is the subset of a module's release manifest.json the proxy
+// reads. The rover reads the same manifest out of the .raw; this only needs what
+// the registry and the dashboard's config form require.
+type releaseManifest struct {
+	Name    string `json:"name"`
+	Label   string `json:"label"`
+	Version string `json:"version"`
+	UI      struct {
+		Static *struct {
+			Bundle string `json:"bundle"`
+		} `json:"static"`
+	} `json:"ui"`
+	Config struct {
+		Fields []configField `json:"fields"`
+	} `json:"config"`
+}
+
+// configField mirrors the agent's manifest [[config.fields]] entry. It is echoed
+// to the dashboard so an operator gets a real form at enable time, before the
+// module is attached and publishing its own schema in infra.modules.
+type configField struct {
+	Key      string `json:"key"`
+	Label    string `json:"label"`
+	Type     string `json:"type"`
+	Default  string `json:"default"`
+	Help     string `json:"help"`
+	Required bool   `json:"required"`
+}
+
+// configFieldsFor decodes a stored manifest's config schema. A manifest that
+// predates the schema, or is unreadable, yields no fields and the dashboard falls
+// back to its TOML editor.
+func configFieldsFor(manifestJSON []byte) []configField {
+	if len(manifestJSON) == 0 {
+		return nil
+	}
+	var m releaseManifest
+	if err := json.Unmarshal(manifestJSON, &m); err != nil {
+		return nil
+	}
+	return m.Config.Fields
+}
+
 // HandleList implements GET /api/admin/modules.
 func (a *API) HandleList(w http.ResponseWriter, r *http.Request) {
 	rows, err := a.repo.ListAll(r.Context())
@@ -300,8 +334,9 @@ func (a *API) HandleList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	type version struct {
-		Version    string `json:"version"`
-		IngestedAt string `json:"ingested_at"`
+		Version      string        `json:"version"`
+		IngestedAt   string        `json:"ingested_at"`
+		ConfigFields []configField `json:"config_fields,omitempty"`
 	}
 	type module struct {
 		ModuleID      string    `json:"module_id"`
@@ -313,7 +348,11 @@ func (a *API) HandleList(w http.ResponseWriter, r *http.Request) {
 	for _, m := range rows {
 		vs := make([]version, 0, len(m.Versions))
 		for _, v := range m.Versions {
-			vs = append(vs, version{Version: v.Version, IngestedAt: v.IngestedAt.Format("2006-01-02T15:04:05Z")})
+			vs = append(vs, version{
+				Version:      v.Version,
+				IngestedAt:   v.IngestedAt.Format("2006-01-02T15:04:05Z"),
+				ConfigFields: configFieldsFor(v.ManifestJSON),
+			})
 		}
 		out = append(out, module{
 			ModuleID:      m.Module.ModuleID,

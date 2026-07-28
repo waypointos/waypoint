@@ -136,6 +136,13 @@ export class ModuleInfo extends Message<ModuleInfo> {
    */
   component?: ModuleComponent;
 
+  /**
+   * manifest [[config.fields]]; empty = no schema
+   *
+   * @generated from field: repeated waypoint.v1.ModuleConfigField config_fields = 10;
+   */
+  configFields: ModuleConfigField[] = [];
+
   constructor(data?: PartialMessage<ModuleInfo>) {
     super();
     proto3.util.initPartial(data, this);
@@ -153,6 +160,7 @@ export class ModuleInfo extends Message<ModuleInfo> {
     { no: 7, name: "ui", kind: "message", T: ModuleUI },
     { no: 8, name: "origin", kind: "enum", T: proto3.getEnumType(ModuleOrigin) },
     { no: 9, name: "component", kind: "message", T: ModuleComponent },
+    { no: 10, name: "config_fields", kind: "message", T: ModuleConfigField, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ModuleInfo {
@@ -169,6 +177,89 @@ export class ModuleInfo extends Message<ModuleInfo> {
 
   static equals(a: ModuleInfo | PlainMessage<ModuleInfo> | undefined, b: ModuleInfo | PlainMessage<ModuleInfo> | undefined): boolean {
     return proto3.util.equals(ModuleInfo, a, b);
+  }
+}
+
+/**
+ * One editable setting in a module's per-rover config (manifest
+ * [[config.fields]]). Lets the dashboard render a real form instead of asking
+ * an operator to hand-write TOML; empty means the module declared no schema.
+ *
+ * @generated from message waypoint.v1.ModuleConfigField
+ */
+export class ModuleConfigField extends Message<ModuleConfigField> {
+  /**
+   * TOML key written to the module's config.toml
+   *
+   * @generated from field: string key = 1;
+   */
+  key = "";
+
+  /**
+   * human label shown in the form
+   *
+   * @generated from field: string label = 2;
+   */
+  label = "";
+
+  /**
+   * Input treatment: text | url | password | number | bool. Left open rather
+   * than an enum so a module may declare a type an older dashboard predates;
+   * unknown values render as text.
+   *
+   * @generated from field: string type = 3;
+   */
+  type = "";
+
+  /**
+   * shown as the placeholder, never written on the operator's behalf
+   *
+   * @generated from field: string default_value = 4;
+   */
+  defaultValue = "";
+
+  /**
+   * optional one-line hint under the field
+   *
+   * @generated from field: string help = 5;
+   */
+  help = "";
+
+  /**
+   * @generated from field: bool required = 6;
+   */
+  required = false;
+
+  constructor(data?: PartialMessage<ModuleConfigField>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "waypoint.v1.ModuleConfigField";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "key", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "label", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "default_value", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 5, name: "help", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "required", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ModuleConfigField {
+    return new ModuleConfigField().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ModuleConfigField {
+    return new ModuleConfigField().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ModuleConfigField {
+    return new ModuleConfigField().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ModuleConfigField | PlainMessage<ModuleConfigField> | undefined, b: ModuleConfigField | PlainMessage<ModuleConfigField> | undefined): boolean {
+    return proto3.util.equals(ModuleConfigField, a, b);
   }
 }
 

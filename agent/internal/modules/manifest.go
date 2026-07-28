@@ -31,6 +31,20 @@ type Manifest struct {
 	Provides    []string
 	Requires    []string
 	Component   *Component
+	// ConfigFields is the manifest [[config.fields]] schema for the module's
+	// per-rover config.toml. Empty means the module declares none, and the
+	// dashboard falls back to a raw TOML editor.
+	ConfigFields []ConfigField
+}
+
+// ConfigField is one editable setting in a module's per-rover config.
+type ConfigField struct {
+	Key      string
+	Label    string
+	Type     string // text | url | password | number | bool; empty defaults to text
+	Default  string
+	Help     string
+	Required bool
 }
 
 // Component is the manifest [component] declaration: the standard class this
@@ -215,6 +229,11 @@ func ParseManifest(data []byte) (*Manifest, error) {
 		}
 		m.Component = &Component{Class: raw.Component.Class, StateRateHz: rate}
 	}
+	fields, err := buildConfigFields(&raw)
+	if err != nil {
+		return nil, err
+	}
+	m.ConfigFields = fields
 	if err := buildUI(&raw, m); err != nil {
 		return nil, err
 	}
@@ -222,6 +241,37 @@ func ParseManifest(data []byte) (*Manifest, error) {
 		return nil, err
 	}
 	return m, nil
+}
+
+var configFieldKeyRe = regexp.MustCompile(`^[a-z][a-z0-9_]{0,63}$`)
+
+// buildConfigFields validates [[config.fields]]. The type string is left
+// unchecked on purpose: a module may declare a type an older dashboard predates,
+// and the dashboard renders anything it does not recognise as text.
+func buildConfigFields(raw *rawManifest) ([]ConfigField, error) {
+	if len(raw.Config.Fields) == 0 {
+		return nil, nil
+	}
+	out := make([]ConfigField, 0, len(raw.Config.Fields))
+	seen := map[string]bool{}
+	for i, f := range raw.Config.Fields {
+		if !configFieldKeyRe.MatchString(f.Key) {
+			return nil, fmt.Errorf("manifest: config.fields[%d].key %q must match [a-z][a-z0-9_]{0,63}", i, f.Key)
+		}
+		if seen[f.Key] {
+			return nil, fmt.Errorf("manifest: duplicate config.fields key %q", f.Key)
+		}
+		seen[f.Key] = true
+		label := f.Label
+		if label == "" {
+			label = f.Key
+		}
+		out = append(out, ConfigField{
+			Key: f.Key, Label: label, Type: f.Type,
+			Default: f.Default, Help: f.Help, Required: f.Required,
+		})
+	}
+	return out, nil
 }
 
 func buildUI(raw *rawManifest, m *Manifest) error {
@@ -363,4 +413,14 @@ type rawManifest struct {
 		Class       string  `toml:"class"`
 		StateRateHz float64 `toml:"state_rate_hz"`
 	} `toml:"component"`
+	Config struct {
+		Fields []struct {
+			Key      string `toml:"key"`
+			Label    string `toml:"label"`
+			Type     string `toml:"type"`
+			Default  string `toml:"default"`
+			Help     string `toml:"help"`
+			Required bool   `toml:"required"`
+		} `toml:"fields"`
+	} `toml:"config"`
 }
