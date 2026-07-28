@@ -1,9 +1,14 @@
 # Drill bring-up
 
 Ordered checklist for the first powered run of the drill module on a rover.
-It establishes the two wiring signs, the height axis, the stall thresholds,
-and finally the ratchet direction. Work through it in order: every step
-assumes the ones before it passed.
+It confirms the two wiring signs, establishes the height axis, and finally
+settles the ratchet direction. Work through it in order: every step assumes
+the ones before it passed.
+
+The lift has no hard stop at either end. Nothing in the module seeks a limit
+under power; both ends of travel are marked by the operator, by jogging to the
+end and pressing a button that records the position where the carriage already
+stands.
 
 Installing and enabling the module is a separate document,
 [drill-module.md](drill-module.md).
@@ -77,66 +82,64 @@ Open the drill tab and read it before touching a control.
   Bus voltage should match the pack. No row shows `OC!`.
 - STATUS shows `homed: no`, `calibrated: no`, `halted: no`, `phase: idle`.
 - HEIGHT renders `N/A` with reason `unhomed`. That is correct at this point:
-  height needs a home anchor before it means anything.
+  height needs a top anchor before it means anything.
 
 Do not jog yet.
 
 ## 4. Step 1: lift_up_sign
 
-Which raw velocity sign raises the carriage depends on gearing and motor
-orientation, so it is a per-build setting rather than something the module
-can infer.
+`lift_up_sign` defaults to `-1`, which is correct for the reference assembly.
+This step confirms it on the machine in front of you rather than discovering
+it, and the key stays configurable so a one-off rebuild can correct itself.
 
 Park the carriage roughly mid-travel by hand if it is not already, then hold
 `jog up` in the HEIGHT card briefly (or D-pad up on a mirrored gamepad).
 While the axis is unhomed the jog runs at `slow_jog_speed`, 150 raw, so the
 motion is deliberately slow. Release immediately.
 
-- Carriage rises: `lift_up_sign = 1`, the default. Continue.
-- Carriage descends: set `lift_up_sign = -1`, re-apply the configuration per
+- Carriage rises: `lift_up_sign = -1`, the default. Continue.
+- Carriage descends: set `lift_up_sign = 1`, re-apply the configuration per
   section 2, restart, and repeat this step.
 
-Never home before this step is settled. Homing creeps toward what the module
-believes is the top stop; with the sign inverted it creeps into the bottom
-stop instead.
+Jog is hold-to-move and ages out on its own deadman, so it stops when you
+release it. Confirm the sign here, where a wrong answer costs a fraction of a
+second of travel, rather than later.
 
 ## 5. Step 2: encoder tick sign
 
-Run this check immediately after the first successful home in step 3. It is
-called out separately because its remedy is upstream, not on the rover, and
-because nothing downstream catches the fault for you.
+Run this check immediately after the top is marked in step 3. It is called
+out separately because its remedy is upstream, not on the rover.
 
-With the axis homed, jog down slightly and read `height_ticks` on the drill
+With the top marked, jog down slightly and read `height_ticks` on the drill
 tab. Ticks are counted from the top anchor at 0 and grow positive downward,
 so a short jog down should produce a small positive value. That one reading
 is the whole check: `height_norm` is still `N/A` with reason `uncalibrated`
 at this point and says nothing either way.
 
 `height_ticks` going negative as the carriage moves below the anchor means
-the encoder counts the wrong way. Two later behaviors actively hide it:
+the encoder counts the wrong way. Marking the bottom in step 4 then refuses
+with `bottom is not below the top anchor`, so the fault surfaces there rather
+than being stored as a plausible-looking span.
 
-- Travel calibration takes the absolute span between the two stops, so it
-  completes normally and STATUS reads `calibrated: yes` with a plausible
-  `travel_ticks`. That is not confirmation of the tick sign.
-- `height_norm` is then clamped to 0 across the entire travel, so the HEIGHT
-  bar never fills and the top-band interlock reads the carriage as parked at
-  the top wherever it actually is. `switch` is enabled at any height instead
-  of only inside the top band.
-
-Because of the second point, step 7 must not be attempted until a downward
-jog reads positive. The interlock that step relies on fails open while the
-tick sign is inverted.
+If it does, `height_norm` never goes live, so the top-band interlock stays
+closed and step 6 cannot be attempted. That is the intended outcome: the
+interlock refuses rather than failing open.
 
 There is no configuration remedy today. `lift_ticks_sign` is the named
 follow-up key for it. Record the observation and stop; do not improvise a
 fix on the rover by rewiring the encoder or hand-editing the persisted
 calibration.
 
-## 6. Step 3: home
+## 6. Step 3: mark the top
 
-Press `Home` in the HEIGHT card. The lift creeps up at `slow_jog_speed`
-until the top hard stop stalls the servo. The calibration note under the
-card reports `homing`, then `done`.
+Jog the carriage to the highest position you want it to reach, then release
+and press `Set top here` in the HEIGHT card. The mark commands no servo: it
+records the position the carriage is already standing at as height 0. The
+calibration note under the card reports `top_set`.
+
+Choose the position deliberately. It is the zero every later height reading
+and the top-band interlock are measured from, and you will re-mark it at
+roughly the same place after every restart.
 
 Verify:
 
@@ -144,56 +147,40 @@ Verify:
 - `height_ticks` reads at or near 0.
 - The HEIGHT reason changes from `unhomed` to `uncalibrated`.
 
-If the carriage creeps down instead, stop and return to step 1. If it drives
-into the stop and keeps pushing, or stops well short of it, the stall
-thresholds need step 5 before homing is trustworthy.
+The mark is refused, with the reason under `refused` in the STATUS rail, if
+the lift is still moving, if the halt latch is set, or before the first servo
+read has landed. Release the jog, clear any halt, and press again.
 
-## 7. Step 4: calibrate travel
+## 7. Step 4: mark the bottom
 
-`Run calibration` becomes available once the axis is homed. The procedure
-creeps down to the bottom stop (phase `run_down`), then back up to the top
-stop (phase `run_up`), and reports `done` with the travel span in ticks.
-`Abort calibration` stops it at any point and leaves the previous span
-untouched.
+`Set bottom here` becomes available once the top is marked. Jog the carriage
+down to the lowest position you want it to reach, release, and press it. The
+span between the two marks is the travel, reported as `bottom_set` with the
+tick count.
 
-On `done`:
+On `bottom_set`:
 
 - The span is written to
   `/var/lib/waypoint-module-drill/calibration.toml` and reloaded at every
-  start, so calibration survives a restart or a module update.
+  start, so it survives a restart or a module update.
 - STATUS shows `calibrated: yes`.
 - `height_norm` goes live (0 at the top, 1 at the bottom), the HEIGHT bar
   tracks the carriage, and the `goto` slider is enabled.
 
-## 8. Step 5: stall tuning
+A bottom marked at or above the top anchor is refused with `bottom is not
+below the top anchor` and nothing is stored. That means either the two marks
+were made in the wrong order or the encoder counts the wrong way; see step 2.
 
-Only needed when home or calibration ends early (a false stall) or fails to
-stop at a hard stop (a missed stall). The detector declares a stall only when
-the axis is loaded and not turning and not advancing, for a sustained run of
-reads at the 20 Hz read rate, so `stall_ticks = 10` is half a second of
-evidence.
+Re-marking the top keeps a stored span, because the span is a property of the
+machine rather than of the anchor. The encoder loses its reference at every
+restart, so marking the top is the routine per-session step and re-measuring
+the span is not. Mark the bottom again whenever the top is set somewhere
+other than its usual place.
 
-| Key | Default | Meaning |
-|---|---|---|
-| `stall_load` | 600 | Absolute load at or above which a read counts as loaded. |
-| `stall_ticks` | 10 | Consecutive qualifying reads before a stall is declared. |
-| `stall_speed_eps` | 20 | Absolute reported speed at or below which the servo counts as not turning. |
-| `stall_delta_eps` | 8 | Absolute tick movement per read at or below which the axis counts as not advancing. |
+## 8. Step 5: auger_drill_sign
 
-- False stall part way along the travel, usually friction or a tight spot:
-  raise `stall_load` first, then `stall_ticks`.
-- Missed stall at a hard stop: lower `stall_load`. If the servo still reports
-  residual speed or tick movement while pressed against the stop, raise
-  `stall_speed_eps` and `stall_delta_eps` to match what it actually reports.
-
-Change one key at a time and re-run home before re-running calibration.
-
-`lift_overcurrent_raw` and `auger_overcurrent_raw`, both 500 raw by default,
-are written to the servos at startup and are the hard backstop underneath all
-of this: a trip latches a halt with reason `overcurrent`. Tune the stall keys,
-not the ceilings.
-
-## 9. Step 6: auger_drill_sign
+`auger_drill_sign` defaults to `-1`, correct for the reference assembly. As
+with the lift sign, this step confirms it rather than discovering it.
 
 There is no throttle control anywhere: the tab, the teleop window and the
 gamepad all command the auger at full scale. The only way to run an attempt
@@ -205,27 +192,26 @@ Hold `drill` in the AUGER card briefly, with the auger clear of material or
 barely engaged.
 
 The screw must convey material upward, out of the hole. If it drives material
-down and packs the hole, set `auger_drill_sign = -1`, re-apply, and repeat.
+down and packs the hole, set `auger_drill_sign = 1`, re-apply, and repeat.
 
 Settle this before any switch test: the switch rotation sign is derived from
 the drill sign, where `switch_direction = "ccw"` means the opposite sign and
 `"cw"` means the same sign.
 
-## 10. Step 7: first powered ratchet test
+## 9. Step 6: first powered ratchet test
 
 This is the test that decides `switch_direction` and whether container
 switching is viable at all.
 
 Preconditions, all required:
 
-- Step 2 passed: a downward jog reads positive `height_ticks`. With the tick
-  sign inverted the interlock below permits the switch at any height.
+- Step 2 passed: a downward jog reads positive `height_ticks`.
 - The axis is calibrated and the carriage is parked inside the top band,
   `height_norm` at or below `top_band_fraction` (0.03 by default).
 - Both containers are empty.
 - The auger is stopped and nothing is in the carousel path.
 
-As in step 6 there is no throttle: `switch` runs at the full `switch_speed`,
+As in step 5 there is no throttle: `switch` runs at the full `switch_speed`,
 300 raw by default. This is the first powered engagement of an unknown
 ratchet, so halve `switch_speed` in the configuration first, re-apply per
 section 2, and raise it again only once the direction is known good.
@@ -243,7 +229,7 @@ mechanism, not the screen.
   for a mechanical redesign. The drill and lift functionality stands on its
   own and stays in service.
 
-## 11. Troubleshooting
+## 10. Troubleshooting
 
 **Halt latch.** A halt zeroes both servos and cuts torque, and it latches.
 Motion resumes only on a fresh input: release every control, then press
@@ -263,8 +249,8 @@ Height `N/A` reasons:
 
 | Reason | Means |
 |---|---|
-| `unhomed` | No top anchor yet. Run `Home`. |
-| `uncalibrated` | Homed, but the travel span is unknown. Run the travel calibration. |
+| `unhomed` | No top anchor yet. Press `Set top here`. |
+| `uncalibrated` | Top marked, but the travel span is unknown. Press `Set bottom here`. |
 
 `height_mm` additionally needs `mm_per_tick` in the configuration; without it
 the field stays `N/A` while ticks and norm are live.
@@ -277,6 +263,14 @@ Switch refusal reasons, shown under `switch` in the STATUS rail:
 | `below top band` | The carriage is lower than `top_band_fraction`. Raise it. |
 | `halted` | The halt latch is set. Clear it with a fresh input. |
 
-Refused commands appear once under `refused` in the STATUS rail, for example
-`goto_height: uncalibrated` or `calibrate: unhomed`. They refuse the command
-only; they are not halts.
+Refused commands appear once under `refused` in the STATUS rail. They refuse
+the command only; they are not halts.
+
+| `refused` | Means |
+|---|---|
+| `goto_height: uncalibrated` | No travel span, so a normalized target has no meaning. |
+| `set_bottom: unhomed, mark the top first` | The span is measured from the top anchor, which does not exist yet. |
+| `set_bottom: bottom is not below the top anchor` | The marks are out of order, or the encoder counts the wrong way. See step 2. |
+| `set_top: lift is moving` / `set_bottom: lift is moving` | A mark records where the carriage stands, so it will not run against a moving one. Release the jog. |
+| `set_top: halted` / `set_bottom: halted` | The halt latch is set. Clear it with a fresh input. |
+| `set_top: no servo read yet` | No position has arrived from the bus. Check MOTORS in step 0. |
