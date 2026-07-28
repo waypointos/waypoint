@@ -77,6 +77,64 @@ func TestParseManifest_MissingEntrypoint(t *testing.T) {
 	}
 }
 
+func TestParseManifest_ConfigFields(t *testing.T) {
+	const m = `
+name = "umr"
+entrypoint = "waypoint-module-umr"
+
+[[config.fields]]
+key     = "host"
+label   = "Router URL"
+type    = "url"
+default = "https://192.168.105.1"
+
+[[config.fields]]
+key      = "password"
+label    = "Owner password"
+type     = "password"
+required = true
+help     = "The router's local owner password."
+
+[[config.fields]]
+key  = "poll_interval_s"
+type = "number"
+`
+	got, err := ParseManifest([]byte(m))
+	require.NoError(t, err)
+	require.Len(t, got.ConfigFields, 3)
+	require.Equal(t, ConfigField{
+		Key: "host", Label: "Router URL", Type: "url", Default: "https://192.168.105.1",
+	}, got.ConfigFields[0])
+	require.True(t, got.ConfigFields[1].Required)
+	require.Equal(t, "The router's local owner password.", got.ConfigFields[1].Help)
+	// Order is the manifest's: a form reads top to bottom.
+	require.Equal(t, "poll_interval_s", got.ConfigFields[2].Key)
+	require.Equal(t, "poll_interval_s", got.ConfigFields[2].Label, "label defaults to the key")
+}
+
+func TestParseManifest_ConfigFieldsRejected(t *testing.T) {
+	base := "name = \"x\"\nentrypoint = \"e\"\n"
+	for name, doc := range map[string]string{
+		"bad key":        base + "\n[[config.fields]]\nkey = \"Host Name\"\n",
+		"empty key":      base + "\n[[config.fields]]\nlabel = \"No key\"\n",
+		"duplicate keys": base + "\n[[config.fields]]\nkey = \"host\"\n\n[[config.fields]]\nkey = \"host\"\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := ParseManifest([]byte(doc))
+			require.Error(t, err)
+		})
+	}
+}
+
+// An unrecognised type must survive parsing: the module may be newer than the
+// dashboard, which falls back to a text input.
+func TestParseManifest_ConfigFieldUnknownTypeKept(t *testing.T) {
+	doc := "name = \"x\"\nentrypoint = \"e\"\n\n[[config.fields]]\nkey = \"colour\"\ntype = \"colour-picker\"\n"
+	got, err := ParseManifest([]byte(doc))
+	require.NoError(t, err)
+	require.Equal(t, "colour-picker", got.ConfigFields[0].Type)
+}
+
 func TestParseManifest_UnknownKeysIgnored(t *testing.T) {
 	doc := sampleManifestTOML + "\nfuture_field = \"someday\"\n"
 	if _, err := ParseManifest([]byte(doc)); err != nil {
