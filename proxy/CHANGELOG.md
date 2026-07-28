@@ -3,6 +3,18 @@
 Generated from conventional commits by the release targets in the root
 Makefile. Do not edit by hand.
 
+## 0.17.0 (2026-07-28)
+
+### Features
+
+- **dashboard:** render module settings as fields from the manifest schema
+- **proxy:** echo a version's config schema from its release manifest
+- **protocol:** declare module config schema in the manifest
+
+### Bug fixes
+
+- **proxy:** relay component-class module commands
+
 ## 0.16.0 (2026-07-27)
 
 ### Features
