@@ -3,6 +3,22 @@
 Generated from conventional commits by the release targets in the root
 Makefile. Do not edit by hand.
 
+## 0.2.0 (2026-07-28)
+
+### Features
+
+- **dashboard:** render module settings as fields from the manifest schema
+- **agent:** publish a module's config schema in the snapshot
+- **protocol:** declare module config schema in the manifest
+- **dashboard:** add per-rover module config form
+
+### Bug fixes
+
+- **proxy:** keep per-rover module config on version-only updates
+- **agent:** apply module config changes without an agent restart
+- **agent:** recover from an untracked portable attach
+- **modules:** stabilize module tab order across snapshots
+
 ## 0.1.0 (2026-07-27)
 
 First versioned release of the rover OS image. Development before this
