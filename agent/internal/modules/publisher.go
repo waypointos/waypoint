@@ -17,9 +17,8 @@ import (
 const defaultSnapshotInterval = time.Second
 
 type runtimeModule struct {
-	label, version string
-	ui             UIBinding
-	origin         waypointv1.ModuleOrigin
+	manifest Manifest
+	origin   waypointv1.ModuleOrigin
 }
 
 // SnapshotPublisher publishes waypoint.<rover-id>.infra.modules at a steady
@@ -73,9 +72,11 @@ func (p *SnapshotPublisher) SetHealth(moduleID string, healthy bool) {
 	}
 }
 
-func (p *SnapshotPublisher) SetRuntimeModule(id, label, version string, ui UIBinding, origin waypointv1.ModuleOrigin) {
+// SetRuntimeModule records a reconciler-attached module. It takes the whole
+// manifest so every snapshot field stays in sync as the manifest grows.
+func (p *SnapshotPublisher) SetRuntimeModule(id string, m Manifest, origin waypointv1.ModuleOrigin) {
 	p.mu.Lock()
-	p.runtime[id] = runtimeModule{label: label, version: version, ui: ui, origin: origin}
+	p.runtime[id] = runtimeModule{manifest: m, origin: origin}
 	p.mu.Unlock()
 	p.signalChange()
 }
@@ -130,6 +131,37 @@ func uiToProto(ui UIBinding) *waypointv1.ModuleUI {
 	return out
 }
 
+// manifestToInfo projects a manifest into a snapshot entry. Single place, so a
+// baked module and a runtime-attached one always advertise the same fields.
+func manifestToInfo(m Manifest, healthy bool, origin waypointv1.ModuleOrigin) *waypointv1.ModuleInfo {
+	info := &waypointv1.ModuleInfo{
+		Id:      m.Name,
+		Label:   m.Label,
+		Version: m.Version,
+		TabId:   m.UI.TabID,
+		Healthy: healthy,
+		Ui:      uiToProto(m.UI),
+		Origin:  origin,
+	}
+	if m.Component != nil {
+		info.Component = &waypointv1.ModuleComponent{
+			Class:       m.Component.Class,
+			StateRateHz: m.Component.StateRateHz,
+		}
+	}
+	for _, f := range m.ConfigFields {
+		info.ConfigFields = append(info.ConfigFields, &waypointv1.ModuleConfigField{
+			Key:          f.Key,
+			Label:        f.Label,
+			Type:         f.Type,
+			DefaultValue: f.Default,
+			Help:         f.Help,
+			Required:     f.Required,
+		})
+	}
+	return info
+}
+
 func (p *SnapshotPublisher) buildSnapshot() *waypointv1.ModuleSnapshot {
 	now := time.Now()
 	msg := &waypointv1.ModuleSnapshot{T: timestamppb.New(now)}
@@ -141,20 +173,7 @@ func (p *SnapshotPublisher) buildSnapshot() *waypointv1.ModuleSnapshot {
 		if _, isRuntime := p.runtime[s.Manifest.Name]; isRuntime {
 			continue
 		}
-		info := &waypointv1.ModuleInfo{
-			Id:      s.Manifest.Name,
-			Label:   s.Manifest.Label,
-			Version: s.Manifest.Version,
-			TabId:   s.Manifest.UI.TabID,
-			Healthy: p.healthy[s.Manifest.Name],
-			Ui:      uiToProto(s.Manifest.UI),
-		}
-		if s.Manifest.Component != nil {
-			info.Component = &waypointv1.ModuleComponent{
-				Class:       s.Manifest.Component.Class,
-				StateRateHz: s.Manifest.Component.StateRateHz,
-			}
-		}
+		info := manifestToInfo(s.Manifest, p.healthy[s.Manifest.Name], waypointv1.ModuleOrigin_MODULE_ORIGIN_UNSPECIFIED)
 		if ls, ok := p.lastSeen[s.Manifest.Name]; ok {
 			info.LastSeen = timestamppb.New(ls)
 		}
@@ -164,11 +183,8 @@ func (p *SnapshotPublisher) buildSnapshot() *waypointv1.ModuleSnapshot {
 	// on every snapshot.
 	for _, id := range slices.Sorted(maps.Keys(p.runtime)) {
 		rm := p.runtime[id]
-		info := &waypointv1.ModuleInfo{
-			Id: id, Label: rm.label, Version: rm.version,
-			TabId: rm.ui.TabID, Healthy: p.healthy[id], Ui: uiToProto(rm.ui),
-			Origin: rm.origin,
-		}
+		info := manifestToInfo(rm.manifest, p.healthy[id], rm.origin)
+		info.Id = id // the attached id wins: it is what every subject is keyed by
 		if ls, ok := p.lastSeen[id]; ok {
 			info.LastSeen = timestamppb.New(ls)
 		}

@@ -77,11 +77,40 @@ func TestSnapshotPublisher_PublishesAtInterval(t *testing.T) {
 	}
 }
 
+// The dashboard renders its config form from the snapshot, so a runtime-attached
+// module must advertise both its config schema and its component class. Both used
+// to be dropped on this path while baked modules kept them.
+func TestPublisher_RuntimeModuleCarriesSchemaAndComponent(t *testing.T) {
+	p := NewSnapshotPublisher(nil, "rover-1", nil)
+	p.SetRuntimeModule("umr", Manifest{
+		Name: "umr", Label: "Connectivity", Version: "0.4.0",
+		UI:        UIBinding{Kind: UIKindStatic, TabID: "m-umr"},
+		Component: &Component{Class: "sensor", StateRateHz: 10},
+		ConfigFields: []ConfigField{
+			{Key: "host", Label: "Router URL", Type: "url", Default: "https://192.168.105.1"},
+			{Key: "password", Label: "Owner password", Type: "password", Required: true},
+		},
+	}, waypointv1.ModuleOrigin_MODULE_ORIGIN_PROXY)
+
+	msg := p.buildSnapshot()
+	require.Len(t, msg.Modules, 1)
+	got := msg.Modules[0]
+	require.Len(t, got.ConfigFields, 2)
+	require.Equal(t, "host", got.ConfigFields[0].Key)
+	require.Equal(t, "Router URL", got.ConfigFields[0].Label)
+	require.Equal(t, "https://192.168.105.1", got.ConfigFields[0].DefaultValue)
+	require.Equal(t, "password", got.ConfigFields[1].Type)
+	require.True(t, got.ConfigFields[1].Required)
+	require.NotNil(t, got.Component)
+	require.Equal(t, "sensor", got.Component.Class)
+}
+
 func TestPublisher_MergesRuntimeModules(t *testing.T) {
 	p := NewSnapshotPublisher(nil, "rover-1", nil)
-	p.SetRuntimeModule("power-monitor", "Power Monitor", "0.1.0",
-		UIBinding{Kind: UIKindProxy, TabID: "m-power-monitor", ProxyPort: 8090, LANOnly: true},
-		waypointv1.ModuleOrigin_MODULE_ORIGIN_UNSPECIFIED)
+	p.SetRuntimeModule("power-monitor", Manifest{
+		Name: "power-monitor", Label: "Power Monitor", Version: "0.1.0",
+		UI: UIBinding{Kind: UIKindProxy, TabID: "m-power-monitor", ProxyPort: 8090, LANOnly: true},
+	}, waypointv1.ModuleOrigin_MODULE_ORIGIN_UNSPECIFIED)
 	p.SetHealth("power-monitor", true)
 
 	msg := p.buildSnapshot()
@@ -115,8 +144,9 @@ func TestPublisher_CarriesTeleopWindow(t *testing.T) {
 // dashboard host can render it.
 func TestPublisher_TeleopOnlyNoTab(t *testing.T) {
 	p := NewSnapshotPublisher(nil, "rover", nil)
-	p.SetRuntimeModule("so100", "SO-100 Arm", "0.1.0", UIBinding{
-		Kind: UIKindNone, Teleop: &TeleopWindowBinding{WindowID: "w-so100", Entry: "arm.js"},
+	p.SetRuntimeModule("so100", Manifest{
+		Name: "so100", Label: "SO-100 Arm", Version: "0.1.0",
+		UI: UIBinding{Kind: UIKindNone, Teleop: &TeleopWindowBinding{WindowID: "w-so100", Entry: "arm.js"}},
 	}, waypointv1.ModuleOrigin_MODULE_ORIGIN_LOCAL)
 	snap := p.buildSnapshot()
 	require.Len(t, snap.Modules, 1)
@@ -150,7 +180,7 @@ func TestPublisher_CarriesComponent(t *testing.T) {
 
 func TestSnapshot_RuntimeOrigin(t *testing.T) {
 	p := NewSnapshotPublisher(nil, "rover", nil)
-	p.SetRuntimeModule("umr", "UMR", "0.1.0", UIBinding{Kind: UIKindStatic, TabID: "m-umr"}, waypointv1.ModuleOrigin_MODULE_ORIGIN_LOCAL)
+	p.SetRuntimeModule("umr", Manifest{Name: "umr", Label: "UMR", Version: "0.1.0", UI: UIBinding{Kind: UIKindStatic, TabID: "m-umr"}}, waypointv1.ModuleOrigin_MODULE_ORIGIN_LOCAL)
 	snap := p.buildSnapshot()
 	require.Len(t, snap.Modules, 1)
 	require.Equal(t, "umr", snap.Modules[0].Id)
@@ -162,7 +192,7 @@ func TestSnapshot_RuntimeOrigin(t *testing.T) {
 func TestSnapshot_RuntimeOrderIsStable(t *testing.T) {
 	p := NewSnapshotPublisher(nil, "rover", nil)
 	for _, id := range []string{"umr", "so100", "power-monitor", "drill"} {
-		p.SetRuntimeModule(id, id, "0.1.0", UIBinding{Kind: UIKindStatic, TabID: "m-" + id}, waypointv1.ModuleOrigin_MODULE_ORIGIN_LOCAL)
+		p.SetRuntimeModule(id, Manifest{Name: id, Label: id, Version: "0.1.0", UI: UIBinding{Kind: UIKindStatic, TabID: "m-" + id}}, waypointv1.ModuleOrigin_MODULE_ORIGIN_LOCAL)
 	}
 	want := []string{"drill", "power-monitor", "so100", "umr"}
 	for i := 0; i < 50; i++ {
@@ -182,7 +212,7 @@ func TestSnapshot_RuntimeShadowsBakedSpec(t *testing.T) {
 		UI: UIBinding{Kind: UIKindStatic, TabID: "m-umr"},
 	}}}
 	p := NewSnapshotPublisher(nil, "rover", specs)
-	p.SetRuntimeModule("umr", "Connectivity", "0.1.0", UIBinding{Kind: UIKindStatic, TabID: "m-umr"}, waypointv1.ModuleOrigin_MODULE_ORIGIN_LOCAL)
+	p.SetRuntimeModule("umr", Manifest{Name: "umr", Label: "Connectivity", Version: "0.1.0", UI: UIBinding{Kind: UIKindStatic, TabID: "m-umr"}}, waypointv1.ModuleOrigin_MODULE_ORIGIN_LOCAL)
 	snap := p.buildSnapshot()
 	require.Len(t, snap.Modules, 1)
 	require.Equal(t, "Connectivity", snap.Modules[0].Label, "runtime entry should win")
