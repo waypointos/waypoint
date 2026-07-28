@@ -182,11 +182,12 @@ other than its usual place.
 `auger_drill_sign` defaults to `-1`, correct for the reference assembly. As
 with the lift sign, this step confirms it rather than discovering it.
 
-There is no throttle control anywhere: the tab, the teleop window and the
-gamepad all command the auger at full scale. The only way to run an attempt
-gently is to lower the speed in the configuration, so set `drill_speed` to
-roughly a third of its 800 raw default before this step, re-apply per
-section 2, and restore it once the sign is settled.
+Use the auger speed slider to run this attempt gently. It sits in the AUGER
+card and in the teleop window, and it scales `drill_speed` from 5 to 100 per
+cent, so drop it to around 25 before this step and raise it once the sign is
+settled. A hold re-publishes every 50 ms, so the slider also takes effect
+mid-run. The gamepad D-pad ignores it and always commands full scale, so keep
+the pad out of this step.
 
 Hold `drill` in the AUGER card briefly, with the auger clear of material or
 barely engaged.
@@ -211,10 +212,10 @@ Preconditions, all required:
 - All three containers are empty.
 - The auger is stopped and nothing is in the carousel path.
 
-As in step 5 there is no throttle: `switch` runs at the full `switch_speed`,
-300 raw by default. This is the first powered engagement of an unknown
-ratchet, so halve `switch_speed` in the configuration first, re-apply per
-section 2, and raise it again only once the direction is known good.
+The speed slider scales `switch` too, against `switch_speed` rather than
+`drill_speed`, so even 100 per cent is only 300 raw by default. This is the
+first powered engagement of an unknown ratchet: set the slider to its 5 per
+cent minimum, and raise it only once the direction is known good.
 
 The `switch` button stays disabled until the interlock allows it and shows
 its refusal reason when it does not. Hold it briefly and watch the
