@@ -1,6 +1,7 @@
 // Package cmdrelay forwards browser-published cmd.* frames, the
 // browser-initiated control RPCs (rpc.set_mode/rpc.estop/rpc.recover), and
-// interactive-module command frames (module.*.command) from the sessions
+// module command frames (module.*.command plus the component-class leaf
+// module.<id>.<class>.cmd) from the sessions
 // account onto each rover's own-account connection, so they reach the
 // leaf-backed rover. A cross-account stream export would form a NATS import
 // cycle with the sessions account's rover-wildcard import; relaying through the
@@ -71,6 +72,26 @@ func Start(sub *nats.Conn, conns roverConns) error {
 		if _, err := sub.Subscribe(s, handle); err != nil {
 			return err
 		}
+	}
+
+	// Component modules take commands on module.<id>.<class>.cmd instead of the
+	// flat .command leaf. The wildcard needed to reach it also matches the
+	// agent's module.<id>.servo.cmd broker, so each frame is gated on the class
+	// the rover actually reports for that module; see classIndex.
+	classes := newClassIndex()
+	if _, err := sub.Subscribe("waypoint.*.infra.modules", func(m *nats.Msg) {
+		if roverID := roverIDFromSubject(m.Subject); roverID != "" {
+			classes.learn(roverID, m.Data)
+		}
+	}); err != nil {
+		return err
+	}
+	if _, err := sub.Subscribe("waypoint.*.module.*.*.cmd", func(m *nats.Msg) {
+		if classes.allow(m.Subject) {
+			handle(m)
+		}
+	}); err != nil {
+		return err
 	}
 	return nil
 }
