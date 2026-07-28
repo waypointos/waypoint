@@ -146,6 +146,14 @@ timeout_s   = 2                                   # per-probe deadline
 [ui.static]                                       # OR [ui.proxy], not both
 tab_id = "m-example"                              # dashboard tab id, must start m-
 bundle = "/dashboard/panel.js"                    # path inside the .raw
+
+[[config.fields]]                                 # optional; see 4.2
+key      = "host"                                 # the config.toml key
+label    = "Router URL"                           # shown in the dashboard form
+type     = "url"                                  # text | url | password | number | bool
+default  = "https://192.168.105.1"                # placeholder only, never written for the operator
+required = false
+help     = "Reachable from the Pi."               # optional one-liner under the field
 ```
 
 ### 4.1 Field rules (enforced by the parser)
@@ -171,7 +179,49 @@ bundle = "/dashboard/panel.js"                    # path inside the .raw
   parser currently only stores it (like `language`) and does not validate it, so
   a mismatch will not fail the load today. Set `"1"`.
 
-### 4.2 The UI block
+### 4.2 The config schema
+
+`[[config.fields]]` declares the settings an operator edits per rover. Without
+it the dashboard can only offer a raw TOML box, because nothing else tells the
+host what a module's keys are. Each entry becomes one labelled input in the
+module's settings form.
+
+```toml
+[[config.fields]]
+key      = "password"
+label    = "Owner password"
+type     = "password"
+required = true
+```
+
+Rules:
+
+- **`key`** is required and must match `^[a-z][a-z0-9_]{0,63}$`. It is the key
+  written into the module's `config.toml`, so it has to be the name your decoder
+  reads. Duplicate keys are rejected at parse time.
+- **`label`** defaults to the key. **`help`** renders under the field.
+- **`type`** picks the input treatment: `text`, `url`, `password`, `number`, or
+  `bool`. `password` masks the value behind a reveal toggle. A type the host does
+  not recognise renders as text, so declaring a newer type never hides a field on
+  an older dashboard.
+- **`default`** is a placeholder only. It is never written on the operator's
+  behalf, and a field left blank is omitted from `config.toml` entirely, which is
+  what lets your own in-code default apply. Keep that default equal to what you
+  document here.
+- **`required = true`** blocks the form's save while the field is blank. Use it
+  only for values with no workable default, like a password.
+
+The schema reaches the dashboard two ways, and both matter: the agent publishes
+it on `infra.modules` for a running module, and the proxy echoes it from the
+release `manifest.json` so the enable form has fields before the module has ever
+run. That second path means your `build/manifest` generator must emit the
+`config` block into `manifest.json` alongside the rest of the manifest.
+
+Keys an operator hand-wrote that the schema does not declare are preserved
+across a form save, so adding a schema to an existing module never discards a
+rover's current config.
+
+### 4.3 The UI block
 
 Exactly one of `[ui.static]` or `[ui.proxy]` (declaring both is an error). You
 may also omit the UI entirely (a headless telemetry module). In every case the
@@ -200,7 +250,7 @@ may also omit the UI entirely (a headless telemetry module). In every case the
   lan_only = true
   ```
 
-### 4.3 Hardware access
+### 4.4 Hardware access
 
 If the module needs device or system access, declare it in `[hardware]`. The
 agent translates this into a systemd drop-in (`DeviceAllow`, `BindReadOnlyPaths`,
@@ -228,7 +278,7 @@ Allow-lists (from `agent/internal/modules/manifest.go`):
   path must include the module name).
 - **capabilities:** `NET_ADMIN`, `SYS_NICE`.
 
-### 4.4 Capabilities a module can provide
+### 4.5 Capabilities a module can provide
 
 `provides` lets a module feed a platform-level signal while staying sandboxed.
 The only known capability today is `uplink`:
@@ -290,7 +340,7 @@ module the agent does exactly two things:
 That is all. The agent does **not** inject any `ExecStart` flags, does not set
 `--config`/`--creds`/`--rover`, does not export a config/creds env var, and does
 not set a NATS URL. The only drop-in it ever writes is the hardware one
-(`30-hardware.conf`, section 4.3).
+(`30-hardware.conf`, section 4.4).
 
 So how does the daemon learn where its files are and which rover it is on? From
 **its own unit**, which the module author baked into the `.raw`. The unit is
