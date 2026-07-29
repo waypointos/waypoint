@@ -22,6 +22,7 @@ export function VideoLane({ source, topic, cursorNs, startNs, endNs }: Props) {
   const ausRef = useRef<AU[]>([]);
   const keyTimesRef = useRef<bigint[]>([]);
   const runStartRef = useRef<bigint | null>(null);
+  const lastFedRef = useRef<bigint | null>(null);
   const decoderRef = useRef<VideoDecoder | null>(null);
   const [status, setStatus] = useState<'loading' | 'ok' | 'unsupported'>(
     typeof VideoDecoder === 'undefined' ? 'unsupported' : 'loading',
@@ -44,8 +45,11 @@ export function VideoLane({ source, topic, cursorNs, startNs, endNs }: Props) {
     const key = keyframeBefore(keyTimesRef.current, cursorNs);
     if (key === null) return;
     try {
-      // Reconfigure only when the cursor jumped to a different keyframe run.
-      if (runStartRef.current !== key) {
+      const lastFed = lastFedRef.current;
+      // A different keyframe run, or any move back before what was already fed,
+      // needs a fresh decoder: a decoder cannot replay frames it has passed.
+      const reset = runStartRef.current !== key || lastFed === null || cursorNs < lastFed;
+      if (reset) {
         decoderRef.current?.close();
         const first = ausRef.current.find((a) => a.tNs === key)!;
         const { sps } = auInfo(first.data);
@@ -67,25 +71,20 @@ export function VideoLane({ source, topic, cursorNs, startNs, endNs }: Props) {
         decoder.configure({ codec: codecStringFromSps(sps) });
         decoderRef.current = decoder;
         runStartRef.current = key;
-        for (const au of ausRef.current) {
-          if (au.tNs < key || au.tNs > cursorNs) continue;
-          decoder.decode(new EncodedVideoChunk({
-            type: auInfo(au.data).key ? 'key' : 'delta',
-            timestamp: Number(au.tNs / 1000n),
-            data: au.data,
-          }));
-        }
-      } else {
-        // Same run: feed only the AUs between the last fed time and the cursor.
-        for (const au of ausRef.current) {
-          if (au.tNs <= (runStartRef.current ?? 0n) || au.tNs > cursorNs) continue;
-          decoderRef.current?.decode(new EncodedVideoChunk({
-            type: auInfo(au.data).key ? 'key' : 'delta',
-            timestamp: Number(au.tNs / 1000n),
-            data: au.data,
-          }));
-          runStartRef.current = au.tNs;
-        }
+        lastFedRef.current = null;
+      }
+      const active = decoderRef.current;
+      if (!active) return;
+      // From the keyframe after a reset, otherwise only what has not been fed.
+      const from = reset ? key : lastFed! + 1n;
+      for (const au of ausRef.current) {
+        if (au.tNs < from || au.tNs > cursorNs) continue;
+        active.decode(new EncodedVideoChunk({
+          type: auInfo(au.data).key ? 'key' : 'delta',
+          timestamp: Number(au.tNs / 1000n),
+          data: au.data,
+        }));
+        lastFedRef.current = au.tNs;
       }
     } catch {
       setStatus('unsupported');
