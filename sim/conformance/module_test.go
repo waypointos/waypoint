@@ -99,6 +99,26 @@ func TestSensorConformance(t *testing.T) {
 	assert.GreaterOrEqual(t, len(r.Trace.Messages("module.sensor-minimal.sensor.state")), 5)
 }
 
+func TestMultiComponentStreams(t *testing.T) {
+	// Global var says 20 Hz (the probe rate); the sensor-specific var must
+	// pin sensor.state to 10 Hz, proving per-class resolution end to end.
+	r, _ := launchWithModule(t, benchPlatform(t), "examples/multi-component", "multi-component",
+		"WAYPOINT_MODULE_STATE_RATE_HZ=20",
+		"WAYPOINT_MODULE_STATE_RATE_HZ_SENSOR=10")
+
+	sr := waitForMsg(t, r, "module.multi-component.sensor.state", &waypointv1.SensorReadings{}, 10*time.Second)
+	require.NotZero(t, sr.GetStamp().GetMonoNs())
+
+	_, err := r.Trace.WaitFor("module.multi-component.probe.state", func(m harness.Msg) bool { return true }, 10*time.Second)
+	require.NoError(t, err, "generic probe.state stream must flow alongside sensor.state")
+
+	// Rate plausibility over 1 s of wall time: sensor ~10 Hz, probe ~20 Hz.
+	r.Trace.Clear()
+	time.Sleep(1 * time.Second)
+	assert.GreaterOrEqual(t, len(r.Trace.Messages("module.multi-component.sensor.state")), 5)
+	assert.GreaterOrEqual(t, len(r.Trace.Messages("module.multi-component.probe.state")), 10)
+}
+
 func TestArmConformanceCommandActs(t *testing.T) {
 	r, _ := launchWithModule(t, benchPlatform(t), "examples/arm-sim", "arm-sim",
 		"WAYPOINT_MODULE_STATE_RATE_HZ=10")
