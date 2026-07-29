@@ -39,7 +39,21 @@ export class EpisodeSource {
       decompressHandlers: DECOMPRESS_HANDLERS,
     });
     const stats = reader.statistics;
-    const spanS = stats ? Number(stats.messageEndTime - stats.messageStartTime) / 1e9 : 0;
+    // Per-channel span, not the episode span: a module that publishes only over
+    // the last seconds of a long episode would otherwise read near 0 Hz. Chunk
+    // bounds are as fine as the summary index goes without reading messages.
+    const spans = new Map<number, { lo: bigint; hi: bigint }>();
+    for (const chunk of reader.chunkIndexes) {
+      for (const channelId of chunk.messageIndexOffsets.keys()) {
+        const seen = spans.get(channelId);
+        spans.set(channelId, seen
+          ? {
+            lo: chunk.messageStartTime < seen.lo ? chunk.messageStartTime : seen.lo,
+            hi: chunk.messageEndTime > seen.hi ? chunk.messageEndTime : seen.hi,
+          }
+          : { lo: chunk.messageStartTime, hi: chunk.messageEndTime });
+      }
+    }
     const schemaByChannelId = new Map<number, string>();
     const topicByChannelId = new Map<number, string>();
     const infos: ChannelInfo[] = [];
@@ -49,6 +63,8 @@ export class EpisodeSource {
       topicByChannelId.set(ch.id, ch.topic);
       const count = Number(stats?.channelMessageCounts.get(ch.id) ?? 0n);
       const known = schema !== '' && schema in SCHEMA_REGISTRY;
+      const span = spans.get(ch.id);
+      const spanS = span ? Number(span.hi - span.lo) / 1e9 : 0;
       infos.push({
         topic: ch.topic,
         schemaName: schema,
