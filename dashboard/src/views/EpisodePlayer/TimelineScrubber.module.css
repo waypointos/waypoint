@@ -10,6 +10,11 @@
   touch-action: none;
 }
 
+.track:focus-visible {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
 .cursor {
   position: absolute;
   top: 0;

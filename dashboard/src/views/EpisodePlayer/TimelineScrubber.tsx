@@ -50,15 +50,42 @@ export function TimelineScrubber({ startNs, endNs, cursorNs, selection, onSeek, 
     }
   }
 
+  function key(e: React.KeyboardEvent) {
+    const span = endNs - startNs;
+    const step = span / 100n || 1n;
+    const clamp = (t: bigint) => (t < startNs ? startNs : t > endNs ? endNs : t);
+    const to: Record<string, bigint | undefined> = {
+      ArrowLeft: cursorNs - step,
+      ArrowRight: cursorNs + step,
+      PageDown: cursorNs - step * 10n,
+      PageUp: cursorNs + step * 10n,
+      Home: startNs,
+      End: endNs,
+    };
+    const next = to[e.key];
+    if (next === undefined) return;
+    e.preventDefault();
+    onSeek(clamp(next));
+  }
+
   // Positions are ratios, so any width works as the mapping denominator.
   const w = 1000;
   const pct = (t: bigint) => `${(timeToX(t, startNs, endNs, w) / w) * 100}%`;
+  const elapsedS = (t: bigint) => Number(t - startNs) / 1e9;
 
   return (
     <div
       ref={trackRef}
       className={styles.track}
       data-testid="scrubber"
+      role="slider"
+      tabIndex={0}
+      aria-label="Episode timeline"
+      aria-valuemin={0}
+      aria-valuemax={elapsedS(endNs)}
+      aria-valuenow={elapsedS(cursorNs)}
+      aria-valuetext={`${elapsedS(cursorNs).toFixed(2)} s`}
+      onKeyDown={key}
       onPointerDown={down}
       onPointerMove={move}
     >
