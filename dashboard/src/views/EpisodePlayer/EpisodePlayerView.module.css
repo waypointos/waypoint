@@ -129,10 +129,22 @@
   white-space: nowrap;
 }
 
-.cursorNs {
+.speed {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.clock {
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--color-fg-3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .exportList {

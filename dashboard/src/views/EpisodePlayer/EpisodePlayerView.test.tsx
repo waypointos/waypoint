@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { EpisodePlayerView } from './EpisodePlayerView';
 
@@ -52,8 +52,10 @@ describe('EpisodePlayerView', () => {
 
   it('lists plot channels as toggleable and schemaless as not decodable', async () => {
     renderPlayer();
-    expect(await screen.findByText('module.drill.sensor.state')).toBeInTheDocument();
-    expect(await screen.findByText(/not decodable/i)).toBeInTheDocument();
+    // Scoped to the sidebar: a visible plot topic also titles its lane.
+    const sidebar = screen.getByRole('complementary');
+    expect(await within(sidebar).findByText('module.drill.sensor.state')).toBeInTheDocument();
+    expect(await within(sidebar).findByText(/not decodable/i)).toBeInTheDocument();
   });
 
   it('shows a closed state when the episode is gone', async () => {

@@ -1,0 +1,65 @@
+/* One plot lane: title, canvas, legend with cursor readouts. Tokens only. */
+
+.lane {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: var(--space-sm);
+}
+
+.laneTitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-3);
+  margin-bottom: var(--space-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.canvas {
+  width: 100%;
+  height: 96px;
+  display: block;
+}
+
+.legend {
+  list-style: none;
+  margin: var(--space-xs) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.legendRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-fg-2);
+}
+
+.legendId {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legendValue {
+  color: var(--color-fg);
+  white-space: nowrap;
+}
+
+.na {
+  color: var(--color-fg-3);
+  white-space: nowrap;
+}
+
+.naHint {
+  margin-left: var(--space-xs);
+  font-size: 10px;
+  color: var(--color-fg-4);
+}
