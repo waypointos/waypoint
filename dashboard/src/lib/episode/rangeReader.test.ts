@@ -66,6 +66,39 @@ describe('RangeReadable', () => {
     expect(Array.from(got)).toEqual(Array.from(FILE.slice(100, 108)));
   });
 
+  it('throws instead of returning a short buffer past EOF on the fallback path', async () => {
+    vi.stubGlobal('fetch', mockFetch({ ranged: false }));
+    const r = new RangeReadable('/ep', { blockSize: 64 });
+    await r.size();
+    await expect(r.read(290n, 20n)).rejects.toThrow(/short read/);
+  });
+
+  it('warns about a full fetch only above the size threshold', async () => {
+    vi.stubGlobal('fetch', mockFetch({ ranged: false }));
+    const r = new RangeReadable('/ep', { blockSize: 64 });
+    await r.size();
+    expect(r.usedFullFetchFallback()).toBe(true);
+    expect(r.fullFetchWarning()).toBe(false);
+  });
+
+  it('shares one fetch between overlapping reads of the same block', async () => {
+    const calls: string[] = [];
+    vi.stubGlobal('fetch', mockFetch({ ranged: true, calls }));
+    const r = new RangeReadable('/ep', { blockSize: 64 });
+    await r.size();
+    const before = calls.length;
+    await Promise.all([r.read(70n, 4n), r.read(80n, 4n)]); // both in block 1
+    expect(calls.length).toBe(before + 1);
+  });
+
+  it('probes once when size and read race', async () => {
+    const calls: string[] = [];
+    vi.stubGlobal('fetch', mockFetch({ ranged: true, calls }));
+    const r = new RangeReadable('/ep', { blockSize: 64 });
+    await Promise.all([r.size(), r.read(0n, 4n)]);
+    expect(calls.filter((c) => c === 'bytes=0-63')).toHaveLength(1);
+  });
+
   it('throws EpisodeGoneError on 404', async () => {
     vi.stubGlobal('fetch', mockFetch({ ranged: true, gone: true }));
     const r = new RangeReadable('/ep', { blockSize: 64 });

@@ -12,11 +12,16 @@ export class EpisodeGoneError extends Error {
 const DEFAULT_BLOCK = 1 << 20;
 const DEFAULT_MAX_BLOCKS = 64;
 
+/** Below this, a full download is not worth warning the operator about. */
+export const FULL_FETCH_WARN_BYTES = 8 * 1024 * 1024;
+
 export class RangeReadable implements IReadable {
   private blockSize: number;
   private maxBlocks: number;
   private fileSize: bigint | null = null;
   private blocks = new Map<number, Uint8Array>(); // insertion order = LRU order
+  private inflight = new Map<number, Promise<Uint8Array>>();
+  private probing: Promise<void> | null = null;
   private full: Uint8Array | null = null;
 
   constructor(
@@ -31,6 +36,11 @@ export class RangeReadable implements IReadable {
     return this.full !== null;
   }
 
+  /** Fallback happened on a file big enough that the operator should know. */
+  fullFetchWarning(): boolean {
+    return this.full !== null && this.full.length > FULL_FETCH_WARN_BYTES;
+  }
+
   async size(): Promise<bigint> {
     if (this.fileSize === null) await this.probe();
     return this.fileSize!;
@@ -40,7 +50,11 @@ export class RangeReadable implements IReadable {
     if (this.fileSize === null) await this.probe();
     const start = Number(offset);
     const len = Number(length);
-    if (this.full) return this.full.slice(start, start + len);
+    if (this.full) {
+      // Fail the same way the ranged path does; a short buffer misparses later.
+      if (start + len > this.full.length) throw new Error('short read past end of episode');
+      return this.full.slice(start, start + len);
+    }
 
     const out = new Uint8Array(len);
     let written = 0;
@@ -59,6 +73,12 @@ export class RangeReadable implements IReadable {
 
   /** First request doubles as Range support detection. */
   private async probe(): Promise<void> {
+    // Concurrent opens must not each fetch the first block.
+    this.probing ??= this.probeOnce().finally(() => { this.probing = null; });
+    await this.probing;
+  }
+
+  private async probeOnce(): Promise<void> {
     const r = await this.fetchRange(0, this.blockSize - 1);
     if (r.status === 206) {
       const m = /\/(\d+)$/.exec(r.headers.get('Content-Range') ?? '');
@@ -79,6 +99,15 @@ export class RangeReadable implements IReadable {
       this.blocks.set(idx, hit);
       return hit;
     }
+    // Overlapping reads of the same block share one fetch.
+    const pending = this.inflight.get(idx);
+    if (pending) return pending;
+    const fetching = this.fetchBlock(idx).finally(() => this.inflight.delete(idx));
+    this.inflight.set(idx, fetching);
+    return fetching;
+  }
+
+  private async fetchBlock(idx: number): Promise<Uint8Array> {
     const start = idx * this.blockSize;
     const end = Math.min(start + this.blockSize, Number(this.fileSize!)) - 1;
     const r = await this.fetchRange(start, end);

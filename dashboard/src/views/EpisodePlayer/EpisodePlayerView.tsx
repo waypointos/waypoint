@@ -49,7 +49,7 @@ export function EpisodePlayerView() {
         if (cancelled) return;
         setSource(src);
         setMeta(all.find((e) => e.episode_id === episodeId) ?? null);
-        setFallbackWarning(readable.usedFullFetchFallback());
+        setFallbackWarning(readable.fullFetchWarning());
         setTransport(newTransport(src.timeRange().startNs));
         setVisible(
           src.channels()
