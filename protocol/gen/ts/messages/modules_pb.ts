@@ -130,7 +130,7 @@ export class ModuleInfo extends Message<ModuleInfo> {
   origin = ModuleOrigin.UNSPECIFIED;
 
   /**
-   * unset when module declares no [component]
+   * first component; kept for readers that predate `components`
    *
    * @generated from field: waypoint.v1.ModuleComponent component = 9;
    */
@@ -142,6 +142,13 @@ export class ModuleInfo extends Message<ModuleInfo> {
    * @generated from field: repeated waypoint.v1.ModuleConfigField config_fields = 10;
    */
   configFields: ModuleConfigField[] = [];
+
+  /**
+   * all manifest components, manifest order
+   *
+   * @generated from field: repeated waypoint.v1.ModuleComponent components = 11;
+   */
+  components: ModuleComponent[] = [];
 
   constructor(data?: PartialMessage<ModuleInfo>) {
     super();
@@ -161,6 +168,7 @@ export class ModuleInfo extends Message<ModuleInfo> {
     { no: 8, name: "origin", kind: "enum", T: proto3.getEnumType(ModuleOrigin) },
     { no: 9, name: "component", kind: "message", T: ModuleComponent },
     { no: 10, name: "config_fields", kind: "message", T: ModuleConfigField, repeated: true },
+    { no: 11, name: "components", kind: "message", T: ModuleComponent, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ModuleInfo {

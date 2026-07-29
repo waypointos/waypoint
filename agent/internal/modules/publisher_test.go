@@ -7,6 +7,7 @@ import (
 	"time"
 
 	natsgo "github.com/nats-io/nats.go"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
@@ -217,4 +218,27 @@ func TestSnapshot_RuntimeShadowsBakedSpec(t *testing.T) {
 	require.Len(t, snap.Modules, 1)
 	require.Equal(t, "Connectivity", snap.Modules[0].Label, "runtime entry should win")
 	require.Equal(t, waypointv1.ModuleOrigin_MODULE_ORIGIN_LOCAL, snap.Modules[0].Origin)
+}
+
+func TestPublisher_CarriesAllComponents(t *testing.T) {
+	p := NewSnapshotPublisher(nil, "rover-1", nil)
+	p.SetRuntimeModule("drill", Manifest{
+		Name: "drill",
+		Components: []Component{
+			{Class: "drill", StateRateHz: 20},
+			{Class: "sensor", StateRateHz: 10},
+		},
+	}, waypointv1.ModuleOrigin_MODULE_ORIGIN_PROXY)
+
+	msg := p.buildSnapshot()
+	require.Len(t, msg.Modules, 1)
+	got := msg.Modules[0]
+	// Singular field stays the first component for older readers.
+	require.NotNil(t, got.GetComponent())
+	require.Equal(t, "drill", got.GetComponent().GetClass())
+	require.Len(t, got.GetComponents(), 2)
+	assert.Equal(t, "drill", got.GetComponents()[0].GetClass())
+	assert.Equal(t, 20.0, got.GetComponents()[0].GetStateRateHz())
+	assert.Equal(t, "sensor", got.GetComponents()[1].GetClass())
+	assert.Equal(t, 10.0, got.GetComponents()[1].GetStateRateHz())
 }
