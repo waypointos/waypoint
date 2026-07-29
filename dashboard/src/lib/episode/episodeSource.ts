@@ -5,10 +5,17 @@
 // chunks overlapping the requested window.
 import { McapIndexedReader } from '@mcap/core';
 import type { IReadable } from '@mcap/core';
-import { loadDecompressHandlers } from '@mcap/support';
+import { decompress as zstdDecompress } from 'fzstd';
 import { decodeBySchema, extractSeries, VIDEO_SCHEMA, SCHEMA_REGISTRY, type Sample } from './decoders';
 import { pbFromBinary } from '../../state/protobuf';
 import { CompressedVideo } from '../../../../protocol/gen/ts/foxglove/compressed_video_pb';
+
+// The recorder writes ZSTD chunks. Decompression is pure JS on purpose:
+// @mcap/support's wasm handlers need a Node Buffer and are not bundleable here.
+const DECOMPRESS_HANDLERS = {
+  zstd: (buffer: Uint8Array, decompressedSize: bigint) =>
+    zstdDecompress(buffer, new Uint8Array(Number(decompressedSize))),
+};
 
 export type ChannelInfo = {
   topic: string;
@@ -27,8 +34,10 @@ export class EpisodeSource {
   ) {}
 
   static async open(readable: IReadable): Promise<EpisodeSource> {
-    const decompressHandlers = await loadDecompressHandlers();
-    const reader = await McapIndexedReader.Initialize({ readable, decompressHandlers });
+    const reader = await McapIndexedReader.Initialize({
+      readable,
+      decompressHandlers: DECOMPRESS_HANDLERS,
+    });
     const stats = reader.statistics;
     const spanS = stats ? Number(stats.messageEndTime - stats.messageStartTime) / 1e9 : 0;
     const schemaByChannelId = new Map<number, string>();

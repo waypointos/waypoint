@@ -1,9 +1,10 @@
 // dashboard/src/views/RoverView/panels/EpisodesPanel.tsx
 //
 // Episodes tab: lists recorded episodes from the agent's local HTTP API,
-// offers per-episode download and a confirmed delete. Off-local sessions get a
-// hint line: episodes live on the rover's local network.
+// offers in-dashboard playback, per-episode download and a confirmed delete.
+// Off-local sessions get a hint line: episodes live on the rover's local network.
 import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { Panel } from '@/ui/primitives/Panel';
 import { Button } from '@/ui/primitives/Button';
 import { Chip } from '@/ui/primitives/Chip';
@@ -46,6 +47,7 @@ function outcome(ep: EpisodeMeta): Outcome {
 export function EpisodesPanel() {
   const me = useMe();
   const isLocal = me?.mode === 'local';
+  const { id: roverId } = useParams();
 
   const [episodes, setEpisodes] = useState<EpisodeMeta[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -121,6 +123,12 @@ export function EpisodesPanel() {
                   </div>
                   <div className={styles.right}>
                     <Chip tone={oc.tone}>{oc.label}</Chip>
+                    <Link
+                      className={styles.download}
+                      to={`/rover/${roverId}/episodes/${ep.episode_id}`}
+                    >
+                      Play
+                    </Link>
                     <a
                       className={styles.download}
                       href={episodeDownloadUrl(ep.episode_id)}

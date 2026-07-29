@@ -18,8 +18,8 @@
   "dependencies": {
     "@bufbuild/protobuf": "^1.10.1",
     "@mcap/core": "^2.2.1",
-    "@mcap/support": "^1.1.0",
     "@waypoint/ui-tokens": "workspace:*",
+    "fzstd": "^0.1.1",
     "lucide-react": "^1.14.0",
     "maplibre-gl": "^4.7.1",
     "nats.ws": "^1.30.3",

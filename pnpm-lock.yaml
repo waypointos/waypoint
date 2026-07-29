@@ -16,12 +16,12 @@ importers:
       '@mcap/core':
         specifier: ^2.2.1
         version: 2.2.1
-      '@mcap/support':
-        specifier: ^1.1.0
-        version: 1.1.0
       '@waypoint/ui-tokens':
         specifier: workspace:*
         version: link:packages/ui-tokens
+      fzstd:
+        specifier: ^0.1.1
+        version: 0.1.1
       lucide-react:
         specifier: ^1.14.0
         version: 1.16.0(react@19.2.6)
@@ -218,15 +218,6 @@ packages:
   '@foxglove/crc@0.0.3':
     resolution: {integrity: sha512-DjIZsnL3CyP/yQ/vUYA9cjrD0a/8YXejI5ZmsaOiT16cLfZcTwaCxIN01/ys4jsy+dZCQ/9DnWFn7AEFbiMDaA==}
 
-  '@foxglove/wasm-bz2@0.3.0':
-    resolution: {integrity: sha512-MP18X3TbeoGT3Kfke7KrYin+5zESfcPnsdD2gaVviN1xzteoDDfVTZbVmbdfGrIV/qAAhBhBVbRcrN25rWSNOQ==}
-
-  '@foxglove/wasm-lz4@1.0.2':
-    resolution: {integrity: sha512-qwGOVLITlMBwuI+Vf09xWkTtbQldaCKchGEiFNZzsY0Q6ZXnHFhFgl4UAew7Xaq0wCv5YB7hqYsHmSrFIVSjCg==}
-
-  '@foxglove/wasm-zstd@1.0.1':
-    resolution: {integrity: sha512-hqKTO45Sl+kSq9SDqM9xi5L+GncjFEZIJgYEkGTlpJXTfhy1Gf+a+3epWMcE0tLUKmzM77dtu8snape/J+7ueQ==}
-
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
     engines: {node: '>=18.18.0'}
@@ -281,9 +272,6 @@ packages:
   '@mcap/core@2.2.1':
     resolution: {integrity: sha512-Qj0NSqxmFA6DlwYZqlnYHApcQl6jaVAFcUlYxFJCRKK6dymJAfdw98EIGnzAxLi/xw6rjQ8GFRyVzuoswFn+UA==}
 
-  '@mcap/support@1.1.0':
-    resolution: {integrity: sha512-ykO32FKP6vjYcjU/KyMTNOMC2CErsV3Wr7hKGNEcop8HWAoi6rlex0nH86QIKn54BoFAM97Rqqs/w0SOJiikKg==}
-
   '@napi-rs/wasm-runtime@1.1.4':
     resolution: {integrity: sha512-3NQNNgA1YSlJb/kMH1ildASP9HW7/7kYnRI2szWJaofaS1hWmbGI4H+d3+22aGzXXN9IJ+n+GiFVcGipJP18ow==}
     peerDependencies:
@@ -292,33 +280,6 @@ packages:
 
   '@oxc-project/types@0.130.0':
     resolution: {integrity: sha512-ibD2usx9JRu7f5pu2tMKMI4cpA4NgXJQoYRP4pQ7Pxmn1l6k/53qWtQWZayhYy3X4QZkt90Ot+mJEaeXouio6Q==}
-
-  '@protobufjs/aspromise@1.1.2':
-    resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
-
-  '@protobufjs/base64@1.1.2':
-    resolution: {integrity: sha512-AZkcAA5vnN/v4PDqKyMR5lx7hZttPDgClv83E//FMNhR2TMcLUhfRUBHCmSl0oi9zMgDDqRUJkSxO3wm85+XLg==}
-
-  '@protobufjs/codegen@2.0.5':
-    resolution: {integrity: sha512-zgXFLzW3Ap33e6d0Wlj4MGIm6Ce8O89n/apUaGNB/jx+hw+ruWEp7EwGUshdLKVRCxZW12fp9r40E1mQrf/34g==}
-
-  '@protobufjs/eventemitter@1.1.1':
-    resolution: {integrity: sha512-vW1GmwMZNnL+gMRaovlh9yZX74kc+TTU3FObkkurpMaRtBfLP3ldjS9KQWlwZgraRE0+dheEEoAxdzcJQ8eXZg==}
-
-  '@protobufjs/fetch@1.1.1':
-    resolution: {integrity: sha512-GpptLrs57adMSuHi3VNj0mAF8dwh36LMaYF6XyJ6JMWlVsc+t42tm1HSEDmOs3A8fC9yyeisgLhsTVQokOZ0zw==}
-
-  '@protobufjs/float@1.0.2':
-    resolution: {integrity: sha512-Ddb+kVXlXst9d+R9PfTIxh1EdNkgoRe5tOX6t01f1lYWOvJnSPDBlG241QLzcyPdoNTsblLUdujGSE4RzrTZGQ==}
-
-  '@protobufjs/path@1.1.2':
-    resolution: {integrity: sha512-6JOcJ5Tm08dOHAbdR3GrvP+yUUfkjG5ePsHYczMFLq3ZmMkAD98cDgcT2iA1lJ9NVwFd4tH/iSSoe44YWkltEA==}
-
-  '@protobufjs/pool@1.1.0':
-    resolution: {integrity: sha512-0kELaGSIDBKvcgS4zkjz1PeddatrjYcmMWOlAuAPwAeccUrPHdUqo/J6LiymHHEiJT5NrF1UVwxY14f+fy4WQw==}
-
-  '@protobufjs/utf8@1.1.2':
-    resolution: {integrity: sha512-b1UQwcEZ4yCnMCD8DAL1VlbvBJE9/IX4FTIp7BG1xYpf29SLazLSrqUkj4w7Y5y7cCVP6E5tcqqcI0xemPkHug==}
 
   '@rolldown/binding-android-arm64@1.0.1':
     resolution: {integrity: sha512-fJI3I0r3C3Oj/zdBCpaCmBRZYf07xpaq4yCfDDoSFm+beWNzbIl26puW8RraUdugoJw/95zerNOn6jasAhzSmg==}
@@ -854,6 +815,9 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
+  fzstd@0.1.1:
+    resolution: {integrity: sha512-dkuVSOKKwh3eas5VkJy1AW1vFpet8TA/fGmVA5krThl8YcOVE/8ZIoEA1+U1vEn5ckxxhLirSdY837azmbaNHA==}
+
   geojson-vt@4.0.3:
     resolution: {integrity: sha512-jR1MwkLaZGa8Zftct9ZFruyWFrdl9ZyD2OliXNy9Qq5bBPeg5wHVpBQF9p5GjnicSDQqvBVpysxTPKmWdsfWMA==}
 
@@ -1064,9 +1028,6 @@ packages:
   locate-path@6.0.0:
     resolution: {integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==}
     engines: {node: '>=10'}
-
-  long@5.3.2:
-    resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
 
   longest-streak@3.1.0:
     resolution: {integrity: sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g==}
@@ -1279,10 +1240,6 @@ packages:
 
   property-information@7.1.0:
     resolution: {integrity: sha512-TwEZ+X+yCJmYfL7TPUOcvBZ4QfoT5YenQiJuX//0th53DE6w0xxLEtfK3iyryQFddXuvkIk51EEgrJQ0WJkOmQ==}
-
-  protobufjs@7.6.5:
-    resolution: {integrity: sha512-/FPD0nUc9jH6rfFjji9IBqOz4pcSE3CsT1m7Ep6Mdb0LxSUMj8hgl6GomOvZzpNpAqqGaXA0P3VSrZLFzIhQrw==}
-    engines: {node: '>=12.0.0'}
 
   protocol-buffers-schema@3.6.1:
     resolution: {integrity: sha512-VG2K63Igkiv9p76tk1lilczEK1cT+kCjKtkdhw1dQZV3k3IXJbd3o6Ho8b9zJZaHSnT2hKe4I+ObmX9w6m5SmQ==}
@@ -1763,14 +1720,6 @@ snapshots:
 
   '@foxglove/crc@0.0.3': {}
 
-  '@foxglove/wasm-bz2@0.3.0':
-    dependencies:
-      tslib: 2.8.1
-
-  '@foxglove/wasm-lz4@1.0.2': {}
-
-  '@foxglove/wasm-zstd@1.0.1': {}
-
   '@humanfs/core@0.19.2':
     dependencies:
       '@humanfs/types': 0.15.0
@@ -1824,14 +1773,6 @@ snapshots:
       heap-js: 2.7.1
       tslib: 2.8.1
 
-  '@mcap/support@1.1.0':
-    dependencies:
-      '@foxglove/wasm-bz2': 0.3.0
-      '@foxglove/wasm-lz4': 1.0.2
-      '@foxglove/wasm-zstd': 1.0.1
-      protobufjs: 7.6.5
-      tslib: 2.8.1
-
   '@napi-rs/wasm-runtime@1.1.4(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)':
     dependencies:
       '@emnapi/core': 1.10.0
@@ -1840,26 +1781,6 @@ snapshots:
     optional: true
 
   '@oxc-project/types@0.130.0': {}
-
-  '@protobufjs/aspromise@1.1.2': {}
-
-  '@protobufjs/base64@1.1.2': {}
-
-  '@protobufjs/codegen@2.0.5': {}
-
-  '@protobufjs/eventemitter@1.1.1': {}
-
-  '@protobufjs/fetch@1.1.1':
-    dependencies:
-      '@protobufjs/aspromise': 1.1.2
-
-  '@protobufjs/float@1.0.2': {}
-
-  '@protobufjs/path@1.1.2': {}
-
-  '@protobufjs/pool@1.1.0': {}
-
-  '@protobufjs/utf8@1.1.2': {}
 
   '@rolldown/binding-android-arm64@1.0.1':
     optional: true
@@ -2369,6 +2290,8 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
+  fzstd@0.1.1: {}
+
   geojson-vt@4.0.3: {}
 
   get-stream@6.0.1: {}
@@ -2559,8 +2482,6 @@ snapshots:
   locate-path@6.0.0:
     dependencies:
       p-locate: 5.0.0
-
-  long@5.3.2: {}
 
   longest-streak@3.1.0: {}
 
@@ -2921,20 +2842,6 @@ snapshots:
       react-is: 17.0.2
 
   property-information@7.1.0: {}
-
-  protobufjs@7.6.5:
-    dependencies:
-      '@protobufjs/aspromise': 1.1.2
-      '@protobufjs/base64': 1.1.2
-      '@protobufjs/codegen': 2.0.5
-      '@protobufjs/eventemitter': 1.1.1
-      '@protobufjs/fetch': 1.1.1
-      '@protobufjs/float': 1.0.2
-      '@protobufjs/path': 1.1.2
-      '@protobufjs/pool': 1.1.0
-      '@protobufjs/utf8': 1.1.2
-      '@types/node': 25.8.0
-      long: 5.3.2
 
   protocol-buffers-schema@3.6.1: {}
 
