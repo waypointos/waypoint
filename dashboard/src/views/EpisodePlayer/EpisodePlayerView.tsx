@@ -16,6 +16,8 @@ import { listEpisodes, episodeDownloadUrl, type EpisodeMeta } from '../RoverView
 import { ChannelList } from './ChannelList';
 import { PlotLane } from './PlotLane';
 import { TimelineScrubber } from './TimelineScrubber';
+import { VideoLane } from './VideoLane';
+import { ExportDialog } from './ExportDialog';
 import styles from './EpisodePlayerView.module.css';
 
 type LoadState = 'loading' | 'ready' | 'gone' | 'error';
@@ -34,6 +36,7 @@ export function EpisodePlayerView() {
   const [visible, setVisible] = useState<string[] | null>(null);
   const [series, setSeries] = useState<Map<string, Sample[]>>(() => new Map());
   const [selection, setSelection] = useState<Sel | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
   const [transport, setTransport] = useState<Transport>(() => newTransport(0n));
 
   useEffect(() => {
@@ -67,6 +70,10 @@ export function EpisodePlayerView() {
   const range = useMemo(
     () => source?.timeRange() ?? { startNs: 0n, endNs: 0n },
     [source],
+  );
+  const videoTopic = useMemo(
+    () => channels.find((c) => c.kind === 'video')?.topic ?? null,
+    [channels],
   );
 
   // Load every visible topic over the whole episode; the source can window
@@ -136,7 +143,12 @@ export function EpisodePlayerView() {
             <span>{meta.video_frames_dropped} video frames dropped</span>
           )}
         </div>
-        <Link className={styles.back} to={`/rover/${roverId}/episodes`}>Close</Link>
+        <div className={styles.headerActions}>
+          <Button size="sm" disabled={state !== 'ready'} onClick={() => setExportOpen(true)}>
+            Export CSV
+          </Button>
+          <Link className={styles.back} to={`/rover/${roverId}/episodes`}>Close</Link>
+        </div>
       </header>
       <aside className={styles.sidebar}>
         <ChannelList
@@ -152,6 +164,15 @@ export function EpisodePlayerView() {
       <main className={styles.stage}>
         {state === 'loading' && <div className={styles.loading}>Loading episode…</div>}
         {state === 'error' && <div className={styles.loading} role="alert">Failed to open episode.</div>}
+        {source && videoTopic && (
+          <VideoLane
+            source={source}
+            topic={videoTopic}
+            cursorNs={transport.cursorNs}
+            startNs={range.startNs}
+            endNs={range.endNs}
+          />
+        )}
         {(visible ?? []).map((topic) => (
           <PlotLane
             key={topic}
@@ -191,6 +212,17 @@ export function EpisodePlayerView() {
           {elapsedS(transport.cursorNs, range.startNs)} / {elapsedS(range.endNs, range.startNs)} s
         </span>
       </footer>
+      {exportOpen && (
+        <ExportDialog
+          open
+          onClose={() => setExportOpen(false)}
+          series={series}
+          visibleIds={[...series.keys()]}
+          range={range}
+          selection={selection}
+          episodeId={episodeId ?? 'episode'}
+        />
+      )}
     </div>
   );
 }

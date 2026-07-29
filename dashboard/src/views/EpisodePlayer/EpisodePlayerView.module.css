@@ -37,8 +37,14 @@
   color: var(--color-fg-3);
 }
 
-.back {
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
   margin-left: auto;
+}
+
+.back {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.04em;
