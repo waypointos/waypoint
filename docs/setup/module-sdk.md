@@ -210,8 +210,8 @@ the component-class contracts end to end:
   and no goal change (the platform guarantee extended through the broker and the
   core gate to the component API).
 
-The in-tree examples (`sensor-minimal`, `arm-sim`) keep the main-repo suite
-self-contained. To prove your own out-of-tree module, run it against a dev rover
+The in-tree examples (`sensor-minimal`, `arm-sim`, `multi-component`) keep the
+main-repo suite self-contained. To prove your own out-of-tree module, run it against a dev rover
 with the documented recipe in your module repo: `make dev-rover PLATFORM=bench`
 in the waypoint repo, then run your module with the dev env vars and confirm
 `module.<id>.<class>.state` traffic on the dashboard Bus pane. Your module's own
