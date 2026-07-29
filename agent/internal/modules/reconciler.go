@@ -143,7 +143,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *waypointv1.DesiredM
 			if dropinErr := r.writeHardwareDropin(id, manifest.Hardware); dropinErr != nil {
 				slog.Warn(fmt.Sprintf("reconcile: dropin %s: %v", id, dropinErr))
 			}
-			if dropinErr := r.writeComponentDropin(id, manifest.Component); dropinErr != nil {
+			var firstComp *Component
+			if len(manifest.Components) > 0 {
+				firstComp = &manifest.Components[0]
+			}
+			if dropinErr := r.writeComponentDropin(id, firstComp); dropinErr != nil {
 				slog.Warn(fmt.Sprintf("reconcile: component dropin %s: %v", id, dropinErr))
 			}
 			if r.ProxyRegistry != nil && manifest.UI.Kind == UIKindProxy {

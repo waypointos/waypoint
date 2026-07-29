@@ -316,12 +316,12 @@ func (m *Manager) onModuleAttached(ctx context.Context, id string, manifest *Man
 		slog.Warn(fmt.Sprintf("modules: attached %s has no readable manifest; not surfacing a tab", id))
 		return
 	}
-	if manifest.Component != nil {
+	if len(manifest.Components) > 0 {
 		m.componentsMu.Lock()
 		if m.components == nil {
 			m.components = map[string]string{}
 		}
-		m.components[id] = manifest.Component.Class
+		m.components[id] = manifest.Components[0].Class
 		m.componentsMu.Unlock()
 	}
 	if containsString(manifest.Provides, "uplink") {

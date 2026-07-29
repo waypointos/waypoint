@@ -143,10 +143,10 @@ func manifestToInfo(m Manifest, healthy bool, origin waypointv1.ModuleOrigin) *w
 		Ui:      uiToProto(m.UI),
 		Origin:  origin,
 	}
-	if m.Component != nil {
+	if len(m.Components) > 0 {
 		info.Component = &waypointv1.ModuleComponent{
-			Class:       m.Component.Class,
-			StateRateHz: m.Component.StateRateHz,
+			Class:       m.Components[0].Class,
+			StateRateHz: m.Components[0].StateRateHz,
 		}
 	}
 	for _, f := range m.ConfigFields {

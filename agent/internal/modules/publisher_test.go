@@ -84,8 +84,8 @@ func TestPublisher_RuntimeModuleCarriesSchemaAndComponent(t *testing.T) {
 	p := NewSnapshotPublisher(nil, "rover-1", nil)
 	p.SetRuntimeModule("umr", Manifest{
 		Name: "umr", Label: "Connectivity", Version: "0.4.0",
-		UI:        UIBinding{Kind: UIKindStatic, TabID: "m-umr"},
-		Component: &Component{Class: "sensor", StateRateHz: 10},
+		UI:         UIBinding{Kind: UIKindStatic, TabID: "m-umr"},
+		Components: []Component{{Class: "sensor", StateRateHz: 10}},
 		ConfigFields: []ConfigField{
 			{Key: "host", Label: "Router URL", Type: "url", Default: "https://192.168.105.1"},
 			{Key: "password", Label: "Owner password", Type: "password", Required: true},
@@ -159,7 +159,7 @@ func TestPublisher_CarriesComponent(t *testing.T) {
 	specs := []ModuleSpec{
 		{Manifest: Manifest{
 			Name: "myarm", Label: "My Arm", Version: "0.1.0",
-			Component: &Component{Class: "arm", StateRateHz: 20},
+			Components: []Component{{Class: "arm", StateRateHz: 20}},
 		}},
 		{Manifest: Manifest{
 			Name: "plain", Label: "Plain", Version: "0.1.0",
