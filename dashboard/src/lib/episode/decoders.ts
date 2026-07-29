@@ -23,12 +23,15 @@ export const SCHEMA_REGISTRY: Record<string, unknown> = Object.fromEntries(
 );
 
 export const VIDEO_SCHEMA = 'foxglove.CompressedVideo';
+const MOTOR_SCHEMA = 'waypoint.v1.MotorTelemetry';
 
 export function decodeBySchema(schemaName: string, bytes: Uint8Array): Record<string, unknown> | null {
   const cls = SCHEMA_REGISTRY[schemaName];
   if (!cls) return null;
   try {
-    const json = pbToJson(pbFromBinary(cls, bytes));
+    // Without emitDefaultValues an implicit-presence scalar that reads exactly
+    // 0 is dropped from the JSON, and a reported zero would plot as N/A.
+    const json = pbToJson(pbFromBinary(cls, bytes), { emitDefaultValues: true });
     return json && typeof json === 'object' ? (json as Record<string, unknown>) : null;
   } catch {
     return null;
@@ -53,12 +56,19 @@ export function extractSeries(
         sample: { tNs, value: r.ok === true && typeof r.value === 'number' ? r.value : null },
       }));
   }
+  // telemetry.motors carries one message per servo on one subject, so the
+  // servo id has to key the series or every servo collapses into one line.
+  const servoId = schemaName === MOTOR_SCHEMA && typeof decoded.id === 'number'
+    ? String(decoded.id)
+    : null;
+  const prefix = servoId === null ? topic : `${topic}.${servoId}`;
   const out: Array<{ id: string; sample: Sample }> = [];
   const walk = (v: unknown, path: string): void => {
     // Log time is the plot axis; message stamps would plot as meaningless ramps.
     if (path === 'stamp' || path.startsWith('stamp.')) return;
+    if (servoId !== null && path === 'id') return;
     if (typeof v === 'number') {
-      out.push({ id: `${topic}.${path}`, sample: { tNs, value: v } });
+      out.push({ id: `${prefix}.${path}`, sample: { tNs, value: v } });
     } else if (Array.isArray(v)) {
       v.forEach((el, i) => walk(el, `${path}.${i}`));
     } else if (v && typeof v === 'object') {

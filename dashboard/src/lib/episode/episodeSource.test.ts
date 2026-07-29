@@ -43,6 +43,13 @@ describe('EpisodeSource', () => {
     expect(b.map((s) => s.value)).toEqual([200, null, 220]);
   });
 
+  it('keys motor series by servo id', async () => {
+    const src = await EpisodeSource.open(new MemReadable());
+    const all = await src.series(['telemetry.motors'], 0n, 4_000_000_000n);
+    expect(all.get('telemetry.motors.1.velocityRadps')!.map((s) => s.value))
+      .toEqual([0.5, 0.6, 0.7]);
+  });
+
   it('respects the time window', async () => {
     const src = await EpisodeSource.open(new MemReadable());
     const all = await src.series(['module.drill.sensor.state'], 1_500_000_000n, 4_000_000_000n);
