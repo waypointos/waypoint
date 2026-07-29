@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { seriesExtent, toPolyline, timeToX, xToTime, valueAtCursor } from './plotGeometry';
+import {
+  seriesExtent, toPolyline, timeToX, xToTime, valueAtCursor, staleAfterNs,
+} from './plotGeometry';
 import type { Sample } from './decoders';
 
 const S = (tNs: bigint, value: number | null): Sample => ({ tNs, value });
@@ -31,5 +33,20 @@ describe('plotGeometry', () => {
     expect(valueAtCursor(s, 15n)).toBeNull();
     expect(valueAtCursor(s, 25n)).toBe(3);
     expect(valueAtCursor(s, -1n)).toBeNull();
+  });
+
+  it('reads N/A once the latest sample is older than the staleness bound', () => {
+    // 10 ns apart, so the bound is 40 ns: a series that died at t=20 goes N/A.
+    const s = [S(0n, 1), S(10n, 2), S(20n, 3)];
+    const gap = staleAfterNs(s)!;
+    expect(gap).toBe(40n);
+    expect(valueAtCursor(s, 50n, gap)).toBe(3);
+    expect(valueAtCursor(s, 100n, gap)).toBeNull();
+    // Without a bound the reading persists forever, which is the old behavior.
+    expect(valueAtCursor(s, 100n)).toBe(3);
+  });
+
+  it('has no staleness bound for a single-sample series', () => {
+    expect(staleAfterNs([S(0n, 1)])).toBeNull();
   });
 });

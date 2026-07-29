@@ -3,7 +3,9 @@
 // One canvas plot lane per topic: polylines broken at N/A, a cursor line,
 // and a legend with per-series cursor readouts.
 import { useEffect, useRef } from 'react';
-import { seriesExtent, toPolyline, timeToX, valueAtCursor } from '../../lib/episode/plotGeometry';
+import {
+  seriesExtent, toPolyline, timeToX, valueAtCursor, latestAtCursor, staleAfterNs,
+} from '../../lib/episode/plotGeometry';
 import type { Sample } from '../../lib/episode/decoders';
 import styles from './PlotLane.module.css';
 
@@ -19,9 +21,11 @@ type Props = {
   cursorNs: bigint;
 };
 
-function naReason(samples: Sample[], cursorNs: bigint): string {
+function naReason(samples: Sample[], cursorNs: bigint, maxGapNs: bigint | null): string {
   if (samples.length === 0) return 'no samples in episode';
-  if (!samples.some((s) => s.tNs <= cursorNs)) return 'before first sample';
+  const latest = latestAtCursor(samples, cursorNs);
+  if (latest === null) return 'before first sample';
+  if (maxGapNs != null && cursorNs - latest.tNs > maxGapNs) return 'last sample too old';
   return 'not reported at this time';
 }
 
@@ -67,14 +71,15 @@ export function PlotLane({ title, series, ids, startNs, endNs, cursorNs }: Props
       <ul className={styles.legend}>
         {ids.map((id) => {
           const samples = series.get(id) ?? [];
-          const v = valueAtCursor(samples, cursorNs);
+          const maxGapNs = staleAfterNs(samples);
+          const v = valueAtCursor(samples, cursorNs, maxGapNs);
           return (
             <li key={id} className={styles.legendRow}>
               <span className={styles.legendId}>{id}</span>
               {v === null ? (
                 <span className={styles.na}>
                   N/A
-                  <span className={styles.naHint}>{naReason(samples, cursorNs)}</span>
+                  <span className={styles.naHint}>{naReason(samples, cursorNs, maxGapNs)}</span>
                 </span>
               ) : (
                 <span className={styles.legendValue}>{v.toPrecision(5)}</span>

@@ -47,11 +47,33 @@ export function toPolyline(
   return segs;
 }
 
-/** Latest sample at or before the cursor; null when it is N/A or absent. */
-export function valueAtCursor(samples: Sample[], tNs: bigint): number | null {
+/** Latest sample at or before the cursor, or null when there is none. */
+export function latestAtCursor(samples: Sample[], tNs: bigint): Sample | null {
   let latest: Sample | null = null;
   for (const s of samples) {
     if (s.tNs <= tNs && (latest === null || s.tNs > latest.tNs)) latest = s;
   }
-  return latest?.value ?? null;
+  return latest;
+}
+
+/** Mean sample interval times a factor: the age past which a sample is stale. */
+export function staleAfterNs(samples: Sample[], factor = 4n): bigint | null {
+  if (samples.length < 2) return null;
+  const span = samples[samples.length - 1].tNs - samples[0].tNs;
+  if (span <= 0n) return null;
+  return (span * factor) / BigInt(samples.length - 1);
+}
+
+/**
+ * Latest sample at or before the cursor; null when it is N/A, absent, or older
+ * than maxGapNs. A series that stopped publishing must read N/A rather than
+ * repeat its final value as if it were live.
+ */
+export function valueAtCursor(
+  samples: Sample[], tNs: bigint, maxGapNs?: bigint | null,
+): number | null {
+  const latest = latestAtCursor(samples, tNs);
+  if (latest === null) return null;
+  if (maxGapNs != null && tNs - latest.tNs > maxGapNs) return null;
+  return latest.value;
 }
