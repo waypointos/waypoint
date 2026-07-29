@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Chip } from '@/ui/primitives/Chip';
 import { Button } from '@/ui/primitives/Button';
+import { useMe } from '../../state/mode';
 import { EpisodeSource } from '../../lib/episode/episodeSource';
 import { RangeReadable, EpisodeGoneError } from '../../lib/episode/rangeReader';
 import {
@@ -29,6 +30,8 @@ function elapsedS(tNs: bigint, startNs: bigint): string {
 
 export function EpisodePlayerView() {
   const { id: roverId, episodeId } = useParams();
+  const me = useMe();
+  const isLocal = me?.mode === 'local';
   const [state, setState] = useState<LoadState>('loading');
   const [source, setSource] = useState<EpisodeSource | null>(null);
   const [meta, setMeta] = useState<EpisodeMeta | null>(null);
@@ -40,7 +43,7 @@ export function EpisodePlayerView() {
   const [transport, setTransport] = useState<Transport>(() => newTransport(0n));
 
   useEffect(() => {
-    if (!episodeId) return;
+    if (!episodeId || !isLocal) return;
     let cancelled = false;
     (async () => {
       try {
@@ -64,7 +67,7 @@ export function EpisodePlayerView() {
       }
     })();
     return () => { cancelled = true; };
-  }, [episodeId]);
+  }, [episodeId, isLocal]);
 
   const channels = useMemo(() => source?.channels() ?? [], [source]);
   const range = useMemo(
@@ -121,6 +124,16 @@ export function EpisodePlayerView() {
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
   }, [transport.playing, range.endNs]);
+
+  // Playback streams the .mcap from the agent, so it is local-network only.
+  if (me && !isLocal) {
+    return (
+      <div className={styles.closed}>
+        <p>Episodes play back on the rover&rsquo;s local network.</p>
+        <Link to={`/rover/${roverId}/episodes`}>Back to episodes</Link>
+      </div>
+    );
+  }
 
   if (state === 'gone') {
     return (

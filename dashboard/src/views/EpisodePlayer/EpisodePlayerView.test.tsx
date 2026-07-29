@@ -3,7 +3,8 @@ import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { EpisodePlayerView } from './EpisodePlayerView';
 
-vi.mock('../../state/mode', () => ({ useMe: () => ({ mode: 'local' }) }));
+const session = vi.hoisted(() => ({ mode: 'local' as string }));
+vi.mock('../../state/mode', () => ({ useMe: () => ({ mode: session.mode }) }));
 
 const openMock = vi.fn();
 vi.mock('../../lib/episode/episodeSource', () => ({
@@ -32,6 +33,7 @@ function renderPlayer() {
 
 describe('EpisodePlayerView', () => {
   beforeEach(() => {
+    session.mode = 'local';
     openMock.mockReset();
     openMock.mockResolvedValue({
       channels: () => [
@@ -56,6 +58,13 @@ describe('EpisodePlayerView', () => {
     const sidebar = screen.getByRole('complementary');
     expect(await within(sidebar).findByText('module.drill.sensor.state')).toBeInTheDocument();
     expect(await within(sidebar).findByText(/not decodable/i)).toBeInTheDocument();
+  });
+
+  it('hints local-only playback off a local session instead of fetching', async () => {
+    session.mode = 'proxy';
+    renderPlayer();
+    expect(await screen.findByText(/local network/i)).toBeInTheDocument();
+    expect(openMock).not.toHaveBeenCalled();
   });
 
   it('shows a closed state when the episode is gone', async () => {
