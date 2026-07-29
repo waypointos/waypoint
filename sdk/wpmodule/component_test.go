@@ -129,6 +129,54 @@ func TestServeSensorPublishesReadings(t *testing.T) {
 	}
 }
 
+func TestServeSensorPrefersClassSpecificRate(t *testing.T) {
+	_, url := startServer(t)
+	m := fakeM(t, url, "dev", "demo")
+	// Global says 1 Hz; the sensor-specific var must win at 50 Hz.
+	t.Setenv("WAYPOINT_MODULE_STATE_RATE_HZ", "1")
+	t.Setenv("WAYPOINT_MODULE_STATE_RATE_HZ_SENSOR", "50")
+
+	stopSrv, err := m.ServeSensor(fakeSensor{})
+	require.NoError(t, err)
+	defer stopSrv()
+
+	obs, err := natsgo.Connect(url)
+	require.NoError(t, err)
+	defer obs.Close()
+
+	n := 0
+	done := make(chan struct{}, 1)
+	_, err = obs.Subscribe("waypoint.dev.module.demo.sensor.state", func(msg *natsgo.Msg) {
+		n++
+		if n >= 5 {
+			select {
+			case done <- struct{}{}:
+			default:
+			}
+		}
+	})
+	require.NoError(t, err)
+	// 5 messages needs 5 s at the global 1 Hz but 100 ms at 50 Hz.
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("class-specific 50 Hz rate not applied")
+	}
+}
+
+func TestStateRateForFallbacks(t *testing.T) {
+	t.Setenv("WAYPOINT_MODULE_STATE_RATE_HZ", "20")
+	t.Setenv("WAYPOINT_MODULE_STATE_RATE_HZ_ARM", "")
+	assert.Equal(t, time.Second/20, stateRateFor("arm"))
+	t.Setenv("WAYPOINT_MODULE_STATE_RATE_HZ_ARM", "250") // out of range: fall through
+	assert.Equal(t, time.Second/20, stateRateFor("arm"))
+	t.Setenv("WAYPOINT_MODULE_STATE_RATE_HZ_ARM", "40")
+	assert.Equal(t, time.Second/40, stateRateFor("arm"))
+	t.Setenv("WAYPOINT_MODULE_STATE_RATE_HZ", "")
+	t.Setenv("WAYPOINT_MODULE_STATE_RATE_HZ_ARM", "")
+	assert.Equal(t, time.Second/10, stateRateFor("arm"))
+}
+
 type fakeBase struct {
 	mu   sync.Mutex
 	cmds []*waypointv1.BaseCommand
