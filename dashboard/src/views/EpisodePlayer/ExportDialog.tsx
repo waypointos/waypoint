@@ -14,8 +14,12 @@ function blobDownload(filename: string, csv: string): void {
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
+  // Some browsers ignore a click on a detached anchor, and revoking the URL
+  // synchronously can cancel a fetch that has not started yet.
+  document.body.append(a);
   a.click();
-  URL.revokeObjectURL(url);
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 type Props = {
