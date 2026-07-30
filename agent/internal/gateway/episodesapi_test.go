@@ -68,6 +68,33 @@ func TestEpisodeDownloadStreamsFile(t *testing.T) {
 	require.Contains(t, rr.Header().Get("Content-Disposition"), `ep-y.mcap`)
 }
 
+// The dashboard episode player reads .mcap files with Range requests; the
+// handler must keep answering 206 with exact slices.
+func TestEpisodeDownloadServesRanges(t *testing.T) {
+	g := newTestGateway(t)
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "ep-r.mcap"), []byte("0123456789"), 0o644))
+	g.episodes = &fakeEpisodes{dir: dir}
+
+	req := httptest.NewRequest("GET", "/api/episodes/ep-r/download?token=tok", nil)
+	req.RemoteAddr = "127.0.0.1:54321"
+	req.Header.Set("Range", "bytes=2-5")
+	rr := httptest.NewRecorder()
+	g.HTTPHandler().ServeHTTP(rr, req)
+
+	require.Equal(t, 206, rr.Code)
+	require.Equal(t, "2345", rr.Body.String())
+	require.Equal(t, "bytes 2-5/10", rr.Header().Get("Content-Range"))
+	require.Equal(t, "bytes", rr.Header().Get("Accept-Ranges"))
+
+	// Range requests do not bypass local auth.
+	unauth := httptest.NewRequest("GET", "/api/episodes/ep-r/download", nil)
+	unauth.Header.Set("Range", "bytes=0-3")
+	rr = httptest.NewRecorder()
+	g.HTTPHandler().ServeHTTP(rr, unauth)
+	require.Equal(t, 401, rr.Code)
+}
+
 func TestEpisodeDelete(t *testing.T) {
 	g := newTestGateway(t)
 	dir := t.TempDir()

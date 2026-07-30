@@ -60,6 +60,21 @@ func TestClassIndex_AllowsOnlyDeclaredClassLeaf(t *testing.T) {
 	require.False(t, idx.allow("waypoint.r2.module.drill.drill.cmd"), "class is learned per rover")
 }
 
+// A module serving several components must have every declared class leaf
+// forwardable, not just the first one in manifest order.
+func TestClassIndex_AllowsEveryDeclaredComponent(t *testing.T) {
+	idx := newClassIndex()
+	idx.learn("r1", snapshot(&waypointv1.ModuleInfo{
+		Id:         "drill",
+		Component:  &waypointv1.ModuleComponent{Class: "drill"},
+		Components: []*waypointv1.ModuleComponent{{Class: "drill"}, {Class: "auger"}},
+	}))
+
+	require.True(t, idx.allow("waypoint.r1.module.drill.drill.cmd"))
+	require.True(t, idx.allow("waypoint.r1.module.drill.auger.cmd"), "a non-first component leaf must relay too")
+	require.False(t, idx.allow("waypoint.r1.module.drill.servo.cmd"), "raw servo broker must never be relayed")
+}
+
 // A class can change when a module is upgraded, and a module can disappear; the
 // index must track the latest snapshot rather than accumulate stale grants.
 func TestClassIndex_ReplacesPerRoverState(t *testing.T) {

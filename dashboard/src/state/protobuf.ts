@@ -24,9 +24,9 @@ export function pbToBinary(msg: unknown): Uint8Array {
 }
 
 /** Minimal runtime surface used to convert an instance to a JSON value. */
-type PbJsonable = { toJson(): unknown };
+type PbJsonable = { toJson(options?: unknown): unknown };
 
 /** Convert a generated message instance into a plain JSON value. */
-export function pbToJson(msg: unknown): unknown {
-  return (msg as PbJsonable).toJson();
+export function pbToJson(msg: unknown, options?: { emitDefaultValues?: boolean }): unknown {
+  return (msg as PbJsonable).toJson(options);
 }

@@ -42,8 +42,24 @@ BindPaths=/data/waypoint/module-state/var/lib/waypoint-module-so100:/var/lib/way
 }
 
 func TestRenderComponentDropin(t *testing.T) {
-	got := RenderComponentDropin(&Component{Class: "arm", StateRateHz: 20})
-	want := "[Service]\nEnvironment=WAYPOINT_MODULE_COMPONENT=arm\nEnvironment=WAYPOINT_MODULE_STATE_RATE_HZ=20\n"
+	got := RenderComponentDropin([]Component{{Class: "arm", StateRateHz: 20}})
+	want := "[Service]\n" +
+		"Environment=WAYPOINT_MODULE_COMPONENT=arm\n" +
+		"Environment=WAYPOINT_MODULE_STATE_RATE_HZ=20\n" +
+		"Environment=WAYPOINT_MODULE_STATE_RATE_HZ_ARM=20\n"
 	assert.Equal(t, want, got)
 	assert.Equal(t, "", RenderComponentDropin(nil))
+}
+
+func TestRenderComponentDropinMulti(t *testing.T) {
+	got := RenderComponentDropin([]Component{
+		{Class: "drill", StateRateHz: 20},
+		{Class: "soil-probe", StateRateHz: 2.5},
+	})
+	want := "[Service]\n" +
+		"Environment=WAYPOINT_MODULE_COMPONENT=drill\n" +
+		"Environment=WAYPOINT_MODULE_STATE_RATE_HZ=20\n" +
+		"Environment=WAYPOINT_MODULE_STATE_RATE_HZ_DRILL=20\n" +
+		"Environment=WAYPOINT_MODULE_STATE_RATE_HZ_SOIL_PROBE=2.5\n"
+	assert.Equal(t, want, got)
 }

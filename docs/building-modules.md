@@ -293,6 +293,40 @@ feeds the dashboard's Signal indicator. The module stays inside its sandbox; the
 agent does the bridging. Declaring any capability not in the known set is a parse
 error.
 
+### 4.6 Component classes
+
+`[component]` declares that the module speaks a standard component API
+(`docs/setup/module-sdk.md` covers the classes and their SDK servers). The class
+must match `^[a-z][a-z0-9-]{1,31}$`, and `state_rate_hz` sets the `.state`
+publish rate (default 10, valid range above 0 up to 100):
+
+```toml
+[component]
+class = "sensor"
+state_rate_hz = 10
+```
+
+A module serving more than one component class declares the array form instead
+(the two forms are mutually exclusive, and classes must be unique within a
+module):
+
+```toml
+[[components]]
+class = "drill"
+state_rate_hz = 20
+
+[[components]]
+class = "sensor"
+state_rate_hz = 10
+```
+
+Each component auto-grants its standard leaves and records its streams in
+episodes independently. The agent exports one
+`WAYPOINT_MODULE_STATE_RATE_HZ_<CLASS>` per component (class upper-cased, `-`
+mapped to `_`); the unsuffixed legacy vars carry the first component so older
+SDKs keep working. `make dev-module` reads only the first component from
+`module.toml`; pass the per-class vars for the rest via `MODULE_ENV`.
+
 ---
 
 ## 5. Subjects and NATS conventions

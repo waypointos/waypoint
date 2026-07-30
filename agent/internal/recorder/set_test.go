@@ -38,7 +38,7 @@ func TestResolveSetRover(t *testing.T) {
 }
 
 func TestResolveSetBenchWithArmComponent(t *testing.T) {
-	specs := ResolveSet(benchDesc(t), map[string]string{"so100": "arm"})
+	specs := ResolveSet(benchDesc(t), map[string][]string{"so100": {"arm"}})
 	subj := subjects(specs)
 	require.NotContains(t, subj, "telemetry.drive") // bench has no drive
 	require.NotContains(t, subj, "cmd.drive")       // no body_twist altitude
@@ -48,14 +48,14 @@ func TestResolveSetBenchWithArmComponent(t *testing.T) {
 }
 
 func TestResolveSetNilDescriptor(t *testing.T) {
-	specs := ResolveSet(nil, map[string]string{"env": "sensor"})
+	specs := ResolveSet(nil, map[string][]string{"env": {"sensor"}})
 	require.Equal(t,
 		[]StreamSpec{{Subject: "module.env.sensor.state", Message: "waypoint.v1.SensorReadings"}},
 		specs)
 }
 
 func TestResolveSetGenericClass(t *testing.T) {
-	specs := ResolveSet(nil, map[string]string{"mydrill": "drill"})
+	specs := ResolveSet(nil, map[string][]string{"mydrill": {"drill"}})
 	require.Equal(t, []StreamSpec{
 		{Subject: "module.mydrill.drill.state"},
 		{Subject: "module.mydrill.drill.cmd"},
@@ -63,7 +63,16 @@ func TestResolveSetGenericClass(t *testing.T) {
 }
 
 func TestResolveSetSkipsEmptyClass(t *testing.T) {
-	require.Empty(t, ResolveSet(nil, map[string]string{"mydrill": ""}))
+	require.Empty(t, ResolveSet(nil, map[string][]string{"mydrill": {""}}))
+}
+
+func TestResolveSetMultiComponentModule(t *testing.T) {
+	specs := ResolveSet(nil, map[string][]string{"drill": {"drill", "sensor"}})
+	require.Equal(t, []StreamSpec{
+		{Subject: "module.drill.drill.state"},
+		{Subject: "module.drill.drill.cmd"},
+		{Subject: "module.drill.sensor.state", Message: "waypoint.v1.SensorReadings"},
+	}, specs)
 }
 
 func TestResolveSetDeduplicates(t *testing.T) {

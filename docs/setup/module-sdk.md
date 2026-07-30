@@ -95,6 +95,7 @@ set them locally. The SDK reads them so you do not parse flags or env yourself.
 | `WAYPOINT_MODULE_CONFIG` | module unit (config.toml path) | optional | path to the module's config.toml; `wpmodule.LoadConfig` decodes it |
 | `WAYPOINT_MODULE_COMPONENT` | agent drop-in (from `[component]`) | optional | the component class (`arm` \| `sensor` \| `base`) |
 | `WAYPOINT_MODULE_STATE_RATE_HZ` | agent drop-in (from `[component]`) | optional | component `.state` publish rate; the SDK defaults to 10 Hz when unset |
+| `WAYPOINT_MODULE_STATE_RATE_HZ_<CLASS>` | agent drop-in (one per component) | optional | per-class state rate; wins over the unsuffixed var for that class's serve loop |
 | `WAYPOINT_MODULE_ID` | dev harness / `make dev-module` | dev harness / `make dev-module` | overrides `Options.ID`; on-rover the id is compiled into the binary |
 
 The component id is normally compiled into the binary through
@@ -123,6 +124,13 @@ position (re-latch goals to present, freeze any internal control loop); a
 generic consumer relies on it. The conformance suite asserts this. Base is a reserved
 contract: the shape is settled and SDK-served, but no production consumer exists
 yet and core remains the platform's base.
+
+SDK serve loops resolve their publish rate per class:
+`WAYPOINT_MODULE_STATE_RATE_HZ_<CLASS>` first, then
+`WAYPOINT_MODULE_STATE_RATE_HZ`, then 10 Hz (class upper-cased, `-` mapped to
+`_`). A module serving several classes declares the `[[components]]` array form
+instead of `[component]`, and the agent exports one suffixed var per component
+(see `docs/building-modules.md`).
 
 These message types are in `protocol/messages/components.proto`, generated as
 `waypointv1` Go bindings and `components_pb` TS bindings. The joint list IS the
@@ -202,8 +210,8 @@ the component-class contracts end to end:
   and no goal change (the platform guarantee extended through the broker and the
   core gate to the component API).
 
-The in-tree examples (`sensor-minimal`, `arm-sim`) keep the main-repo suite
-self-contained. To prove your own out-of-tree module, run it against a dev rover
+The in-tree examples (`sensor-minimal`, `arm-sim`, `multi-component`) keep the
+main-repo suite self-contained. To prove your own out-of-tree module, run it against a dev rover
 with the documented recipe in your module repo: `make dev-rover PLATFORM=bench`
 in the waypoint repo, then run your module with the dev env vars and confirm
 `module.<id>.<class>.state` traffic on the dashboard Bus pane. Your module's own

@@ -40,7 +40,7 @@ var componentStreams = map[string][]StreamSpec{
 // ResolveSet derives the recording set: descriptor observation streams, the
 // command streams implied by action altitudes, and the state/cmd leaves of
 // every active component. Resolved at episode start, never hardcoded.
-func ResolveSet(d *descriptor.Descriptor, components map[string]string) []StreamSpec {
+func ResolveSet(d *descriptor.Descriptor, components map[string][]string) []StreamSpec {
 	seen := map[string]bool{}
 	var out []StreamSpec
 	add := func(s StreamSpec) {
@@ -69,20 +69,21 @@ func ResolveSet(d *descriptor.Descriptor, components map[string]string) []Stream
 	}
 	sort.Strings(ids)
 	for _, id := range ids {
-		class := components[id]
-		tpls, ok := componentStreams[class]
-		if !ok {
-			// Untyped class: record the generic leaves schemaless (empty Message).
+		for _, class := range components[id] {
 			if class == "" {
 				continue
 			}
-			tpls = []StreamSpec{
-				{Subject: "module.%s." + class + ".state"},
-				{Subject: "module.%s." + class + ".cmd"},
+			tpls, ok := componentStreams[class]
+			if !ok {
+				// Untyped class: record the generic leaves schemaless (empty Message).
+				tpls = []StreamSpec{
+					{Subject: "module.%s." + class + ".state"},
+					{Subject: "module.%s." + class + ".cmd"},
+				}
 			}
-		}
-		for _, tpl := range tpls {
-			add(StreamSpec{Subject: fmt.Sprintf(tpl.Subject, id), Message: tpl.Message})
+			for _, tpl := range tpls {
+				add(StreamSpec{Subject: fmt.Sprintf(tpl.Subject, id), Message: tpl.Message})
+			}
 		}
 	}
 	return out

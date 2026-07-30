@@ -117,6 +117,65 @@ embedded schemas decode the protobuf streams without setup, and the
 `foxglove.CompressedVideo` schema. Drag the `.mcap` onto a Studio window, or open
 it from the local file source.
 
+## In-dashboard player
+
+The dashboard replays an episode without any external tool. The Episodes tab lists
+a **Play** action per episode, which opens the player at
+`/rover/<rover_id>/episodes/<episode_id>`. Playback only works on the rover's local
+network: the player streams the `.mcap` from the agent's local HTTP API, so the
+action is present only on local sessions, the same rule the download and delete
+actions follow.
+
+Everything happens in the browser. The player reads the container with HTTP Range
+requests, starting with the summary index and then pulling only the chunks it
+needs. In practice it loads every visible channel over the whole episode when it
+opens, and the recorder interleaves all channels into shared chunks, so opening an
+episode does transfer most of the file. An agent that ignores Range requests forces
+a single full download instead, and the header shows a
+`full download (no range support)` chip when the file is large enough to matter.
+
+What the player gives you:
+
+- **A shared timeline.** Play and pause, playback speeds from `0.25x` to `4x`, and
+  a scrubber that seeks on click or drag, or with the arrow, page, and Home/End keys
+  once focused. Shift-drag on the scrubber selects a time range, which the CSV
+  export then defaults to.
+- **Plot lanes.** One lane per visible channel, drawn from the decoded protobuf
+  messages, with a legend that reads out each series value at the cursor. A missing
+  or `ok: false` value renders a muted `N/A` and breaks the plot line rather than
+  plotting zero. A series whose last sample is far older than its own sample
+  interval also reads `N/A`, so a channel that died mid-episode does not keep
+  reporting its final value.
+- **A channel sidebar.** Decodable channels toggle their lane on and off, with
+  message count and rate per channel. Schemaless channels (a module publishing
+  bytes with no registered protobuf schema) are listed with count and rate but
+  marked not decodable: they cannot be plotted or exported in this version.
+- **Video.** The `camera.<id>/h264` channel decodes with WebCodecs, so it needs a
+  WebCodecs-capable browser (Chrome and other Chromium browsers today). Elsewhere
+  the lane shows a muted notice and the plots still work. Seeking snaps to the
+  keyframe before the cursor and decodes forward, which is why recording is
+  keyframe gated.
+- **A partial banner.** A crashed episode is labelled `partial (crashed)` in the
+  header, and a nonzero `video_frames_dropped` is shown next to it.
+
+### CSV export
+
+The **Export CSV** button in the player header opens a dialog that picks which
+series to export and confirms the time range (the shift-drag selection if there is
+one, the whole episode otherwise). The file is built in the browser and downloaded
+as `<episode_id>.csv`.
+
+The format is wide: `time_ns`, `time_iso`, then one column per exported series, and
+one row per timestamp in the union of the exported series. A cell is blank when
+that series has no sample at that timestamp or the sample is N/A, so a blank never
+means zero. Column names are the series ids the player shows: the topic plus the
+protobuf field path, for example `module.drill.sensor.state.cell_a_g` or
+`telemetry.motors.7.velocityRadps` (`telemetry.motors` carries one message per
+servo, so the servo id keys its series).
+
+Foxglove Studio remains the deep-analysis path: the player covers a quick look and
+a spreadsheet-ready extract, not full inspection.
+
 ## Disk guard
 
 The recorder protects the data partition. It refuses to start an episode when free

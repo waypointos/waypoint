@@ -7,6 +7,7 @@ import (
 	"time"
 
 	natsgo "github.com/nats-io/nats.go"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
@@ -84,8 +85,8 @@ func TestPublisher_RuntimeModuleCarriesSchemaAndComponent(t *testing.T) {
 	p := NewSnapshotPublisher(nil, "rover-1", nil)
 	p.SetRuntimeModule("umr", Manifest{
 		Name: "umr", Label: "Connectivity", Version: "0.4.0",
-		UI:        UIBinding{Kind: UIKindStatic, TabID: "m-umr"},
-		Component: &Component{Class: "sensor", StateRateHz: 10},
+		UI:         UIBinding{Kind: UIKindStatic, TabID: "m-umr"},
+		Components: []Component{{Class: "sensor", StateRateHz: 10}},
 		ConfigFields: []ConfigField{
 			{Key: "host", Label: "Router URL", Type: "url", Default: "https://192.168.105.1"},
 			{Key: "password", Label: "Owner password", Type: "password", Required: true},
@@ -159,7 +160,7 @@ func TestPublisher_CarriesComponent(t *testing.T) {
 	specs := []ModuleSpec{
 		{Manifest: Manifest{
 			Name: "myarm", Label: "My Arm", Version: "0.1.0",
-			Component: &Component{Class: "arm", StateRateHz: 20},
+			Components: []Component{{Class: "arm", StateRateHz: 20}},
 		}},
 		{Manifest: Manifest{
 			Name: "plain", Label: "Plain", Version: "0.1.0",
@@ -217,4 +218,27 @@ func TestSnapshot_RuntimeShadowsBakedSpec(t *testing.T) {
 	require.Len(t, snap.Modules, 1)
 	require.Equal(t, "Connectivity", snap.Modules[0].Label, "runtime entry should win")
 	require.Equal(t, waypointv1.ModuleOrigin_MODULE_ORIGIN_LOCAL, snap.Modules[0].Origin)
+}
+
+func TestPublisher_CarriesAllComponents(t *testing.T) {
+	p := NewSnapshotPublisher(nil, "rover-1", nil)
+	p.SetRuntimeModule("drill", Manifest{
+		Name: "drill",
+		Components: []Component{
+			{Class: "drill", StateRateHz: 20},
+			{Class: "sensor", StateRateHz: 10},
+		},
+	}, waypointv1.ModuleOrigin_MODULE_ORIGIN_PROXY)
+
+	msg := p.buildSnapshot()
+	require.Len(t, msg.Modules, 1)
+	got := msg.Modules[0]
+	// Singular field stays the first component for older readers.
+	require.NotNil(t, got.GetComponent())
+	require.Equal(t, "drill", got.GetComponent().GetClass())
+	require.Len(t, got.GetComponents(), 2)
+	assert.Equal(t, "drill", got.GetComponents()[0].GetClass())
+	assert.Equal(t, 20.0, got.GetComponents()[0].GetStateRateHz())
+	assert.Equal(t, "sensor", got.GetComponents()[1].GetClass())
+	assert.Equal(t, 10.0, got.GetComponents()[1].GetStateRateHz())
 }
