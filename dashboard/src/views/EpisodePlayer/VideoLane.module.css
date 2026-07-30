@@ -1,0 +1,18 @@
+/* Camera lane: decoded frames on a canvas, muted notice when unsupported. */
+
+.video {
+  width: 100%;
+  max-height: 45vh;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  display: block;
+}
+
+.notice {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-fg-3);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: var(--space-sm);
+}
