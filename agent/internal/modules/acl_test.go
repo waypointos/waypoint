@@ -26,8 +26,8 @@ func TestToLocalAuthPermissions(t *testing.T) {
 
 func TestManifestAuthPermissionsIncludeComponentLeaves(t *testing.T) {
 	m := &Manifest{
-		Name:      "myarm",
-		Component: &Component{Class: "arm", StateRateHz: 20},
+		Name:       "myarm",
+		Components: []Component{{Class: "arm", StateRateHz: 20}},
 		Permissions: Permissions{
 			Publish:   []string{"waypoint.*.module.myarm.stats"},
 			Subscribe: []string{"waypoint.*.module.myarm.command"},
@@ -40,15 +40,29 @@ func TestManifestAuthPermissionsIncludeComponentLeaves(t *testing.T) {
 }
 
 func TestManifestAuthPermissionsIncludeGenericClassLeaves(t *testing.T) {
-	m := &Manifest{Name: "mydrill", Component: &Component{Class: "drill", StateRateHz: 5}}
+	m := &Manifest{Name: "mydrill", Components: []Component{{Class: "drill", StateRateHz: 5}}}
 	p := ManifestAuthPermissions(m)
 	assert.Contains(t, p.Publish, "waypoint.*.module.mydrill.drill.state")
 	assert.Contains(t, p.Subscribe, "waypoint.*.module.mydrill.drill.cmd")
 }
 
 func TestManifestAuthPermissionsSensorHasNoCmdLeaf(t *testing.T) {
-	m := &Manifest{Name: "s", Component: &Component{Class: "sensor", StateRateHz: 1}}
+	m := &Manifest{Name: "s", Components: []Component{{Class: "sensor", StateRateHz: 1}}}
 	p := ManifestAuthPermissions(m)
 	assert.Contains(t, p.Publish, "waypoint.*.module.s.sensor.state")
 	assert.Empty(t, p.Subscribe)
+}
+
+func TestManifestAuthPermissionsUnionAcrossComponents(t *testing.T) {
+	m := &Manifest{
+		Name: "drill",
+		Components: []Component{
+			{Class: "drill", StateRateHz: 20},
+			{Class: "sensor", StateRateHz: 10},
+		},
+	}
+	p := ManifestAuthPermissions(m)
+	assert.Contains(t, p.Publish, "waypoint.*.module.drill.drill.state")
+	assert.Contains(t, p.Publish, "waypoint.*.module.drill.sensor.state")
+	assert.Contains(t, p.Subscribe, "waypoint.*.module.drill.drill.cmd")
 }

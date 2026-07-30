@@ -496,9 +496,9 @@ func TestActiveComponentsTracksAttachDetach(t *testing.T) {
 	sup := &fakeSupervisor{active: true}
 	m := &Manager{opts: Options{Supervisor: sup, RoverID: "rover-1"}, pub: pub,
 		hw: map[string]*HealthWatcher{}, healthPollers: map[string]context.CancelFunc{}}
-	man := &Manifest{Component: &Component{Class: "arm"}}
+	man := &Manifest{Components: []Component{{Class: "arm"}, {Class: "sensor"}}}
 	m.onModuleAttached(context.Background(), "so100", man)
-	require.Equal(t, map[string]string{"so100": "arm"}, m.ActiveComponents())
+	require.Equal(t, map[string][]string{"so100": {"arm", "sensor"}}, m.ActiveComponents())
 	m.onModuleDetached("so100")
 	require.Empty(t, m.ActiveComponents())
 }

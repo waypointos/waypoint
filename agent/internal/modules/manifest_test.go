@@ -426,9 +426,9 @@ class = "arm"
 state_rate_hz = 20
 `))
 	require.NoError(t, err)
-	require.NotNil(t, m.Component)
-	assert.Equal(t, "arm", m.Component.Class)
-	assert.Equal(t, 20.0, m.Component.StateRateHz)
+	require.Len(t, m.Components, 1)
+	assert.Equal(t, "arm", m.Components[0].Class)
+	assert.Equal(t, 20.0, m.Components[0].StateRateHz)
 }
 
 func TestManifestComponentDefaultsRate(t *testing.T) {
@@ -439,7 +439,8 @@ entrypoint = "x"
 class = "sensor"
 `))
 	require.NoError(t, err)
-	assert.Equal(t, 10.0, m.Component.StateRateHz)
+	require.Len(t, m.Components, 1)
+	assert.Equal(t, 10.0, m.Components[0].StateRateHz)
 }
 
 func TestManifestComponentRejectsMalformedClass(t *testing.T) {
@@ -458,9 +459,9 @@ entrypoint = "x"
 class = "drill"
 `))
 	require.NoError(t, err)
-	require.NotNil(t, m.Component)
-	assert.Equal(t, "drill", m.Component.Class)
-	pub, sub := componentLeaves(m.Name, m.Component.Class)
+	require.Len(t, m.Components, 1)
+	assert.Equal(t, "drill", m.Components[0].Class)
+	pub, sub := componentLeaves(m.Name, m.Components[0].Class)
 	assert.Equal(t, []string{"waypoint.*.module.mydrill.drill.state"}, pub)
 	assert.Equal(t, []string{"waypoint.*.module.mydrill.drill.cmd"}, sub)
 }
@@ -469,4 +470,60 @@ func TestManifestComponentRejectsBadRate(t *testing.T) {
 	_, err := ParseManifest([]byte("name = \"m\"\nentrypoint = \"x\"\n[component]\nclass = \"arm\"\nstate_rate_hz = 250\n"))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "state_rate_hz")
+}
+
+func TestManifestComponentsArrayForm(t *testing.T) {
+	m, err := ParseManifest([]byte(`
+name = "drill"
+entrypoint = "waypoint-module-drill"
+
+[[components]]
+class = "drill"
+state_rate_hz = 20
+
+[[components]]
+class = "sensor"
+state_rate_hz = 10
+`))
+	require.NoError(t, err)
+	require.Len(t, m.Components, 2)
+	assert.Equal(t, Component{Class: "drill", StateRateHz: 20}, m.Components[0])
+	assert.Equal(t, Component{Class: "sensor", StateRateHz: 10}, m.Components[1])
+}
+
+func TestManifestComponentsArrayDefaultsRate(t *testing.T) {
+	m, err := ParseManifest([]byte("name = \"m\"\nentrypoint = \"x\"\n[[components]]\nclass = \"sensor\"\n"))
+	require.NoError(t, err)
+	require.Len(t, m.Components, 1)
+	assert.Equal(t, 10.0, m.Components[0].StateRateHz)
+}
+
+func TestManifestComponentsBothFormsRejected(t *testing.T) {
+	_, err := ParseManifest([]byte(`
+name = "m"
+entrypoint = "x"
+
+[component]
+class = "arm"
+
+[[components]]
+class = "sensor"
+`))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "mutually exclusive")
+}
+
+func TestManifestComponentsDuplicateClassRejected(t *testing.T) {
+	_, err := ParseManifest([]byte(`
+name = "m"
+entrypoint = "x"
+
+[[components]]
+class = "sensor"
+
+[[components]]
+class = "sensor"
+`))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "duplicate component class")
 }

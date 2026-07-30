@@ -146,18 +146,23 @@ Component leaves (see below) need not be declared explicitly: declaring
 
 ## Standard component APIs: `[component]`
 
-A manifest may declare one standard component class so the module speaks a
+A manifest may declare a standard component class so the module speaks a
 uniform arm/sensor/base API that any consumer can decode without reading the
 manifest:
 
     [component]
-    class = "arm"          # arm | sensor | base
+    class = "arm"          # arm | sensor | base are typed; the registry is open
     state_rate_hz = 20      # SDK publish rate for <class>.state
 
-- `class` is validated against the known set (`arm`, `sensor`, `base`). One
-  component per module in v1.
+- `class` must match `^[a-z][a-z0-9-]{1,31}$`. `arm`, `sensor` and `base` are
+  the typed classes with SDK servers and auto-granted leaves; any other class is
+  accepted and left to the module.
 - `state_rate_hz` must be positive and at most 100; it defaults to 10 when
   omitted.
+- A module serving several classes uses the `[[components]]` array form instead
+  (the two forms are mutually exclusive, and classes must be unique within a
+  module). See `docs/building-modules.md` for the array form and the per-class
+  state-rate env vars.
 
 **Auto-granted leaves.** Declaring `[component]` grants the module's minted NATS
 user the standard sandbox leaves for its class, alongside whatever
@@ -176,8 +181,9 @@ not a ceiling: a module keeps its own private subjects (calibration, richer
 commands, panel feeds) under the same sandbox.
 
 **Discovery.** The agent's `ModuleSnapshot` (`waypoint.<rover>.infra.modules`)
-carries each module's component class and state rate, so the dashboard and
-future consumers discover components without reading manifests.
+carries every component a module declares, each with its class and state rate, so
+the dashboard and future consumers discover components without reading
+manifests.
 
 Authoring a module against these APIs is covered in `module-sdk.md`.
 

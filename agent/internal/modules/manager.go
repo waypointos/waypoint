@@ -89,7 +89,7 @@ type Manager struct {
 	staging    map[string]stagedModule
 
 	componentsMu sync.Mutex
-	components   map[string]string // module id -> component class
+	components   map[string][]string // module id -> component classes
 }
 
 // New discovers modules and adds their users to the localauth Builder.
@@ -316,12 +316,16 @@ func (m *Manager) onModuleAttached(ctx context.Context, id string, manifest *Man
 		slog.Warn(fmt.Sprintf("modules: attached %s has no readable manifest; not surfacing a tab", id))
 		return
 	}
-	if manifest.Component != nil {
+	if len(manifest.Components) > 0 {
+		classes := make([]string, 0, len(manifest.Components))
+		for _, c := range manifest.Components {
+			classes = append(classes, c.Class)
+		}
 		m.componentsMu.Lock()
 		if m.components == nil {
-			m.components = map[string]string{}
+			m.components = map[string][]string{}
 		}
-		m.components[id] = manifest.Component.Class
+		m.components[id] = classes
 		m.componentsMu.Unlock()
 	}
 	if containsString(manifest.Provides, "uplink") {
@@ -379,14 +383,15 @@ func (m *Manager) onModuleDetached(id string) {
 	m.pub.RemoveRuntimeModule(id)
 }
 
-// ActiveComponents reports the component class of every attached module,
-// keyed by module id. The recorder snapshots this at episode start.
-func (m *Manager) ActiveComponents() map[string]string {
+// ActiveComponents reports the component classes of every attached module,
+// keyed by module id, manifest order. The recorder snapshots this at
+// episode start.
+func (m *Manager) ActiveComponents() map[string][]string {
 	m.componentsMu.Lock()
 	defer m.componentsMu.Unlock()
-	out := make(map[string]string, len(m.components))
+	out := make(map[string][]string, len(m.components))
 	for k, v := range m.components {
-		out[k] = v
+		out[k] = append([]string(nil), v...)
 	}
 	return out
 }

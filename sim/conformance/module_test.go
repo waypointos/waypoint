@@ -99,6 +99,33 @@ func TestSensorConformance(t *testing.T) {
 	assert.GreaterOrEqual(t, len(r.Trace.Messages("module.sensor-minimal.sensor.state")), 5)
 }
 
+func TestMultiComponentStreams(t *testing.T) {
+	// The sensor-specific var must pin the SDK sensor loop to 10 Hz even though
+	// the global var says 20 Hz, proving per-class resolution end to end. The
+	// example's generic probe loop is a fixed 50 ms ticker that reads no env.
+	r, _ := launchWithModule(t, benchPlatform(t), "examples/multi-component", "multi-component",
+		"WAYPOINT_MODULE_STATE_RATE_HZ=20",
+		"WAYPOINT_MODULE_STATE_RATE_HZ_SENSOR=10")
+
+	sr := waitForMsg(t, r, "module.multi-component.sensor.state", &waypointv1.SensorReadings{}, 10*time.Second)
+	require.NotZero(t, sr.GetStamp().GetMonoNs())
+
+	_, err := r.Trace.WaitFor("module.multi-component.probe.state", func(m harness.Msg) bool { return true }, 10*time.Second)
+	require.NoError(t, err, "generic probe.state stream must flow alongside sensor.state")
+
+	// Rate over 1 s of wall time: sensor ~10 Hz, probe ~20 Hz. The sensor upper
+	// bound is what fails if the per-class var is ignored and the loop runs at
+	// the global 20 Hz.
+	r.Trace.Clear()
+	time.Sleep(1 * time.Second)
+	sensorCount := len(r.Trace.Messages("module.multi-component.sensor.state"))
+	assert.GreaterOrEqual(t, sensorCount, 5)
+	assert.LessOrEqual(t, sensorCount, 15, "sensor.state must honor the per-class 10 Hz, not the global 20 Hz")
+	probeCount := len(r.Trace.Messages("module.multi-component.probe.state"))
+	assert.GreaterOrEqual(t, probeCount, 10)
+	assert.LessOrEqual(t, probeCount, 30)
+}
+
 func TestArmConformanceCommandActs(t *testing.T) {
 	r, _ := launchWithModule(t, benchPlatform(t), "examples/arm-sim", "arm-sim",
 		"WAYPOINT_MODULE_STATE_RATE_HZ=10")

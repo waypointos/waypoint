@@ -30,7 +30,9 @@ type Manifest struct {
 	Hardware    Hardware
 	Provides    []string
 	Requires    []string
-	Component   *Component
+	// Components are the manifest component declarations, manifest order.
+	// Single [component] and array [[components]] forms both land here.
+	Components []Component
 	// ConfigFields is the manifest [[config.fields]] schema for the module's
 	// per-rover config.toml. Empty means the module declares none, and the
 	// dashboard falls back to a raw TOML editor.
@@ -47,7 +49,7 @@ type ConfigField struct {
 	Required bool
 }
 
-// Component is the manifest [component] declaration: the standard class this
+// Component is one manifest component declaration: a standard class this
 // module serves. Declaring it auto-grants the class's standard sandbox leaves.
 type Component struct {
 	Class       string
@@ -216,19 +218,11 @@ func ParseManifest(data []byte) (*Manifest, error) {
 		Provides: raw.Provides,
 		Requires: raw.Requires,
 	}
-	if raw.Component != nil {
-		if !componentClassRe.MatchString(raw.Component.Class) {
-			return nil, fmt.Errorf("manifest: component class %q must match [a-z][a-z0-9-]{1,31}", raw.Component.Class)
-		}
-		rate := raw.Component.StateRateHz
-		if rate == 0 {
-			rate = 10
-		}
-		if rate < 0 || rate > 100 {
-			return nil, fmt.Errorf("manifest: component state_rate_hz %v out of range (0, 100]", raw.Component.StateRateHz)
-		}
-		m.Component = &Component{Class: raw.Component.Class, StateRateHz: rate}
+	comps, err := buildComponents(&raw)
+	if err != nil {
+		return nil, err
 	}
+	m.Components = comps
 	fields, err := buildConfigFields(&raw)
 	if err != nil {
 		return nil, err
@@ -241,6 +235,45 @@ func ParseManifest(data []byte) (*Manifest, error) {
 		return nil, err
 	}
 	return m, nil
+}
+
+// buildComponents validates the [component] / [[components]] declarations.
+// The two forms are mutually exclusive; the single form yields one entry.
+func buildComponents(raw *rawManifest) ([]Component, error) {
+	if raw.Component != nil && len(raw.ComponentList) > 0 {
+		return nil, errors.New("manifest: [component] and [[components]] are mutually exclusive")
+	}
+	type entry struct {
+		Class       string
+		StateRateHz float64
+	}
+	var entries []entry
+	if raw.Component != nil {
+		entries = append(entries, entry{raw.Component.Class, raw.Component.StateRateHz})
+	}
+	for _, c := range raw.ComponentList {
+		entries = append(entries, entry{c.Class, c.StateRateHz})
+	}
+	seen := map[string]bool{}
+	out := make([]Component, 0, len(entries))
+	for _, e := range entries {
+		if !componentClassRe.MatchString(e.Class) {
+			return nil, fmt.Errorf("manifest: component class %q must match [a-z][a-z0-9-]{1,31}", e.Class)
+		}
+		if seen[e.Class] {
+			return nil, fmt.Errorf("manifest: duplicate component class %q", e.Class)
+		}
+		seen[e.Class] = true
+		rate := e.StateRateHz
+		if rate == 0 {
+			rate = 10
+		}
+		if rate < 0 || rate > 100 {
+			return nil, fmt.Errorf("manifest: component state_rate_hz %v out of range (0, 100]", e.StateRateHz)
+		}
+		out = append(out, Component{Class: e.Class, StateRateHz: rate})
+	}
+	return out, nil
 }
 
 var configFieldKeyRe = regexp.MustCompile(`^[a-z][a-z0-9_]{0,63}$`)
@@ -413,6 +446,10 @@ type rawManifest struct {
 		Class       string  `toml:"class"`
 		StateRateHz float64 `toml:"state_rate_hz"`
 	} `toml:"component"`
+	ComponentList []struct {
+		Class       string  `toml:"class"`
+		StateRateHz float64 `toml:"state_rate_hz"`
+	} `toml:"components"`
 	Config struct {
 		Fields []struct {
 			Key      string `toml:"key"`

@@ -143,7 +143,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, desired *waypointv1.DesiredM
 			if dropinErr := r.writeHardwareDropin(id, manifest.Hardware); dropinErr != nil {
 				slog.Warn(fmt.Sprintf("reconcile: dropin %s: %v", id, dropinErr))
 			}
-			if dropinErr := r.writeComponentDropin(id, manifest.Component); dropinErr != nil {
+			if dropinErr := r.writeComponentDropin(id, manifest.Components); dropinErr != nil {
 				slog.Warn(fmt.Sprintf("reconcile: component dropin %s: %v", id, dropinErr))
 			}
 			if r.ProxyRegistry != nil && manifest.UI.Kind == UIKindProxy {
@@ -314,14 +314,14 @@ func (r *Reconciler) writeHardwareDropin(moduleID string, h Hardware) error {
 	return os.WriteFile(filepath.Join(dir, "30-hardware.conf"), []byte(body), 0o644)
 }
 
-// writeComponentDropin writes the [component] env drop-in next to the module
+// writeComponentDropin writes the component env drop-in next to the module
 // service unit. A no-op when DropinDir is unset (tests) or the module declares
-// no component.
-func (r *Reconciler) writeComponentDropin(moduleID string, c *Component) error {
+// no components.
+func (r *Reconciler) writeComponentDropin(moduleID string, cs []Component) error {
 	if r.DropinDir == "" {
 		return nil
 	}
-	body := RenderComponentDropin(c)
+	body := RenderComponentDropin(cs)
 	if body == "" {
 		return nil
 	}

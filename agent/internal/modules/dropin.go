@@ -51,12 +51,27 @@ func RenderHardwareDropin(h Hardware, rwSource func(string) string) string {
 }
 
 // RenderComponentDropin returns the .d/40-component.conf contents exporting
-// the component class and state rate to the module process. "" when the
-// module declares no component.
-func RenderComponentDropin(c *Component) string {
-	if c == nil {
+// component classes and state rates to the module process. The first
+// component also fills the legacy unsuffixed vars so pre-multi-component
+// SDKs keep working. "" when the module declares no components.
+func RenderComponentDropin(cs []Component) string {
+	if len(cs) == 0 {
 		return ""
 	}
-	return fmt.Sprintf("[Service]\nEnvironment=WAYPOINT_MODULE_COMPONENT=%s\nEnvironment=WAYPOINT_MODULE_STATE_RATE_HZ=%s\n",
-		c.Class, strconv.FormatFloat(c.StateRateHz, 'f', -1, 64))
+	var b strings.Builder
+	b.WriteString("[Service]\n")
+	fmt.Fprintf(&b, "Environment=WAYPOINT_MODULE_COMPONENT=%s\n", cs[0].Class)
+	fmt.Fprintf(&b, "Environment=WAYPOINT_MODULE_STATE_RATE_HZ=%s\n", formatRate(cs[0].StateRateHz))
+	for _, c := range cs {
+		fmt.Fprintf(&b, "Environment=WAYPOINT_MODULE_STATE_RATE_HZ_%s=%s\n", classEnvSuffix(c.Class), formatRate(c.StateRateHz))
+	}
+	return b.String()
+}
+
+func formatRate(hz float64) string { return strconv.FormatFloat(hz, 'f', -1, 64) }
+
+// classEnvSuffix maps a component class to its env-var suffix: upper-case,
+// "-" becomes "_".
+func classEnvSuffix(class string) string {
+	return strings.ToUpper(strings.ReplaceAll(class, "-", "_"))
 }

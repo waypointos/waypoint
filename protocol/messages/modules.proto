@@ -23,8 +23,9 @@ message ModuleInfo {
   google.protobuf.Timestamp last_seen = 6;
   ModuleUI ui       = 7;   // unset when module declares no UI
   ModuleOrigin origin = 8; // who asked for this module
-  ModuleComponent component = 9;  // unset when module declares no [component]
+  ModuleComponent component = 9;  // first component; kept for readers that predate `components`
   repeated ModuleConfigField config_fields = 10; // manifest [[config.fields]]; empty = no schema
+  repeated ModuleComponent components = 11; // all manifest components, manifest order
 }
 
 // One editable setting in a module's per-rover config (manifest

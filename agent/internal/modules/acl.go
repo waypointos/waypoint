@@ -13,14 +13,14 @@ func ToLocalAuthPermissions(p Permissions) localauth.ModulePermissions {
 }
 
 // ManifestAuthPermissions derives the localauth permissions for a module from
-// its manifest: the declared [permissions] plus the standard component leaves
-// when [component] is declared. Only the baked-manifest mint path narrows to
+// its manifest: the declared [permissions] plus the standard leaves of every
+// declared component. Only the baked-manifest mint path narrows to
 // explicit subjects; the install paths grant the whole module subtree, which
 // already covers component leaves.
 func ManifestAuthPermissions(m *Manifest) localauth.ModulePermissions {
 	p := ToLocalAuthPermissions(m.Permissions)
-	if m.Component != nil {
-		pub, sub := componentLeaves(m.Name, m.Component.Class)
+	for _, c := range m.Components {
+		pub, sub := componentLeaves(m.Name, c.Class)
 		p.Publish = append(p.Publish, pub...)
 		p.Subscribe = append(p.Subscribe, sub...)
 	}
