@@ -3,6 +3,17 @@
 Generated from conventional commits by the release targets in the root
 Makefile. Do not edit by hand.
 
+## 0.18.0 (2026-07-30)
+
+### Features
+
+- **dashboard:** episode player with replay and csv export (#13)
+- **protocol:** advertise all module components in discovery
+
+### Bug fixes
+
+- **proxy:** relay every declared component cmd leaf
+
 ## 0.17.0 (2026-07-28)
 
 ### Features
