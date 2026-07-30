@@ -3,6 +3,8 @@
 Generated from conventional commits by the release targets in the root
 Makefile. Do not edit by hand.
 
+## 0.3.0 (2026-07-30)
+
 ## 0.2.0 (2026-07-28)
 
 ### Features
