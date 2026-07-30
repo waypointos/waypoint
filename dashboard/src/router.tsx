@@ -1,4 +1,5 @@
 // dashboard/src/router.tsx
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { useMe } from './state/mode';
 import { Gallery } from './ui/__gallery__/Gallery';
@@ -6,7 +7,6 @@ import { FleetView } from './views/FleetView';
 import { MapView } from './views/MapView';
 import { RoverView } from './views/RoverView/RoverView';
 import { TeleopView } from './views/Teleop/TeleopView';
-import { EpisodePlayerView } from './views/EpisodePlayer/EpisodePlayerView';
 import { AdminView } from './views/AdminView';
 import { AuditLogView } from './views/AuditLogView';
 import { AdminUsersView } from './views/AdminUsersView';
@@ -14,6 +14,11 @@ import { AdminModulesView } from './views/AdminModulesView';
 import { ComingSoonView } from './views/ComingSoonView';
 import { ModulesView } from './views/ModulesView/ModulesView';
 import { ReleasesView } from './views/ReleasesView/ReleasesView';
+
+// Split out so the MCAP parser and its zstd decoder stay off every other route.
+const EpisodePlayerView = lazy(() =>
+  import('./views/EpisodePlayer/EpisodePlayerView')
+    .then((m) => ({ default: m.EpisodePlayerView })));
 
 function AdminRoute() {
   const me = useMe();
@@ -51,7 +56,10 @@ const router = createBrowserRouter([
   { path: '/map',         element: <MapView /> },
   { path: '/rover/:id',        element: <RoverView /> },
   { path: '/rover/:id/teleop', element: <TeleopView /> },
-  { path: '/rover/:id/episodes/:episodeId', element: <EpisodePlayerView /> },
+  {
+    path: '/rover/:id/episodes/:episodeId',
+    element: <Suspense fallback={null}><EpisodePlayerView /></Suspense>,
+  },
   { path: '/rover/:id/:tab',   element: <RoverView /> },
   { path: '/modules',     element: <ModulesView /> },
   { path: '/releases',    element: <ReleasesView /> },
