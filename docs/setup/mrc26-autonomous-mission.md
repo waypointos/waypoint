@@ -146,14 +146,25 @@ after editing.
 
 ### After the run
 
-Copy the mission CSV to the laptop and onto the SD card for the referees:
+Copy the mission CSV to the laptop (BusyBox scp needs `-O`; the module's
+`/var/lib/waypoint-module-survey` is backed by `/data/waypoint/module-state`
+on the host):
 
 ```sh
-scp -O root@<rover>:/data/waypoint/store/module-state/var/lib/waypoint-module-survey/logs/mission-*.csv .
+scp -O root@<rover>:/data/waypoint/module-state/var/lib/waypoint-module-survey/logs/mission-*.csv .
 ```
 
-(BusyBox scp needs `-O`.) Hand over the card together with the printed
-LED legend card (`tools/mrc26/legend-card.html`).
+Add the latitude/longitude columns the rules ask for (same origin as the
+waypoint conversion), then copy both files onto the handover SD card with
+the laptop's card reader:
+
+```sh
+python3 tools/mrc26/log_to_gps.py mission-<ts>.csv --origin <lat0>,<lon0>
+```
+
+Hand over the card together with the printed LED legend card
+(`tools/mrc26/legend-card.html`). Bring a spare SD card and a USB reader
+for this; the rover's own boot card never leaves the rover.
 
 ## Troubleshooting
 
