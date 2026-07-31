@@ -3,6 +3,12 @@
 Generated from conventional commits by the release targets in the root
 Makefile. Do not edit by hand.
 
+## 0.19.0 (2026-07-31)
+
+### Features
+
+- **dashboard:** autonomous mode switch and manual-gated drive publisher (#15)
+
 ## 0.18.0 (2026-07-30)
 
 ### Features
