@@ -31,7 +31,7 @@ func TestExecPortable_Detach(t *testing.T) {
 	p := Portable{runner: f}
 	err := p.Detach(context.Background(), "x")
 	require.NoError(t, err)
-	require.Equal(t, [][]string{{"portablectl", "detach", "--runtime", "x"}}, f.called)
+	require.Equal(t, [][]string{{"portablectl", "detach", "--runtime", "x", "waypoint-module"}}, f.called)
 }
 
 func TestExecPortable_Mount(t *testing.T) {
