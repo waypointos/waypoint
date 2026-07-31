@@ -13,8 +13,16 @@ import { pbToBinary } from './protobuf';
 
 const EMPTY = new Uint8Array(0);
 
-export function setMode(roverId: string, target: 'manual' | 'safe'): void {
-  const ev = new ModeEvent({ to: target === 'manual' ? Mode.MANUAL : Mode.SAFE });
+export type ModeTarget = 'manual' | 'safe' | 'autonomous';
+
+const MODE_BY_TARGET: Record<ModeTarget, Mode> = {
+  manual: Mode.MANUAL,
+  safe: Mode.SAFE,
+  autonomous: Mode.AUTONOMOUS,
+};
+
+export function setMode(roverId: string, target: ModeTarget): void {
+  const ev = new ModeEvent({ to: MODE_BY_TARGET[target] });
   getBus().publish(`waypoint.${roverId}.rpc.set_mode`, pbToBinary(ev));
 }
 

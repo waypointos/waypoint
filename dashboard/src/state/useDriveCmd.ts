@@ -7,6 +7,7 @@
 import { useEffect, useRef } from 'react';
 import { Timestamp } from '@bufbuild/protobuf';
 import { DriveCommand } from '../../../protocol/gen/ts/messages/drive_pb';
+import type { Mode as DisplayMode } from '../ui/telemetry/ModeIndicator';
 import { getBus } from './nats';
 import { pbToBinary } from './protobuf';
 import { stickToPhysical } from './kinematics';
@@ -18,6 +19,12 @@ type Options = {
    * cmd.drive, even with a zero stick.
    */
   paused?: boolean;
+  /**
+   * Confirmed mode from the rover's event.mode stream, not the optimistic
+   * pending intent. Frames are only published in Manual; in Autonomous the
+   * autonomy module owns cmd.drive and the dashboard must not compete.
+   */
+  mode: DisplayMode;
 };
 
 // Keep streaming briefly after the stick centres so the rover sees a clean
@@ -29,17 +36,17 @@ const IDLE_GRACE_MS = 200;
 export function useDriveCmd(
   roverId: string,
   target: { vx: number; yaw: number },
-  options: Options = {},
+  options: Options,
 ) {
   const subject = `waypoint.${roverId}.cmd.drive`;
   const ref = useRef(target);
   ref.current = target;
   const lastActiveMs = useRef(0);
 
-  const { paused = false } = options;
+  const { paused = false, mode } = options;
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || mode !== 'manual') return;
     const id = setInterval(() => {
       const t = ref.current;
       const now = Date.now();
@@ -54,5 +61,5 @@ export function useDriveCmd(
       getBus().publish(subject, pbToBinary(cmd));
     }, 20); // 50 Hz
     return () => clearInterval(id);
-  }, [subject, paused]);
+  }, [subject, paused, mode]);
 }

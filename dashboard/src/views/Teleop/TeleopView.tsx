@@ -56,6 +56,7 @@ export function TeleopView() {
     : offline ? 'offline · awaiting rover'
     : ctx.mode === 'estop' ? 'e-stop engaged'
     : ctx.mode === 'safe' ? 'in safe mode'
+    : ctx.mode === 'autonomous' ? 'auto mode active'
     : ctx.mode === 'unknown' ? 'mode unknown · awaiting core'
     : undefined;
 
@@ -66,7 +67,7 @@ export function TeleopView() {
 
   const scaled = applySpeedScale(stick, preset, cap);
   const effectiveStick = driveDisabled ? { vx: 0, yaw: 0 } : scaled;
-  useDriveCmd(ctx.id, effectiveStick, { paused: !ctx.canControl });
+  useDriveCmd(ctx.id, effectiveStick, { paused: !ctx.canControl, mode: ctx.mode });
 
   useGamepadPublish(ctx.id);
   const me = useMe();

@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 
-vi.mock('@/state/useDriveCmd', () => ({ useDriveCmd: () => {} }));
+const useDriveCmd = vi.fn();
+vi.mock('@/state/useDriveCmd', () => ({ useDriveCmd: (...a: unknown[]) => useDriveCmd(...a) }));
 const requestMode = vi.fn();
 const requestEstop = vi.fn();
 const requestRecover = vi.fn();
@@ -71,6 +72,7 @@ beforeEach(() => {
   requestMode.mockClear();
   requestEstop.mockClear();
   requestRecover.mockClear();
+  useDriveCmd.mockClear();
   subscribers.clear();
 });
 
@@ -91,6 +93,18 @@ describe('ControlPanel', () => {
     renderPanel({ connection: { kind: 'direct', rttMs: 10 }, mode: 'safe' });
     screen.getByRole('button', { name: 'Manual' }).click();
     expect(requestMode).toHaveBeenCalledWith('manual');
+  });
+
+  it('requests autonomous mode from the Auto button', () => {
+    renderPanel({ connection: { kind: 'direct', rttMs: 10 }, mode: 'manual' });
+    screen.getByRole('button', { name: 'Auto' }).click();
+    expect(requestMode).toHaveBeenCalledWith('autonomous');
+  });
+
+  it('feeds the confirmed mode into the drive publisher gate', () => {
+    renderPanel({ connection: { kind: 'direct', rttMs: 10 }, mode: 'autonomous' });
+    const [, , options] = useDriveCmd.mock.calls.at(-1)!;
+    expect(options).toMatchObject({ mode: 'autonomous' });
   });
 
   it('engages the E-stop', () => {

@@ -74,8 +74,9 @@ export function ControlPanel({ active = true }: { roverId?: string; active?: boo
 
   // Publish at 50 Hz when the operator has control authority AND this panel
   // is the active tab. Monitor accounts and hidden mounts both stay paused so
-  // they never interleave zero frames with another tab's real commands.
-  useDriveCmd(ctx.id, effectiveStick, { paused: !ctx.canControl || !active });
+  // they never interleave zero frames with another tab's real commands. The
+  // hook also gates on the confirmed mode: only Manual publishes cmd.drive.
+  useDriveCmd(ctx.id, effectiveStick, { paused: !ctx.canControl || !active, mode: ctx.mode });
 
   // Compute per-wheel target rad/s using the same skid-steer formula the core
   // applies. Display only — the rover does its own conversion from DriveCommand.

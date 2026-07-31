@@ -1,13 +1,14 @@
 // dashboard/src/ui/telemetry/ModeControl.tsx
 //
-// Clickable Manual/Safe segmented control. Mode is authoritative from core;
-// this only requests transitions. While estopped, selection is disabled — the
-// operator must Clear the E-stop first.
+// Clickable Manual/Auto/Safe segmented control. Mode is authoritative from
+// core; this only requests transitions. While estopped, selection is disabled —
+// the operator must Clear the E-stop first.
 import type { Mode as DisplayMode } from './ModeIndicator';
 import type { PendingIntent } from '@/state/useModeCommand';
+import type { ModeTarget } from '@/state/roverCommands';
 import styles from './ModeControl.module.css';
 
-type Target = 'manual' | 'safe';
+type Target = ModeTarget;
 type Props = {
   mode: DisplayMode;
   pending: PendingIntent;
@@ -19,6 +20,7 @@ type Props = {
 
 const ITEMS: { id: Target; label: string }[] = [
   { id: 'manual', label: 'Manual' },
+  { id: 'autonomous', label: 'Auto' },
   { id: 'safe', label: 'Safe' },
 ];
 
