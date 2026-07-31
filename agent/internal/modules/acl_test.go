@@ -53,6 +53,21 @@ func TestManifestAuthPermissionsSensorHasNoCmdLeaf(t *testing.T) {
 	assert.Empty(t, p.Subscribe)
 }
 
+func TestManifestAuthPermissionsIncludeDriveControlLeaves(t *testing.T) {
+	m := &Manifest{Name: "nav", Requires: []string{"drive-control"}}
+	p := ManifestAuthPermissions(m)
+	assert.Contains(t, p.Publish, "waypoint.*.module.nav.drive.cmd")
+	assert.Contains(t, p.Subscribe, "waypoint.*.module.nav.drive.telemetry")
+	assert.Contains(t, p.Subscribe, "waypoint.*.module.nav.mode")
+}
+
+func TestManifestAuthPermissionsServoControlAddsNoLeaves(t *testing.T) {
+	m := &Manifest{Name: "so100", Requires: []string{"servo-control"}}
+	p := ManifestAuthPermissions(m)
+	assert.Empty(t, p.Publish)
+	assert.Empty(t, p.Subscribe)
+}
+
 func TestManifestAuthPermissionsUnionAcrossComponents(t *testing.T) {
 	m := &Manifest{
 		Name: "drill",

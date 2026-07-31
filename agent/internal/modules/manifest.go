@@ -135,8 +135,9 @@ var knownCapabilities = map[string]struct{}{"uplink": {}}
 // access INTO a platform/core subject, so they are admin-gated (a module that
 // declares one only attaches when admin-registered through the signed-module
 // trust path). "servo-control" lets the agent bridge module.<id>.servo.* to
-// core's cmd.servo / rpc.servo_read.
-var knownRequires = map[string]struct{}{"servo-control": {}, "teleop-input": {}}
+// core's cmd.servo / rpc.servo_read; "drive-control" bridges module.<id>.drive.*
+// to core's cmd.drive / telemetry.drive, gated on autonomous mode.
+var knownRequires = map[string]struct{}{"servo-control": {}, "teleop-input": {}, "drive-control": {}}
 
 // componentClassRe bounds the open component-class registry: any well-formed
 // class name is accepted, typed classes are just the ones with a schema.

@@ -24,5 +24,22 @@ func ManifestAuthPermissions(m *Manifest) localauth.ModulePermissions {
 		p.Publish = append(p.Publish, pub...)
 		p.Subscribe = append(p.Subscribe, sub...)
 	}
+	for _, r := range m.Requires {
+		pub, sub := requiresLeaves(m.Name, r)
+		p.Publish = append(p.Publish, pub...)
+		p.Subscribe = append(p.Subscribe, sub...)
+	}
 	return p
+}
+
+// requiresLeaves returns the sandbox leaves the agent's brokers serve for a
+// required capability, manifest wildcard form, so a baked manifest needs no
+// explicit [permissions] entries for them.
+func requiresLeaves(name, require string) (publish, subscribe []string) {
+	base := "waypoint.*.module." + name + "."
+	if require == "drive-control" {
+		return []string{base + "drive.cmd"},
+			[]string{base + "drive.telemetry", base + "mode"}
+	}
+	return nil, nil
 }
