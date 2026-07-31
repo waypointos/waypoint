@@ -64,8 +64,12 @@ func (p *Portable) Attach(ctx context.Context, rawPath string) error {
 	return p.runner.Run(ctx, cmd)
 }
 
+// Detach passes the prefix for the same reason Attach does: without it,
+// portabled widens unit matching across every attached waypoint-module-*
+// unit, so on a rover running two modules a detach can refuse because the
+// other module's unit is active.
 func (p *Portable) Detach(ctx context.Context, moduleID string) error {
-	cmd := newPortableCmd("detach", "--runtime", moduleID)
+	cmd := newPortableCmd("detach", "--runtime", moduleID, modulePrefix)
 	return p.runner.Run(ctx, cmd)
 }
 
