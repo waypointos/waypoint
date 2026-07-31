@@ -8,19 +8,21 @@ namespace wp::rpc {
 namespace {
 waypoint::v1::Mode toProto(wp::mode::Mode m) {
     switch (m) {
-    case wp::mode::Mode::Manual: return waypoint::v1::MODE_MANUAL;
-    case wp::mode::Mode::Safe:   return waypoint::v1::MODE_SAFE;
-    case wp::mode::Mode::Estop:  return waypoint::v1::MODE_ESTOP;
+    case wp::mode::Mode::Manual:     return waypoint::v1::MODE_MANUAL;
+    case wp::mode::Mode::Safe:       return waypoint::v1::MODE_SAFE;
+    case wp::mode::Mode::Estop:      return waypoint::v1::MODE_ESTOP;
+    case wp::mode::Mode::Autonomous: return waypoint::v1::MODE_AUTONOMOUS;
     }
     return waypoint::v1::MODE_UNSPECIFIED;
 }
 
 wp::mode::Mode fromProto(waypoint::v1::Mode p) {
     switch (p) {
-    case waypoint::v1::MODE_MANUAL: return wp::mode::Mode::Manual;
-    case waypoint::v1::MODE_SAFE:   return wp::mode::Mode::Safe;
-    case waypoint::v1::MODE_ESTOP:  return wp::mode::Mode::Estop;
-    default:                        return wp::mode::Mode::Safe;
+    case waypoint::v1::MODE_MANUAL:     return wp::mode::Mode::Manual;
+    case waypoint::v1::MODE_SAFE:       return wp::mode::Mode::Safe;
+    case waypoint::v1::MODE_ESTOP:      return wp::mode::Mode::Estop;
+    case waypoint::v1::MODE_AUTONOMOUS: return wp::mode::Mode::Autonomous;
+    default:                            return wp::mode::Mode::Safe;
     }
 }
 }  // namespace

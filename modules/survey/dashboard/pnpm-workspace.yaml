@@ -1,0 +1,5 @@
+# Standalone workspace: keeps this panel out of the repo root's pnpm
+# workspace so the module builds self-contained.
+# Supply-chain cooldown: refuse to resolve any package version published less
+# than this many minutes ago (frozen-lockfile installs are unaffected).
+minimumReleaseAge: 4320

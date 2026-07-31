@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 
-vi.mock('@/state/useDriveCmd', () => ({ useDriveCmd: () => {} }));
+const useDriveCmd = vi.fn();
+vi.mock('@/state/useDriveCmd', () => ({ useDriveCmd: (...a: unknown[]) => useDriveCmd(...a) }));
 vi.mock('@/state/useGamepadPublish', () => ({ useGamepadPublish: () => {} }));
 vi.mock('@/state/mode', () => ({ useMe: () => ({ mode: 'local' }) }));
 const requestMode = vi.fn();
@@ -70,7 +71,7 @@ function renderAt(value: RoverContextValue) {
   );
 }
 
-beforeEach(() => { requestMode.mockClear(); requestEstop.mockClear(); });
+beforeEach(() => { requestMode.mockClear(); requestEstop.mockClear(); useDriveCmd.mockClear(); });
 
 describe('TeleopView', () => {
   it('renders the camera stage and HUD mode control', () => {
@@ -94,6 +95,18 @@ describe('TeleopView', () => {
     renderAt(ctx({ mode: 'safe' }));
     screen.getByRole('button', { name: 'Manual' }).click();
     expect(requestMode).toHaveBeenCalledWith('manual');
+  });
+
+  it('requests autonomous mode from the HUD Auto button', () => {
+    renderAt(ctx());
+    screen.getByRole('button', { name: 'Auto' }).click();
+    expect(requestMode).toHaveBeenCalledWith('autonomous');
+  });
+
+  it('feeds the confirmed mode into the drive publisher gate', () => {
+    renderAt(ctx({ mode: 'autonomous' }));
+    const [, , options] = useDriveCmd.mock.calls.at(-1)!;
+    expect(options).toMatchObject({ mode: 'autonomous' });
   });
 
   it('hosts module teleop windows (no hardcoded arm overlay)', () => {

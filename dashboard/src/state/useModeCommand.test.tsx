@@ -29,6 +29,15 @@ describe('useModeCommand', () => {
     expect(result.current.pending).toBeNull();
   });
 
+  it('requestMode autonomous sets pending and clears once core confirms', () => {
+    const { result, rerender } = renderHook(({ m }) => useModeCommand('r1', m), { initialProps: { m: 'manual' as DisplayMode } });
+    act(() => result.current.requestMode('autonomous'));
+    expect(mocks.setMode).toHaveBeenCalledWith('r1', 'autonomous');
+    expect(result.current.pending).toBe('autonomous');
+    rerender({ m: 'autonomous' });
+    expect(result.current.pending).toBeNull();
+  });
+
   it('clears pending after the timeout when no event.mode arrives', () => {
     const { result } = renderHook(({ m }) => useModeCommand('r1', m), { initialProps: { m: 'safe' as DisplayMode } });
     act(() => result.current.requestMode('manual'));

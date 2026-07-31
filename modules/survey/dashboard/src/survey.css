@@ -1,0 +1,416 @@
+/* Survey panel styles. Colors come only from tokens: the host dashboard's
+ * --color-* custom properties, seeded as --sv-* fallbacks from ctx.tokens
+ * at mount. Never a raw hex here. */
+
+.sv-root {
+  color: var(--sv-fg, var(--color-fg));
+  font-family: var(--sv-sans, var(--font-sans));
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sv-teleop {
+  height: 100%;
+  gap: 6px;
+}
+
+/* Status strip */
+
+.sv-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 4px;
+}
+
+.sv-tile {
+  background: var(--sv-surface, var(--color-surface));
+  border: 1px solid var(--sv-border, var(--color-border));
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sv-tile-label {
+  font-family: var(--sv-mono, var(--font-mono));
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sv-fg-3, var(--color-fg-3));
+}
+
+.sv-tile-value {
+  font-family: var(--sv-mono, var(--font-mono));
+  font-size: 13px;
+}
+
+.sv-val-accent { color: var(--sv-accent, var(--color-accent)); }
+.sv-val-caution { color: var(--sv-caution, var(--color-caution)); }
+.sv-val-ok { color: var(--sv-ok, var(--color-ok)); }
+
+.sv-na {
+  color: var(--sv-fg-3, var(--color-fg-3));
+  font-style: italic;
+  font-size: 12px;
+}
+
+/* Sections */
+
+.sv-section {
+  background: var(--sv-surface, var(--color-surface));
+  border: 1px solid var(--sv-border, var(--color-border));
+  padding: 12px;
+}
+
+.sv-title {
+  margin: 0 0 8px;
+  font-family: var(--sv-mono, var(--font-mono));
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sv-fg-2, var(--color-fg-2));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sv-source {
+  font-size: 10px;
+  color: var(--sv-fg-3, var(--color-fg-3));
+  text-transform: none;
+  letter-spacing: 0.03em;
+}
+
+.sv-source-override { color: var(--sv-caution, var(--color-caution)); }
+
+.sv-help {
+  margin: 0 0 8px;
+  color: var(--sv-fg-3, var(--color-fg-3));
+  font-size: 12px;
+}
+
+/* Map */
+
+.sv-map {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  flex: 1;
+}
+
+.sv-map-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: var(--sv-bg, var(--color-bg));
+  border: 1px solid var(--sv-border, var(--color-border));
+}
+
+.sv-teleop .sv-map-svg {
+  height: 100%;
+  flex: 1;
+}
+
+.sv-map-planned {
+  fill: none;
+  stroke: var(--sv-fg-4, var(--color-fg-4));
+  stroke-width: 1.5;
+  stroke-dasharray: 6 6;
+}
+
+.sv-map-trail {
+  fill: none;
+  stroke: var(--sv-accent, var(--color-accent));
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.sv-wp circle {
+  stroke-width: 1.5;
+}
+
+.sv-wp-pending circle {
+  fill: var(--sv-surface-2, var(--color-surface-2));
+  stroke: var(--sv-fg-3, var(--color-fg-3));
+}
+
+.sv-wp-reached circle {
+  fill: var(--sv-accent-tint, var(--color-accent-tint));
+  stroke: var(--sv-accent, var(--color-accent));
+}
+
+.sv-wp-detected circle {
+  fill: var(--sv-surface-2, var(--color-surface-2));
+  stroke: var(--sv-ok, var(--color-ok));
+}
+
+.sv-wp-num {
+  font-family: var(--sv-mono, var(--font-mono));
+  font-size: 10px;
+  fill: var(--sv-fg, var(--color-fg));
+  text-anchor: middle;
+}
+
+.sv-wp-id {
+  font-family: var(--sv-mono, var(--font-mono));
+  font-size: 10px;
+  fill: var(--sv-ok, var(--color-ok));
+  text-anchor: middle;
+}
+
+.sv-pose polygon {
+  fill: var(--sv-caution, var(--color-caution));
+}
+
+.sv-map-empty {
+  font-family: var(--sv-mono, var(--font-mono));
+  font-size: 12px;
+  font-style: italic;
+  fill: var(--sv-fg-3, var(--color-fg-3));
+  text-anchor: middle;
+}
+
+.sv-scale line {
+  stroke: var(--sv-fg-3, var(--color-fg-3));
+  stroke-width: 1;
+}
+
+.sv-scale text {
+  font-family: var(--sv-mono, var(--font-mono));
+  font-size: 10px;
+  fill: var(--sv-fg-3, var(--color-fg-3));
+}
+
+.sv-map-footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--sv-mono, var(--font-mono));
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sv-fg-3, var(--color-fg-3));
+}
+
+.sv-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sv-swatch {
+  width: 16px;
+  height: 0;
+  border-top: 2px solid;
+}
+
+.sv-swatch-planned { border-color: var(--sv-fg-4, var(--color-fg-4)); border-top-style: dashed; }
+.sv-swatch-trail { border-color: var(--sv-accent, var(--color-accent)); }
+
+.sv-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid;
+}
+
+.sv-dot-pending { border-color: var(--sv-fg-3, var(--color-fg-3)); }
+.sv-dot-reached { border-color: var(--sv-accent, var(--color-accent)); }
+.sv-dot-detected { border-color: var(--sv-ok, var(--color-ok)); }
+
+/* Teleop status line */
+
+.sv-teleop-status {
+  font-family: var(--sv-mono, var(--font-mono));
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sv-fg-2, var(--color-fg-2));
+  padding: 2px 0;
+}
+
+/* Forms */
+
+.sv-textarea,
+.sv-input {
+  width: 100%;
+  background: var(--sv-bg, var(--color-bg));
+  color: var(--sv-fg, var(--color-fg));
+  border: 1px solid var(--sv-border, var(--color-border));
+  font-family: var(--sv-mono, var(--font-mono));
+  font-size: 12px;
+  padding: 6px 8px;
+}
+
+.sv-textarea:focus,
+.sv-input:focus {
+  outline: none;
+  border-color: var(--sv-accent, var(--color-accent));
+}
+
+.sv-formrow {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.sv-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 160px;
+}
+
+.sv-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.sv-btn {
+  background: transparent;
+  color: var(--sv-fg-2, var(--color-fg-2));
+  border: 1px solid var(--sv-border, var(--color-border));
+  font-family: var(--sv-mono, var(--font-mono));
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.sv-btn:hover:not(:disabled) {
+  border-color: var(--sv-fg-3, var(--color-fg-3));
+  color: var(--sv-fg, var(--color-fg));
+}
+
+.sv-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sv-btn-primary {
+  border-color: var(--sv-accent, var(--color-accent));
+  color: var(--sv-accent, var(--color-accent));
+}
+
+.sv-btn-primary:hover:not(:disabled) {
+  background: var(--sv-accent-tint, var(--color-accent-tint));
+  border-color: var(--sv-accent, var(--color-accent));
+  color: var(--sv-accent, var(--color-accent));
+}
+
+.sv-btn-small {
+  padding: 2px 8px;
+  font-size: 10px;
+}
+
+.sv-error {
+  margin: 6px 0 0;
+  color: var(--sv-fault, var(--color-fault));
+  font-size: 12px;
+}
+
+.sv-result {
+  margin: 6px 0 0;
+  color: var(--sv-ok, var(--color-ok));
+  font-size: 12px;
+}
+
+/* Preview table */
+
+.sv-table {
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-family: var(--sv-mono, var(--font-mono));
+  font-size: 12px;
+  width: 100%;
+}
+
+.sv-table th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sv-fg-3, var(--color-fg-3));
+  border-bottom: 1px solid var(--sv-border, var(--color-border));
+  padding: 4px 10px 4px 0;
+}
+
+.sv-table td {
+  padding: 3px 10px 3px 0;
+  border-bottom: 1px solid var(--sv-border, var(--color-border-soft));
+}
+
+.sv-num { text-align: right; }
+
+/* Files */
+
+.sv-files {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sv-file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--sv-border, var(--color-border-soft));
+  font-family: var(--sv-mono, var(--font-mono));
+  font-size: 12px;
+}
+
+.sv-file:last-child { border-bottom: none; }
+
+.sv-file-name { flex: 1; }
+
+.sv-file-size { color: var(--sv-fg-3, var(--color-fg-3)); }
+
+/* Snapshots */
+
+.sv-snaps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.sv-snap {
+  background: var(--sv-bg, var(--color-bg));
+  border: 1px solid var(--sv-border, var(--color-border));
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sv-snap:hover { border-color: var(--sv-accent, var(--color-accent)); }
+
+.sv-snap-img {
+  width: 100%;
+  display: block;
+}
+
+.sv-snap-loading {
+  color: var(--sv-fg-3, var(--color-fg-3));
+  padding: 24px 0;
+  text-align: center;
+}
+
+.sv-snap-caption {
+  font-family: var(--sv-mono, var(--font-mono));
+  font-size: 10px;
+  color: var(--sv-fg-2, var(--color-fg-2));
+  text-align: left;
+}
