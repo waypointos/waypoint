@@ -64,9 +64,10 @@ std::atomic<bool> g_stop{false};
 
 waypoint::v1::Mode toProtoMode(wp::mode::Mode m) {
     switch (m) {
-    case wp::mode::Mode::Manual: return waypoint::v1::MODE_MANUAL;
-    case wp::mode::Mode::Safe:   return waypoint::v1::MODE_SAFE;
-    case wp::mode::Mode::Estop:  return waypoint::v1::MODE_ESTOP;
+    case wp::mode::Mode::Manual:     return waypoint::v1::MODE_MANUAL;
+    case wp::mode::Mode::Safe:       return waypoint::v1::MODE_SAFE;
+    case wp::mode::Mode::Estop:      return waypoint::v1::MODE_ESTOP;
+    case wp::mode::Mode::Autonomous: return waypoint::v1::MODE_AUTONOMOUS;
     }
     return waypoint::v1::MODE_UNSPECIFIED;
 }
@@ -222,7 +223,11 @@ int main(int argc, char** argv) {
         std::cerr << "waypoint-core: mode " << wp::mode::name(old)
                   << " -> " << wp::mode::name(now) << "\n";
         publishMode(old, now);
-        armDrive(now == wp::mode::Mode::Manual);
+        // Manual and Autonomous switch directly without a disarm in between,
+        // so clear the target here: the old authority's last command must not
+        // keep driving until the staleness watchdog catches it.
+        if (drive) drive->setBodyTarget({});
+        armDrive(now == wp::mode::Mode::Manual || now == wp::mode::Mode::Autonomous);
         if (now == wp::mode::Mode::Estop) {
             // The servo broker refuses module writes while estopped, so core is
             // the only path that can stop module wheel servos. Same latched
@@ -246,7 +251,8 @@ int main(int argc, char** argv) {
     if (drive) {
         nc.subscribe("waypoint." + args.roverID + ".cmd.drive",
             [&](const wp::nats::Message& m) {
-                if (mode.current() != wp::mode::Mode::Manual) return;
+                if (mode.current() != wp::mode::Mode::Manual &&
+                    mode.current() != wp::mode::Mode::Autonomous) return;
                 waypoint::v1::DriveCommand cmd;
                 if (!cmd.ParseFromString(m.payload)) return;
                 drive->setBodyTarget({.vx = cmd.body_vx_mps(),

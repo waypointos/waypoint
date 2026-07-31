@@ -200,6 +200,75 @@ func TestEstopStopsModuleWheels(t *testing.T) {
 	}
 }
 
+// 1c. Autonomous accepts drive commands: cmd.drive actuates the wheels exactly
+// as it does in Manual.
+func TestAutonomousDriveActuatesWheels(t *testing.T) {
+	for _, p := range platforms(t) {
+		p := p
+		t.Run(p.id, func(t *testing.T) {
+			if !p.hasDrive() {
+				t.Skip("platform has no drive capability")
+			}
+			wheelIDs := p.driveWheelIDs(t)
+			r := launch(t, true, p)
+			require.NoError(t, r.SetModeAutonomous())
+			require.NoError(t, r.Advance(100*time.Millisecond))
+
+			_, err := r.Trace.WaitFor("event.mode", func(m harness.Msg) bool {
+				var me waypointv1.ModeEvent
+				return proto.Unmarshal(m.Data, &me) == nil && me.GetTo() == waypointv1.Mode_MODE_AUTONOMOUS
+			}, 1*time.Second)
+			require.NoError(t, err, "set_mode must transition to AUTONOMOUS")
+
+			require.NoError(t, r.Drive(0.5, 0))
+			// Stay inside the 300ms drive-staleness window so wheels spin.
+			require.NoError(t, r.Advance(200*time.Millisecond))
+			assert.Greater(t, peakAbsDriveVel(r.Trace, wheelIDs), 0.1,
+				"wheels should be moving in autonomous")
+		})
+	}
+}
+
+// 1d. E-stop from Autonomous halts motion: same guarantee as from Manual.
+func TestEstopFromAutonomousHaltsMotion(t *testing.T) {
+	for _, p := range platforms(t) {
+		p := p
+		t.Run(p.id, func(t *testing.T) {
+			r := launch(t, true, p)
+			require.NoError(t, r.SetModeAutonomous())
+			require.NoError(t, r.Advance(100*time.Millisecond))
+
+			if p.hasDrive() {
+				wheelIDs := p.driveWheelIDs(t)
+				require.NoError(t, r.Drive(0.5, 0))
+				require.NoError(t, r.Advance(200*time.Millisecond))
+				assert.Greater(t, peakAbsDriveVel(r.Trace, wheelIDs), 0.1,
+					"wheels should be moving in autonomous")
+			}
+
+			require.NoError(t, r.Estop())
+			require.NoError(t, r.Advance(300*time.Millisecond))
+			_, err := r.Trace.WaitFor("event.mode", func(m harness.Msg) bool {
+				var me waypointv1.ModeEvent
+				return proto.Unmarshal(m.Data, &me) == nil && me.GetTo() == waypointv1.Mode_MODE_ESTOP
+			}, 1*time.Second)
+			require.NoError(t, err, "estop must transition to ESTOP")
+
+			if p.hasDrive() {
+				// Let the first-order velocity model settle, then sample a fresh
+				// window: motion already underway must stop and fresh commands
+				// must be rejected.
+				require.NoError(t, r.Advance(500*time.Millisecond))
+				r.Trace.Clear()
+				require.NoError(t, r.Drive(0.5, 0))
+				require.NoError(t, r.Advance(500*time.Millisecond))
+				assert.Less(t, peakAbsDriveVel(r.Trace, p.driveWheelIDs(t)), 0.5,
+					"no drive wheel may move after estop from autonomous")
+			}
+		})
+	}
+}
+
 // 2. Heartbeat loss drops to safe: fault + alert + mode SAFE.
 func TestHeartbeatLossDropsToSafe(t *testing.T) {
 	for _, p := range platforms(t) {
@@ -244,6 +313,41 @@ func TestDriveStalenessZeroesTarget(t *testing.T) {
 			wheelIDs := p.driveWheelIDs(t)
 			r := launch(t, true, p)
 			require.NoError(t, r.SetModeManual())
+			require.NoError(t, r.Advance(100*time.Millisecond))
+			require.NoError(t, r.Drive(0.5, 0))
+			require.NoError(t, r.Advance(200*time.Millisecond)) // fresh: wheels move
+			assert.Greater(t, peakAbsDriveVel(r.Trace, wheelIDs), 0.1, "wheels moving while drive fresh")
+
+			r.Trace.Clear()
+			// Advance with heartbeats but NO further drive commands: drive goes stale.
+			require.NoError(t, r.Advance(600*time.Millisecond))
+
+			_, err := r.Trace.WaitFor("event.fault", func(m harness.Msg) bool {
+				var fe waypointv1.FaultEvent
+				return proto.Unmarshal(m.Data, &fe) == nil && fe.GetCode() == "drive_command_stale"
+			}, 2*time.Second)
+			require.NoError(t, err, "expected event.fault drive_command_stale")
+
+			// Let the zeroed target propagate through the first-order velocity model.
+			r.Trace.Clear()
+			require.NoError(t, r.Advance(600*time.Millisecond))
+			assert.Less(t, lastAbsDriveVel(r.Trace, wheelIDs), 0.5, "velocities decay to ~0 after stale-zero")
+		})
+	}
+}
+
+// 3b. Drive staleness applies in Autonomous too: an autonomy stack that stops
+// publishing cmd.drive must not leave the rover coasting on its last target.
+func TestDriveStalenessZeroesTargetInAutonomous(t *testing.T) {
+	for _, p := range platforms(t) {
+		p := p
+		t.Run(p.id, func(t *testing.T) {
+			if !p.hasDrive() {
+				t.Skip("platform has no drive capability")
+			}
+			wheelIDs := p.driveWheelIDs(t)
+			r := launch(t, true, p)
+			require.NoError(t, r.SetModeAutonomous())
 			require.NoError(t, r.Advance(100*time.Millisecond))
 			require.NoError(t, r.Drive(0.5, 0))
 			require.NoError(t, r.Advance(200*time.Millisecond)) // fresh: wheels move

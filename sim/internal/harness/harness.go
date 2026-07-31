@@ -366,6 +366,21 @@ func (r *Rover) SetModeManual() error {
 	return r.NC.Publish(r.subj("rpc.set_mode"), payload)
 }
 
+// SetModeAutonomous publishes a ModeEvent{to=AUTONOMOUS} to rpc.set_mode.
+// Same heartbeat-first ordering as SetModeManual: core refuses Autonomous
+// without a live heartbeat.
+func (r *Rover) SetModeAutonomous() error {
+	if err := r.Heartbeat(); err != nil {
+		return err
+	}
+	ev := &waypointv1.ModeEvent{To: waypointv1.Mode_MODE_AUTONOMOUS}
+	payload, err := proto.Marshal(ev)
+	if err != nil {
+		return err
+	}
+	return r.NC.Publish(r.subj("rpc.set_mode"), payload)
+}
+
 // SetModeSafe publishes a ModeEvent{to=SAFE} to rpc.set_mode.
 func (r *Rover) SetModeSafe() error {
 	ev := &waypointv1.ModeEvent{To: waypointv1.Mode_MODE_SAFE}

@@ -8,9 +8,10 @@ namespace wp::rpc {
 namespace {
 waypoint::v1::Mode toProto(wp::mode::Mode m) {
     switch (m) {
-    case wp::mode::Mode::Manual: return waypoint::v1::MODE_MANUAL;
-    case wp::mode::Mode::Safe:   return waypoint::v1::MODE_SAFE;
-    case wp::mode::Mode::Estop:  return waypoint::v1::MODE_ESTOP;
+    case wp::mode::Mode::Manual:     return waypoint::v1::MODE_MANUAL;
+    case wp::mode::Mode::Safe:       return waypoint::v1::MODE_SAFE;
+    case wp::mode::Mode::Estop:      return waypoint::v1::MODE_ESTOP;
+    case wp::mode::Mode::Autonomous: return waypoint::v1::MODE_AUTONOMOUS;
     }
     return waypoint::v1::MODE_UNSPECIFIED;
 }
