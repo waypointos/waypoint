@@ -379,6 +379,16 @@ requires    = ["servo-control"]
 	require.Equal(t, []string{"servo-control"}, m.Requires)
 }
 
+func TestParseManifest_RequiresDriveControl(t *testing.T) {
+	m, err := ParseManifest([]byte(`
+name        = "nav"
+entrypoint  = "waypoint-module-nav"
+requires    = ["drive-control"]
+`))
+	require.NoError(t, err)
+	require.Equal(t, []string{"drive-control"}, m.Requires)
+}
+
 func TestParseManifest_RejectsUnknownRequires(t *testing.T) {
 	_, err := ParseManifest([]byte(`
 name       = "so100"

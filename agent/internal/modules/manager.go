@@ -70,6 +70,7 @@ type Manager struct {
 	uplinkMir     *uplinkMirror
 	servoBkr      *servoBroker
 	teleopIn      *teleopInputBroker
+	driveBkr      *driveBroker
 	hw            map[string]*HealthWatcher
 	pollersMu     sync.Mutex
 	healthPollers map[string]context.CancelFunc
@@ -226,13 +227,18 @@ func (m *Manager) Run(ctx context.Context) {
 		"/usr/share/waypoint/platform.toml",
 	}))
 	m.teleopIn = newTeleopInputBroker(nc, m.opts.RoverID)
+	m.driveBkr = newDriveBroker(nc, m.opts.RoverID)
 
 	// Dev images launch modules out-of-band (make dev-module, the sim
-	// conformance harness) so no per-module attach fires. Start a wildcard servo
-	// broker so servo-control reaches those modules; the deny-list still applies.
+	// conformance harness) so no per-module attach fires. Start wildcard servo
+	// and drive brokers so those capabilities reach dev modules; the servo
+	// deny-list and the drive mode gate still apply.
 	if m.opts.IsDevImage {
 		if err := m.servoBkr.startDev(ctx); err != nil {
 			slog.Warn(fmt.Sprintf("modules: dev servo broker: %v", err))
+		}
+		if err := m.driveBkr.startDev(ctx); err != nil {
+			slog.Warn(fmt.Sprintf("modules: dev drive broker: %v", err))
 		}
 	}
 
@@ -345,6 +351,20 @@ func (m *Manager) onModuleAttached(ctx context.Context, id string, manifest *Man
 			slog.Warn(fmt.Sprintf("modules: teleop-input broker %s: %v", id, err))
 		}
 	}
+	// Dev suppression applies only to the command relay (the wildcard already
+	// covers this module's drive.cmd); the per-module mirrors must start
+	// either way or an attached module never sees mode / odometry.
+	if containsString(manifest.Requires, "drive-control") {
+		var err error
+		if m.opts.IsDevImage {
+			err = m.driveBkr.startMirrors(m.runCtxOr(ctx), id)
+		} else {
+			err = m.driveBkr.start(m.runCtxOr(ctx), id)
+		}
+		if err != nil {
+			slog.Warn(fmt.Sprintf("modules: drive broker %s: %v", id, err))
+		}
+	}
 	// A teleop-only module has no tab kind but still publishes a window descriptor.
 	if manifest.UI.Kind == UIKindNone && manifest.UI.Teleop == nil {
 		return // no UI → no tab → nothing to publish
@@ -380,6 +400,7 @@ func (m *Manager) onModuleDetached(id string) {
 	m.uplinkMir.stop(id)
 	m.servoBkr.stop(id)
 	m.teleopIn.stop(id)
+	m.driveBkr.stop(id)
 	m.pub.RemoveRuntimeModule(id)
 }
 
