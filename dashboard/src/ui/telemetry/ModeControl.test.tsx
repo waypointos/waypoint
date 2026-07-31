@@ -10,6 +10,19 @@ describe('ModeControl', () => {
     expect(onSelect).toHaveBeenCalledWith('manual');
   });
 
+  it('offers Auto and calls onSelect with autonomous', () => {
+    const onSelect = vi.fn();
+    render(<ModeControl mode="manual" pending={null} onSelect={onSelect} />);
+    screen.getByRole('button', { name: 'Auto' }).click();
+    expect(onSelect).toHaveBeenCalledWith('autonomous');
+  });
+
+  it('marks Auto active while the rover is autonomous', () => {
+    render(<ModeControl mode="autonomous" pending={null} onSelect={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Auto' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Manual' }).getAttribute('aria-pressed')).toBe('false');
+  });
+
   it('marks the current mode active', () => {
     render(<ModeControl mode="manual" pending={null} onSelect={() => {}} />);
     expect(screen.getByRole('button', { name: 'Manual' }).getAttribute('aria-pressed')).toBe('true');
@@ -18,6 +31,7 @@ describe('ModeControl', () => {
   it('disables selection while estopped (must clear first)', () => {
     render(<ModeControl mode="estop" pending={null} onSelect={() => {}} />);
     expect(screen.getByRole('button', { name: 'Manual' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Auto' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Safe' })).toBeDisabled();
   });
 

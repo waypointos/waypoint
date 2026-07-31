@@ -24,6 +24,12 @@ describe('roverCommands', () => {
     expect(pbFromBinary<ModeEvent>(ModeEvent, publish.mock.calls[0][1]).to).toBe(Mode.SAFE);
   });
 
+  it('setMode autonomous maps to MODE_AUTONOMOUS', () => {
+    setMode('r1', 'autonomous');
+    expect(publish.mock.calls[0][0]).toBe('waypoint.r1.rpc.set_mode');
+    expect(pbFromBinary<ModeEvent>(ModeEvent, publish.mock.calls[0][1]).to).toBe(Mode.AUTONOMOUS);
+  });
+
   it('estop publishes an empty payload to rpc.estop', () => {
     estop('r1');
     expect(publish.mock.calls[0][0]).toBe('waypoint.r1.rpc.estop');
