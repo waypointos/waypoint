@@ -4,9 +4,10 @@ namespace wp::mode {
 
 const char* name(Mode m) {
     switch (m) {
-    case Mode::Manual: return "manual";
-    case Mode::Safe:   return "safe";
-    case Mode::Estop:  return "estop";
+    case Mode::Manual:     return "manual";
+    case Mode::Safe:       return "safe";
+    case Mode::Estop:      return "estop";
+    case Mode::Autonomous: return "autonomous";
     }
     return "?";
 }
@@ -14,8 +15,8 @@ const char* name(Mode m) {
 bool ModeMachine::requestSetMode(Mode target) {
     // Cannot leave estop except via explicit recover.
     if (mode_ == Mode::Estop) return false;
-    // Cannot enter manual without a live heartbeat.
-    if (target == Mode::Manual && !heartbeatOk_) return false;
+    // Cannot enter an actuating mode without a live heartbeat.
+    if ((target == Mode::Manual || target == Mode::Autonomous) && !heartbeatOk_) return false;
     transition(target);
     return true;
 }
@@ -35,12 +36,13 @@ bool ModeMachine::requestRecover() {
 
 void ModeMachine::onHeartbeatLost() {
     heartbeatOk_ = false;
-    if (mode_ == Mode::Manual) transition(Mode::Safe);
+    if (mode_ == Mode::Manual || mode_ == Mode::Autonomous) transition(Mode::Safe);
 }
 
 void ModeMachine::onHeartbeatRestored() {
     heartbeatOk_ = true;
-    // Restoration does NOT auto-resume Manual — that requires explicit rpc.set_mode.
+    // Restoration does NOT auto-resume Manual or Autonomous; that requires
+    // explicit rpc.set_mode.
 }
 
 void ModeMachine::transition(Mode to) {

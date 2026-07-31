@@ -4,7 +4,7 @@
 
 namespace wp::mode {
 
-enum class Mode { Manual, Safe, Estop };
+enum class Mode { Manual, Safe, Estop, Autonomous };
 
 const char* name(Mode m);
 
