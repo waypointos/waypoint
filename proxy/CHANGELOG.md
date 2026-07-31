@@ -3,6 +3,12 @@
 Generated from conventional commits by the release targets in the root
 Makefile. Do not edit by hand.
 
+## 0.19.1 (2026-07-31)
+
+### Bug fixes
+
+- **dashboard:** scroll long dialog bodies instead of overflowing (#16)
+
 ## 0.19.0 (2026-07-31)
 
 ### Features
