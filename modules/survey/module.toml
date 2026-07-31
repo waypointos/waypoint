@@ -1,0 +1,158 @@
+name        = "survey"
+label       = "Survey"
+version     = "0.1.0"
+api_version = "1"
+language    = "go"
+entrypoint  = "waypoint-module-survey"
+
+# drive-control auto-grants the drive.cmd / drive.telemetry / mode leaves;
+# only the module's own extra leaves are listed here.
+requires = ["drive-control"]
+
+[permissions]
+publish   = ["waypoint.*.module.survey.stats"]
+subscribe = ["waypoint.*.module.survey.health.ready"]
+
+[health]
+probe      = "ready"
+interval_s = 5
+timeout_s  = 2
+
+[hardware]
+devices    = ["/dev/video0", "/dev/video1", "/dev/spidev0.0"]
+read_write = ["/var/lib/waypoint-module-survey"]
+
+[[config.fields]]
+key      = "waypoints"
+label    = "Waypoints"
+type     = "text"
+help     = "Semicolon-separated x,y pairs in local-frame meters: x1,y1;x2,y2;... (max 10)"
+required = true
+
+[[config.fields]]
+key   = "tag_ids"
+label = "Expected tag IDs"
+type  = "text"
+help  = "Comma-separated ArUco 5x5_100 ids, one per waypoint. Empty accepts any tag."
+
+[[config.fields]]
+key     = "start_pose"
+label   = "Start pose"
+type    = "text"
+default = "0,0,0"
+help    = "x,y,theta_deg of the rover when the mission arms"
+
+[[config.fields]]
+key     = "cruise_speed_mps"
+label   = "Cruise speed (m/s)"
+type    = "number"
+default = "0.35"
+
+[[config.fields]]
+key     = "turn_rate_radps"
+label   = "Turn rate (rad/s)"
+type    = "number"
+default = "0.8"
+
+[[config.fields]]
+key     = "arrive_radius_m"
+label   = "Arrival radius (m)"
+type    = "number"
+default = "0.45"
+
+[[config.fields]]
+key     = "tag_stop_m"
+label   = "Tag stop distance (m)"
+type    = "number"
+default = "0.55"
+
+[[config.fields]]
+key     = "sense_dwell_s"
+label   = "Sensing dwell (s)"
+type    = "number"
+default = "4"
+
+[[config.fields]]
+key     = "scan_max_deg"
+label   = "Scan sweep (deg each way)"
+type    = "number"
+default = "120"
+
+[[config.fields]]
+key     = "camera_device"
+label   = "Camera device"
+type    = "text"
+default = "/dev/video0"
+
+[[config.fields]]
+key     = "camera_width"
+label   = "Camera width (px)"
+type    = "number"
+default = "1280"
+
+[[config.fields]]
+key     = "camera_height"
+label   = "Camera height (px)"
+type    = "number"
+default = "720"
+
+[[config.fields]]
+key     = "camera_hfov_deg"
+label   = "Camera horizontal FOV (deg)"
+type    = "number"
+default = "66"
+
+[[config.fields]]
+key     = "marker_size_m"
+label   = "Marker size (m)"
+type    = "number"
+default = "0.20"
+
+[[config.fields]]
+key     = "led_device"
+label   = "LED SPI device"
+type    = "text"
+default = "/dev/spidev0.0"
+
+[[config.fields]]
+key     = "led_count"
+label   = "LED count"
+type    = "number"
+default = "8"
+
+[[config.fields]]
+key     = "led_brightness"
+label   = "LED brightness (0-1)"
+type    = "number"
+default = "0.4"
+
+[[config.fields]]
+key     = "sim_mode"
+label   = "Simulation mode"
+type    = "bool"
+default = "false"
+help    = "No SPI or camera; detections are synthesized from the pose estimate"
+
+[[config.fields]]
+key   = "sim_tags"
+label = "Sim tag IDs"
+type  = "text"
+help  = "Tag ids the sim vision source fakes, one per waypoint"
+
+[[config.fields]]
+key     = "sim_visibility_m"
+label   = "Sim tag visibility (m)"
+type    = "number"
+default = "3.0"
+
+[[config.fields]]
+key     = "log_dir"
+label   = "Mission log directory"
+type    = "text"
+default = "/var/lib/waypoint-module-survey/logs"
+
+[[config.fields]]
+key     = "return_home"
+label   = "Return to start"
+type    = "bool"
+default = "true"

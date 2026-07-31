@@ -1,0 +1,8 @@
+# Dev/sim config: run against `make dev-rover` with
+#   make -C modules/survey dev
+# Square-ish course inside a 9 m field, synthetic detections.
+waypoints  = "4,0;4,4;0,4"
+tag_ids    = "17,42,99"
+start_pose = "0,0,0"
+sim_mode   = true
+log_dir    = "/tmp/waypoint-survey-logs"
