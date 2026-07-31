@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Indicator LED legend</title>
+<style>
+  body { font-family: system-ui, sans-serif; color: #111; margin: 2rem; max-width: 42rem; }
+  h1 { font-size: 1.4rem; border-bottom: 3px solid #111; padding-bottom: .4rem; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+  th, td { border: 2px solid #111; padding: .5rem .7rem; text-align: left; font-size: 1rem; }
+  .strip { display: inline-flex; gap: 4px; }
+  .px { width: 22px; height: 22px; border: 2px solid #111; border-radius: 3px; }
+  .g { background: #2fbf3f; } .r { background: #e33; } .y { background: #f5c518; }
+  .w { background: #fff; } .o { background: #222; }
+  .ex { font-size: .95rem; margin: .3rem 0 1rem; }
+  @media print { body { margin: 0.5cm; } }
+</style>
+</head>
+<body>
+<h1>Rover indicator LED legend (8-pixel strip)</h1>
+
+<table>
+  <tr><th>Strip</th><th>Meaning</th></tr>
+  <tr>
+    <td><span class="strip"><span class="px g"></span><span class="px g"></span><span class="px g"></span><span class="px g"></span><span class="px g"></span><span class="px g"></span><span class="px g"></span><span class="px g"></span></span></td>
+    <td><strong>Green</strong>: manual mode (leaving base, emergency intervention)</td>
+  </tr>
+  <tr>
+    <td><span class="strip"><span class="px r"></span><span class="px r"></span><span class="px r"></span><span class="px r"></span><span class="px r"></span><span class="px r"></span><span class="px r"></span><span class="px r"></span></span></td>
+    <td><strong>Red</strong>: autonomous mode, navigating</td>
+  </tr>
+  <tr>
+    <td><span class="strip"><span class="px y"></span><span class="px o"></span><span class="px o"></span><span class="px w"></span><span class="px o"></span><span class="px o"></span><span class="px o"></span><span class="px w"></span></span></td>
+    <td><strong>Sensing</strong>: first LED yellow (sensing mode), LEDs 2-8 show the
+        detected ArUco tag ID in 7-bit binary, most significant bit first
+        (white = 1, off = 0)</td>
+  </tr>
+</table>
+
+<p class="ex">
+Example above: <code>0010001</code> = tag ID <strong>17</strong>.<br>
+The same detected ID is written to the mission log on the SD card at the
+moment of detection, so every displayed value can be cross-checked.
+</p>
+</body>
+</html>
