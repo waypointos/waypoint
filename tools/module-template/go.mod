@@ -2,7 +2,7 @@
 // The release-manifest generator is a separate module under build/.
 module github.com/waypointos/waypoint-module-example
 
-go 1.25.0
+go 1.27.3
 
 require (
 	github.com/BurntSushi/toml v1.4.0

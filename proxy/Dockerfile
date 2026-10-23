@@ -20,7 +20,7 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm --filter dashboard build
 
 # Stage 2 — build the proxy with the dashboard embedded
-FROM golang:1.25-alpine AS proxy
+FROM golang:1.27.3-alpine AS proxy
 WORKDIR /src
 COPY proxy ./proxy
 # proxy/go.mod replaces two intra-repo modules with sibling paths relative to

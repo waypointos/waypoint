@@ -1,6 +1,6 @@
 module github.com/waypointos/waypoint/protocol/platform
 
-go 1.25.0
+go 1.27.3
 
 replace github.com/waypointos/waypoint/protocol/gen/go => ../gen/go
 

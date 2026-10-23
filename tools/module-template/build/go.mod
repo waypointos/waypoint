@@ -1,5 +1,5 @@
 module github.com/waypointos/waypoint-module-example/build
 
-go 1.25.0
+go 1.27.3
 
 require github.com/BurntSushi/toml v1.4.0
