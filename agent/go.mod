@@ -1,6 +1,6 @@
 module github.com/waypointos/waypoint/agent
 
-go 1.25.0
+go 1.27.3
 
 replace github.com/waypointos/waypoint/protocol/gen/go => ../protocol/gen/go
 
@@ -19,14 +19,13 @@ require (
 	github.com/pion/webrtc/v4 v4.2.12
 	github.com/sigstore/sigstore-go v1.1.4
 	github.com/stretchr/testify v1.11.1
+	github.com/waypointos/waypoint/modverify v0.0.0-00010101000000-000000000000
 	github.com/waypointos/waypoint/protocol/gen/go v0.0.0-00010101000000-000000000000
 	github.com/waypointos/waypoint/protocol/platform v0.0.0-00010101000000-000000000000
 	golang.org/x/sys v0.46.0
 	google.golang.org/protobuf v1.36.11
 	modernc.org/sqlite v1.50.1
 )
-
-require github.com/pierrec/lz4/v4 v4.1.22 // indirect
 
 require (
 	github.com/antithesishq/antithesis-sdk-go v0.7.0-default-no-op // indirect
@@ -77,6 +76,7 @@ require (
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/pion/datachannel v1.6.0 // indirect
 	github.com/pion/dtls/v3 v3.1.2 // indirect
 	github.com/pion/ice/v4 v4.2.5 // indirect
@@ -105,7 +105,6 @@ require (
 	github.com/theupdateframework/go-tuf/v2 v2.3.0 // indirect
 	github.com/transparency-dev/formats v0.0.0-20251017110053-404c0d5b696c // indirect
 	github.com/transparency-dev/merkle v0.0.2 // indirect
-	github.com/waypointos/waypoint/modverify v0.0.0-00010101000000-000000000000
 	github.com/wlynxg/anet v0.0.5 // indirect
 	go.mongodb.org/mongo-driver v1.17.6 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
